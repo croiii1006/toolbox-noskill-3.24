@@ -1,11 +1,11 @@
 import { TextToImage } from './TextToImage';
 import { AppPlaza } from './AppPlaza';
-import { BrandHealth } from './BrandHealth';
+import { InsightAndPlanning } from './InsightAndPlanning';
 
 import { ReplicateWorkspace } from './ReplicateWorkspace';
 
 import { TikTokReport } from './TikTokReport';
-import { CampaignPlanner } from './CampaignPlanner';
+
 
 interface AIToolboxModuleProps {
   activeItem: string;
@@ -23,10 +23,8 @@ export function AIToolboxModule({ activeItem, onNavigate }: AIToolboxModuleProps
   switch (activeItem) {
     case 'app-plaza':
       return <AppPlaza onNavigate={onNavigate} />;
-    case 'brand-health':
-      return <BrandHealth onNavigate={onNavigate} />;
-    case 'campaign-planner':
-      return <CampaignPlanner />;
+    case 'insight-planning':
+      return <InsightAndPlanning onNavigate={onNavigate} />;
     case 'text-to-image':
       return <TextToImage onNavigate={onNavigate} />;
     case 'text-to-video':
