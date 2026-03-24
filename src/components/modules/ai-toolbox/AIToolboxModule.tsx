@@ -1,6 +1,6 @@
 import { TextToImage } from './TextToImage';
 import { AppPlaza } from './AppPlaza';
-import { BrandHealth } from './BrandHealth';
+import { InsightAndPlanning } from './InsightAndPlanning';
 
 import { ReplicateWorkspace } from './ReplicateWorkspace';
 
