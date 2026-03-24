@@ -23,10 +23,8 @@ export function AIToolboxModule({ activeItem, onNavigate }: AIToolboxModuleProps
   switch (activeItem) {
     case 'app-plaza':
       return <AppPlaza onNavigate={onNavigate} />;
-    case 'brand-health':
-      return <BrandHealth onNavigate={onNavigate} />;
-    case 'campaign-planner':
-      return <CampaignPlanner />;
+    case 'insight-planning':
+      return <InsightAndPlanning onNavigate={onNavigate} />;
     case 'text-to-image':
       return <TextToImage onNavigate={onNavigate} />;
     case 'text-to-video':
