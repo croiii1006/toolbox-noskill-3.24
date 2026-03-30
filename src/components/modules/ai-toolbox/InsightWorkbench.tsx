@@ -80,7 +80,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     entries.map(e => ({
       id: e.id,
       name: e.title,
-      description: e.content.slice(0, 60),
+      desc: e.content.slice(0, 60),
       tag: e.category,
       charCount: e.content.length,
     })),
