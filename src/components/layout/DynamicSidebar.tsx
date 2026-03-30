@@ -120,9 +120,15 @@ const sidebarConfig: Record<ModuleType, SidebarSection[]> = {
       isGroupHeader: true,
     },
     {
-      id: 'insight-planning',
-      titleKey: 'sidebar.insightPlanning',
+      id: 'brand-health',
+      titleKey: 'sidebar.marketInsights',
       icon: <TrendingUp className="w-4 h-4" />,
+      isGroupHeader: true,
+    },
+    {
+      id: 'campaign-planner',
+      titleKey: 'sidebar.planningScheme',
+      icon: <Megaphone className="w-4 h-4" />,
       isGroupHeader: true,
     },
     {
