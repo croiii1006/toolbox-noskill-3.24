@@ -481,7 +481,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
       <InsufficientCreditsDrawer
         open={creditsDrawerOpen}
         onOpenChange={setCreditsDrawerOpen}
-        needed={shortfall(GENERATION_COST)}
+        shortfall={shortfall(GENERATION_COST)}
       />
     </div>
   );
