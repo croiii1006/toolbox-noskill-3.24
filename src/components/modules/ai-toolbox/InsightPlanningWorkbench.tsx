@@ -24,18 +24,25 @@ interface ChatMessage {
 }
 
 /* ─── Step definitions per mode ─── */
-const INSIGHT_STEPS = [
-  { field: 'brandName', question: '请输入要分析的品牌名称', type: 'text' as const },
-  { field: 'category', question: '选择该品牌所属的品类', type: 'category' as const },
-  { field: 'competitors', question: '输入主要竞品品牌（回车添加，输入完毕后点击发送）', type: 'tags' as const },
+interface StepDef {
+  field: string;
+  question: string;
+  type: 'text' | 'options' | 'tags' | 'category';
+  options?: string[];
+}
+
+const INSIGHT_STEPS: StepDef[] = [
+  { field: 'brandName', question: '请输入要分析的品牌名称', type: 'text' },
+  { field: 'category', question: '选择该品牌所属的品类', type: 'category' },
+  { field: 'competitors', question: '输入主要竞品品牌（回车添加，输入完毕后点击发送）', type: 'tags' },
 ];
 
-const CAMPAIGN_STEPS = [
-  { field: 'brandName', question: '请输入品牌名称', type: 'text' as const },
-  { field: 'goal', question: '选择本次营销目标', type: 'options' as const, options: ['品牌升级', '销量增长', '新品发布', '节点营销', '用户拉新'] },
-  { field: 'audience', question: '描述目标人群（如：18-25岁大学生、熬夜党，回车添加）', type: 'tags' as const },
-  { field: 'sellingPoints', question: '输入核心卖点（如：温和不刺激、医生推荐，回车添加）', type: 'tags' as const },
-  { field: 'budget', question: '选择预算量级', type: 'options' as const, options: ['S级全域战役', 'A级核心爆破', 'B级日常种草'] },
+const CAMPAIGN_STEPS: StepDef[] = [
+  { field: 'brandName', question: '请输入品牌名称', type: 'text' },
+  { field: 'goal', question: '选择本次营销目标', type: 'options', options: ['品牌升级', '销量增长', '新品发布', '节点营销', '用户拉新'] },
+  { field: 'audience', question: '描述目标人群（如：18-25岁大学生、熬夜党，回车添加）', type: 'tags' },
+  { field: 'sellingPoints', question: '输入核心卖点（如：温和不刺激、医生推荐，回车添加）', type: 'tags' },
+  { field: 'budget', question: '选择预算量级', type: 'options', options: ['S级全域战役', 'A级核心爆破', 'B级日常种草'] },
 ];
 
 const REPORT_COST = 200;
