@@ -72,7 +72,7 @@ Report display component for Step 5. Renders a structured HTML report preview wi
 - Replace separate `brand-health` and `campaign-planner` entries with single entry: `{ id: 'insight-workbench', labelKey: 'sidebar.insightWorkbench', icon: <TrendingUp /> }`
 
 #### 5. Modify: `src/i18n/locales/en.json` and `zh.json`
-- Add `sidebar.insightWorkbench` key ("Insight Workbench" / "洞察工作台")
+- Add `sidebar.insightWorkbench` key ("Insight Workbench" / "ORAN INSIGHT")
 - Remove old `sidebar.marketInsights` and `sidebar.planningScheme` if no longer referenced
 
 #### 6. Keep existing files

@@ -170,7 +170,7 @@ function CascaderColumn({
   };
 
   return (
-    <div className="min-w-[160px] max-h-[320px] overflow-y-auto border-r border-border/20 last:border-r-0 py-1 scrollbar-thin">
+    <div className="min-w-[160px] max-h-[320px] overflow-y-auto border-r border-border/20 last:border-r-0 py-1">
       {items.map((node) => {
         const isSelected = node.label === selectedLabel;
         const hasChildren = node.children && node.children.length > 0;
@@ -310,7 +310,7 @@ export function CategoryCascader({ data, value, onChange, placeholder = '选择�
 
         {search.trim() ? (
           /* Search results */
-          <div className="max-h-[320px] overflow-y-auto py-1 scrollbar-thin">
+          <div className="max-h-[320px] overflow-y-auto py-1">
             {filteredPaths.length === 0 ? (
               <p className="text-xs text-muted-foreground/50 text-center py-6">无匹配结果</p>
             ) : (

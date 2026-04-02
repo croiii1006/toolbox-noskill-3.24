@@ -126,6 +126,12 @@ const sidebarConfig: Record<ModuleType, SidebarSection[]> = {
       isGroupHeader: true,
     },
     {
+      id: 'oran-simulation',
+      titleKey: 'sidebar.oranSimulation',
+      icon: <Zap className="w-4 h-4" />,
+      isGroupHeader: true,
+    },
+    {
       titleKey: 'sidebar.materialGeneration',
       isGroupHeader: true,
       defaultOpen: true,

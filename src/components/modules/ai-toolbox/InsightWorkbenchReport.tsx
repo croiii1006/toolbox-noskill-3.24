@@ -20,6 +20,9 @@ interface Props {
   extractedInfo: ExtractedInfo;
   onBack: () => void;
   onRestart: () => void;
+  embedded?: boolean;
+  showEmbeddedToolbar?: boolean;
+  showEmbeddedBackButton?: boolean;
 }
 
 function generateReportHTML(info: ExtractedInfo): string {
@@ -122,14 +125,21 @@ function generateReportHTML(info: ExtractedInfo): string {
     </div>
 
     <div class="footer">
-      本报告由洞察工作台自动生成 · ${new Date().toLocaleDateString('zh-CN')} · 仅供参考
+      本报告由ORAN INSIGHT自动生成 · ${new Date().toLocaleDateString('zh-CN')} · 仅供参考
     </div>
   </div>
 </body>
 </html>`;
 }
 
-export function InsightWorkbenchReport({ extractedInfo, onBack, onRestart }: Props) {
+export function InsightWorkbenchReport({
+  extractedInfo,
+  onBack,
+  onRestart,
+  embedded = false,
+  showEmbeddedToolbar = true,
+  showEmbeddedBackButton = true,
+}: Props) {
   const reportRef = useRef<HTMLDivElement>(null);
   const { addEntry, setDrawerOpen } = useMemory();
   const reportHTML = generateReportHTML(extractedInfo);
@@ -169,6 +179,66 @@ export function InsightWorkbenchReport({ extractedInfo, onBack, onRestart }: Pro
     setDrawerOpen(true);
     toast.success('已保存到记忆库');
   }, [extractedInfo, addEntry, setDrawerOpen]);
+
+  const actionBar = (
+    <div className={embedded ? 'flex flex-wrap items-center gap-2' : 'flex items-center gap-2'}>
+      <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={handlePreview}>
+        <Eye className="w-3.5 h-3.5 mr-1" />
+        预览
+      </Button>
+      <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={handleCopy}>
+        <Copy className="w-3.5 h-3.5 mr-1" />
+        复制 HTML
+      </Button>
+      <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={handleExport}>
+        <Download className="w-3.5 h-3.5 mr-1" />
+        导出
+      </Button>
+      <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={handleCopyToMemory}>
+        <FileText className="w-3.5 h-3.5 mr-1" />
+        存入记忆库
+      </Button>
+      <Button variant="ghost" size="sm" className="text-xs h-8 rounded-lg" onClick={onRestart}>
+        <RefreshCw className="w-3.5 h-3.5 mr-1" />
+        重新生成
+      </Button>
+    </div>
+  );
+
+  if (embedded) {
+    return (
+      <div className="flex h-full min-h-0 flex-col gap-4">
+        {showEmbeddedToolbar && (
+          <div className="flex flex-col gap-3 rounded-2xl border border-border/30 bg-card/80 p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+            {showEmbeddedBackButton ? (
+              <button
+                onClick={onBack}
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                返回确认信息
+              </button>
+            ) : (
+              <div />
+            )}
+            {actionBar}
+          </div>
+        )}
+
+        <Card className="flex-1 min-h-0 overflow-hidden border-border/30 shadow-md">
+          <div ref={reportRef} className="h-full bg-muted/20 p-4 md:p-6">
+            <iframe
+              srcDoc={reportHTML}
+              title="报告预览"
+              className="h-full w-full rounded-xl border-0 bg-white"
+              style={{ minHeight: '100%', height: '100%' }}
+              sandbox="allow-same-origin"
+            />
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col">

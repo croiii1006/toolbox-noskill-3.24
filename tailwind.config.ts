@@ -16,6 +16,7 @@ export default {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         display: ['Urbanist', 'Inter', 'system-ui', 'sans-serif'],
+        bitcount: ['"Bitcount Single"', 'monospace'],
       },
       colors: {
         border: "hsl(var(--border))",

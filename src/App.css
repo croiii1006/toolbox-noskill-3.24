@@ -40,3 +40,10 @@
 .read-the-docs {
   color: #888;
 }
+
+.reading-text-shell {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  background: rgba(249, 250, 251, 0.72);
+}

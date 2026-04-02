@@ -1,6 +1,7 @@
 import { TextToImage } from './TextToImage';
 import { AppPlaza } from './AppPlaza';
 import { InsightWorkbench } from './InsightWorkbench';
+import { OranSimulation } from './OranSimulation';
 import { ReplicateWorkspace } from './ReplicateWorkspace';
 import { TikTokReport } from './TikTokReport';
 
@@ -22,6 +23,8 @@ export function AIToolboxModule({ activeItem, onNavigate }: AIToolboxModuleProps
       return <AppPlaza onNavigate={onNavigate} />;
     case 'insight-workbench':
       return <InsightWorkbench onNavigate={onNavigate} />;
+    case 'oran-simulation':
+      return <OranSimulation onNavigate={onNavigate} />;
     case 'text-to-image':
       return <TextToImage onNavigate={onNavigate} />;
     case 'text-to-video':

@@ -16,6 +16,7 @@ const defaultItems: Record<ModuleType, string> = {
 
 // Items that should trigger auto-collapse (tool/canvas views)
 const toolItems = [
+  'oran-simulation',
   'text-to-image',
   'ecommerce-assets',
   'reference-to-image',
@@ -48,6 +49,8 @@ export function AppShell({ children }: AppShellProps) {
   }, [activeItem, setSidebarCollapsed]);
 
   const isAppPlaza = activeModule === 'ai-toolbox' && activeItem === 'app-plaza';
+  const isInsightWorkbench = activeModule === 'ai-toolbox' && activeItem === 'insight-workbench';
+  const isOranSimulation = activeModule === 'ai-toolbox' && activeItem === 'oran-simulation';
 
   return (
     <div
@@ -59,7 +62,11 @@ export function AppShell({ children }: AppShellProps) {
       <TopNav />
       <div className="flex flex-1 overflow-hidden">
         <DynamicSidebar activeItem={activeItem} onItemClick={setActiveItem} />
-        <main className="flex-1 overflow-auto pt-14 transition-all duration-300 pl-[64px]">
+        <main
+          className={`min-h-0 flex-1 pt-14 transition-all duration-300 pl-[64px] ${
+            isInsightWorkbench || isOranSimulation ? 'overflow-hidden' : 'overflow-auto'
+          }`}
+        >
           {children(activeItem, setActiveItem)}
         </main>
       </div>
