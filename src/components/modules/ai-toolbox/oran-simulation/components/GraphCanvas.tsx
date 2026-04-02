@@ -17,6 +17,7 @@ interface GraphCanvasProps {
   highlight: GraphHighlight | null;
   onSelectNode: (nodeId: string | null) => void;
   locale: Locale;
+  showHeader?: boolean;
 }
 
 type TransformState = {
@@ -188,6 +189,7 @@ export default function GraphCanvas({
   highlight,
   onSelectNode,
   locale,
+  showHeader = true,
 }: GraphCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -976,25 +978,27 @@ export default function GraphCanvas({
         interactionRef.current = null;
         updateHoveredNode(null);
       }}
-      className="kernel-shell open-frame relative h-full overflow-hidden rounded-[34px] text-white cursor-none select-none"
+      className="kernel-shell open-frame relative h-full overflow-hidden rounded-none text-white cursor-none select-none"
     >
       <div className="scan-grid absolute inset-0 opacity-35" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white/[0.05] to-transparent" />
       <div className="pointer-events-none animate-scan-line absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-white/[0.08] via-white/[0.02] to-transparent" />
 
-      <div className="pointer-events-none absolute left-6 top-5 right-6 flex items-start justify-between">
-        <div>
-          <div className="font-pixel text-[11px] uppercase tracking-[0.34em] text-white/42">
-            {t(locale, "canvasTitle")}
+      {showHeader ? (
+        <div className="pointer-events-none absolute left-6 top-5 right-6 flex items-start justify-between">
+          <div>
+            <div className="font-pixel text-[11px] uppercase tracking-[0.34em] text-white/42">
+              {t(locale, "canvasTitle")}
+            </div>
+            <div className="mt-2 font-display text-[26px] leading-none tracking-[0.08em] text-white">
+              SYSTEM KERNEL
+            </div>
           </div>
-          <div className="mt-2 font-display text-[26px] leading-none tracking-[0.08em] text-white">
-            SYSTEM KERNEL
+          <div className="font-pixel text-[11px] uppercase tracking-[0.2em] text-white/46">
+            {localizeHighlightTitle(locale, highlight)}
           </div>
         </div>
-        <div className="font-pixel text-[11px] uppercase tracking-[0.2em] text-white/46">
-          {localizeHighlightTitle(locale, highlight)}
-        </div>
-      </div>
+      ) : null}
 
       <div className="pointer-events-none absolute inset-y-20 left-6 w-40 space-y-2 text-[10px] text-white/[0.16]">
         {codeLines.slice(0, 4).map((line) => (
@@ -1019,7 +1023,7 @@ export default function GraphCanvas({
           </pattern>
         </defs>
 
-        <rect x="0" y="0" width="100%" height="100%" fill="url(#kernel-grid)" />
+        <rect x="0" y="0" width="100%" height="100%"  />
 
         <g transform={`translate(${transform.x} ${transform.y}) scale(${transform.scale})`}>
           <LaneGuide x={toLayoutPosition(60, 0).x} label={t(locale, "laneSource")} />

@@ -49,6 +49,9 @@ interface InsightComposerPanelProps {
   emptyMemoryLabel?: string;
   planningPrefixLabel?: string;
   planningActionLabel?: string;
+  promptValue?: string;
+  onPromptValueChange?: (value: string) => void;
+  submitLabel?: string;
   submitAriaLabel?: string;
 }
 
@@ -91,6 +94,9 @@ export function InsightComposerPanel({
   planningPrefixLabel = '基于',
   planningActionLabel = '为我生成',
   submitAriaLabel = '提交',
+  promptValue = '',
+  onPromptValueChange = () => {},
+  submitLabel,
 }: InsightComposerPanelProps) {
   const resolvedMemoryButtonLabel =
     memoryButtonLabel ?? (selectedMemoryIds.length > 0 ? `${selectedMemoryIds.length} 个记忆库` : '记忆库');
@@ -106,29 +112,19 @@ export function InsightComposerPanel({
         <div className="p-5">
           <div className="flex items-center flex-wrap gap-y-2 text-sm text-foreground/70 leading-relaxed">
             {contentMode === 'memoryPrompt' ? (
-              <button
-                type="button"
-                onClick={onOpenMemoryDialog}
-                className={cn(
-                  'flex min-h-11 w-full items-center rounded-2xl border border-border/40 bg-muted/20 px-4 py-3 text-left transition-colors hover:bg-muted/28',
-                  selectedMemoryIds.length > 0 ? 'text-foreground/72' : 'text-muted-foreground hover:text-foreground/72'
-                )}
-              >
-                {selectedMemoryIds.length > 0 ? (
-                  <span
-                    className={cn(
-                      'block overflow-hidden whitespace-nowrap text-sm',
-                      selectedMemorySummaryNeedsFade &&
-                        'max-w-full [mask-image:linear-gradient(to_right,black_88%,transparent)] [-webkit-mask-image:linear-gradient(to_right,black_88%,transparent)]'
-                    )}
-                    title={selectedMemorySummary}
-                  >
-                    {selectedMemorySummary}
-                  </span>
-                ) : (
-                  <span className="text-sm">{planningActionLabel}</span>
-                )}
-              </button>
+              <textarea
+                value={promptValue}
+                onChange={(event) => onPromptValueChange(event.target.value)}
+                placeholder={planningActionLabel}
+                rows={3}
+                className="oran-sim-prompt min-h-[20px] w-full resize-none appearance-none rounded-2xl border-0 bg-muted/20 px-2 py-1 text-sm leading-relaxed text-foreground/72 shadow-none outline-none transition-colors placeholder:text-muted-foreground/50 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+                    event.preventDefault();
+                    onSubmit();
+                  }
+                }}
+              />
             ) : reportType === 'planning' ? (
               <>
                 <span className="whitespace-nowrap">{planningPrefixLabel}</span>
@@ -291,13 +287,19 @@ export function InsightComposerPanel({
               disabled={!canSubmit}
               aria-label={submitAriaLabel}
               className={cn(
-                'w-9 h-9 rounded-full flex items-center justify-center transition-all',
-                canSubmit
-                  ? 'bg-foreground text-background hover:bg-foreground/90'
-                  : 'bg-muted/60 text-muted-foreground/40 cursor-not-allowed'
+                'flex items-center justify-center gap-2 transition-all',
+                submitLabel ? 'h-10 min-w-[120px] rounded-full px-4' : 'w-9 h-9 rounded-full',
+                submitLabel
+                  ? canSubmit
+                    ? 'border border-orange-200/80 bg-orange-10 text-foreground/60 hover:bg-orange-100'
+                    : 'border border-orange-300/70 bg-orange-50/60 text-foreground/50 cursor-not-allowed'
+                  : canSubmit
+                    ? 'bg-foreground text-background hover:bg-foreground/90'
+                    : 'bg-muted/60 text-muted-foreground/40 cursor-not-allowed'
               )}
             >
-              <ArrowUp className="w-4 h-4" />
+              <ArrowUp className={cn('w-4 h-4', submitLabel && 'text-orange-500')} />
+              {submitLabel ? <span className="whitespace-nowrap text-sm font-medium">{submitLabel}</span> : null}
             </button>
           </div>
         </div>

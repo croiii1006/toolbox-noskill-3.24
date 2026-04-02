@@ -1,9 +1,8 @@
-import { useCallback, useRef } from 'react';
-import { ArrowLeft, Copy, Download, RefreshCw, Eye, FileText } from 'lucide-react';
+import { useCallback, useMemo, useRef } from 'react';
+import { ArrowLeft, Copy, Download, Eye, FileText, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
 import { useMemory } from '@/contexts/MemoryContext';
 
 interface ExtractedInfo {
@@ -16,8 +15,11 @@ interface ExtractedInfo {
   businessDirection: string;
 }
 
+type InsightReportType = 'insight' | 'planning';
+
 interface Props {
   extractedInfo: ExtractedInfo;
+  reportType?: InsightReportType;
   onBack: () => void;
   onRestart: () => void;
   embedded?: boolean;
@@ -25,107 +27,315 @@ interface Props {
   showEmbeddedBackButton?: boolean;
 }
 
-function generateReportHTML(info: ExtractedInfo): string {
+const REPORT_META = {
+  insight: {
+    label: '洞察报告',
+    summaryTitle: '执行摘要',
+    summaryText: '围绕品牌现状、竞品格局与机会方向，输出一份可直接用于决策讨论的洞察结论。',
+    metrics: [
+      { value: '78', label: '品牌势能' },
+      { value: '62%', label: '市场认知度' },
+      { value: '4.2', label: '用户兴趣值' },
+      { value: 'A-', label: '综合评级' },
+    ],
+    sectionTwoTitle: '核心卖点拆解',
+    sectionTwoText: '系统识别到以下关键卖点，可作为后续传播与内容生产的核心抓手。',
+    sectionThreeTitle: '竞争格局判断',
+    sectionThreeText: '结合品类趋势与竞品线索，当前市场仍存在可被放大的差异化机会。',
+    sectionFourTitle: '用户机会洞察',
+    sectionFourText: '目标用户更关注真实功效、专业表达与短链路转化，适合继续承接到策划与内容生产阶段。',
+    sectionFiveTitle: '下一步建议',
+    sectionFiveText:
+      '建议将当前洞察沉淀为策划方案，进一步明确传播主题、渠道优先级、内容节奏与爆款切题方向。',
+    memoryCategory: '洞察报告',
+  },
+  planning: {
+    label: '策划方案',
+    summaryTitle: '方案摘要',
+    summaryText: '基于已识别的洞察结论，进一步整理可执行的传播策略、阶段目标与内容方向。',
+    metrics: [
+      { value: '8周', label: '建议周期' },
+      { value: '3段', label: '推进阶段' },
+      { value: '4+', label: '内容方向' },
+      { value: 'P0', label: '优先级' },
+    ],
+    sectionTwoTitle: '核心主题与卖点',
+    sectionTwoText: '以下卖点可被收敛为主传播主题，并映射到不同平台内容表达。',
+    sectionThreeTitle: '执行路径建议',
+    sectionThreeText: '建议按预热、爆发、沉淀三段推进，并在节点上做差异化内容编排。',
+    sectionFourTitle: '内容与渠道方向',
+    sectionFourText: '优先围绕高感知卖点展开短视频、种草笔记与达人协同，形成稳定内容供给。',
+    sectionFiveTitle: '交付建议',
+    sectionFiveText:
+      '可继续衔接 ORANGEN 做爆款内容生成，将本方案拆解成具体选题、脚本与素材生产任务。',
+    memoryCategory: '策划方案',
+  },
+} as const;
+
+function escapeHtml(value: string) {
+  return value
+    .split('&').join('&amp;')
+    .split('<').join('&lt;')
+    .split('>').join('&gt;')
+    .split('"').join('&quot;')
+    .split("'").join('&#39;');
+}
+
+function generateReportHTML(info: ExtractedInfo, reportType: InsightReportType): string {
+  const meta = REPORT_META[reportType];
+  const safeBrandName = escapeHtml(info.brandName || '未命名品牌');
+  const safeCategory = escapeHtml(info.category || '待补充品类');
+  const safeTargetMarket = escapeHtml(info.targetMarket || '待确认目标市场');
+  const safeWebsiteType = escapeHtml(info.websiteType || '结构化品牌输入');
+  const safeBusinessDirection = escapeHtml(info.businessDirection || '待补充方向');
+  const safeAnalysisTarget = escapeHtml(info.analysisTarget || '品牌上下文');
+  const safeSellingPoints = info.sellingPoints.length > 0 ? info.sellingPoints : ['待补充核心卖点'];
+  const safeTags = safeSellingPoints
+    .map((item) => `<span class="tag">${escapeHtml(item)}</span>`)
+    .join('');
+  const tableRows = safeSellingPoints
+    .map(
+      (item, index) => `
+        <tr>
+          <td>${escapeHtml(item)}</td>
+          <td>${['高', '中', '高'][index % 3]}</td>
+          <td>${['强', '中', '强'][index % 3]}</td>
+          <td>${['P0', 'P1', 'P0'][index % 3]}</td>
+        </tr>
+      `
+    )
+    .join('');
+  const metricCards = meta.metrics
+    .map(
+      (item) => `
+        <div class="metric">
+          <div class="metric-value">${item.value}</div>
+          <div class="metric-label">${item.label}</div>
+        </div>
+      `
+    )
+    .join('');
+
   return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${info.brandName} - 品牌洞察报告</title>
+  <title>${safeBrandName} - ${meta.label}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #1a1a1a; background: #fff; line-height: 1.6; }
-    .container { max-width: 800px; margin: 0 auto; padding: 48px 32px; }
-    h1 { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
-    h2 { font-size: 18px; font-weight: 600; margin: 32px 0 16px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
-    h3 { font-size: 15px; font-weight: 600; margin: 20px 0 8px; }
-    p { font-size: 14px; color: #444; margin-bottom: 12px; }
-    .subtitle { font-size: 14px; color: #888; margin-bottom: 32px; }
-    .meta { display: flex; gap: 24px; margin-bottom: 32px; flex-wrap: wrap; }
-    .meta-item { font-size: 13px; color: #666; }
-    .meta-item strong { color: #1a1a1a; }
-    .tag { display: inline-block; padding: 2px 10px; background: #f5f5f5; border-radius: 4px; font-size: 12px; margin-right: 6px; margin-bottom: 4px; }
-    .card { border: 1px solid #eee; border-radius: 8px; padding: 20px; margin-bottom: 16px; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .metric { text-align: center; padding: 16px; background: #fafafa; border-radius: 8px; }
-    .metric-value { font-size: 24px; font-weight: 700; color: #1a1a1a; }
-    .metric-label { font-size: 12px; color: #888; margin-top: 4px; }
-    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
-    th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #f0f0f0; }
-    th { font-weight: 600; color: #666; font-size: 12px; text-transform: uppercase; }
-    .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid #eee; font-size: 12px; color: #aaa; text-align: center; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f6f4f1;
+      color: #1f1f1f;
+      line-height: 1.65;
+      padding: 32px;
+    }
+    .container {
+      max-width: 920px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 18px 60px rgba(15, 23, 42, 0.08);
+    }
+    .hero {
+      padding: 40px 40px 28px;
+      background: linear-gradient(135deg, #fff8f1 0%, #ffffff 58%, #f5f5f4 100%);
+      border-bottom: 1px solid #ece7df;
+    }
+    .eyebrow {
+      display: inline-flex;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(249, 115, 22, 0.1);
+      color: #c2410c;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+    }
+    h1 {
+      margin-top: 18px;
+      font-size: 32px;
+      line-height: 1.2;
+      letter-spacing: -0.03em;
+    }
+    .subtitle {
+      margin-top: 10px;
+      color: #6b7280;
+      font-size: 14px;
+    }
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      padding: 28px 40px 0;
+    }
+    .meta-item {
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: #faf8f6;
+      border: 1px solid #efe9e1;
+      font-size: 13px;
+      color: #6b7280;
+    }
+    .meta-item strong {
+      display: block;
+      color: #111827;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+    .content {
+      padding: 8px 40px 40px;
+    }
+    h2 {
+      margin-top: 28px;
+      margin-bottom: 14px;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+    h3 {
+      margin-top: 18px;
+      margin-bottom: 10px;
+      font-size: 15px;
+    }
+    p {
+      font-size: 14px;
+      color: #4b5563;
+      margin-bottom: 12px;
+    }
+    .card {
+      padding: 22px;
+      border-radius: 20px;
+      border: 1px solid #eee7df;
+      background: #fffdfa;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+    .metric {
+      border-radius: 18px;
+      padding: 18px;
+      background: #ffffff;
+      border: 1px solid #f0e7dc;
+      text-align: center;
+    }
+    .metric-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #111827;
+    }
+    .metric-label {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .tag {
+      display: inline-block;
+      margin-right: 8px;
+      margin-bottom: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #f5f5f4;
+      color: #374151;
+      font-size: 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid #f1ece5;
+    }
+    th {
+      font-size: 12px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .footer {
+      margin-top: 36px;
+      padding-top: 20px;
+      border-top: 1px solid #ece7df;
+      color: #9ca3af;
+      font-size: 12px;
+      text-align: center;
+    }
+    @media (max-width: 720px) {
+      body { padding: 16px; }
+      .hero, .content, .meta { padding-left: 20px; padding-right: 20px; }
+      .meta, .grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>${info.brandName} 品牌洞察报告</h1>
-    <p class="subtitle">基于 ${info.analysisTarget} 的自动化分析 · ${new Date().toLocaleDateString('zh-CN')}</p>
+    <div class="hero">
+      <div class="eyebrow">${meta.label}</div>
+      <h1>${safeBrandName}${meta.label}</h1>
+      <p class="subtitle">基于 ${safeAnalysisTarget} 的自动生成结果 · ${new Date().toLocaleDateString('zh-CN')}</p>
+    </div>
 
     <div class="meta">
-      <div class="meta-item"><strong>品类：</strong>${info.category}</div>
-      <div class="meta-item"><strong>目标市场：</strong>${info.targetMarket}</div>
-      <div class="meta-item"><strong>网站类型：</strong>${info.websiteType}</div>
-      <div class="meta-item"><strong>业务方向：</strong>${info.businessDirection}</div>
+      <div class="meta-item"><strong>品类</strong>${safeCategory}</div>
+      <div class="meta-item"><strong>目标市场</strong>${safeTargetMarket}</div>
+      <div class="meta-item"><strong>输入类型</strong>${safeWebsiteType}</div>
+      <div class="meta-item"><strong>业务方向</strong>${safeBusinessDirection}</div>
     </div>
 
-    <h2>一、执行摘要</h2>
-    <div class="card">
-      <p>${info.brandName} 是一家定位于 ${info.category} 领域的品牌，主要面向 ${info.targetMarket} 市场。通过对其${info.websiteType}的深度解析，我们识别出以下核心竞争力与市场机会。</p>
-      <div class="grid" style="margin-top: 16px;">
-        <div class="metric"><div class="metric-value">78</div><div class="metric-label">品牌健康指数</div></div>
-        <div class="metric"><div class="metric-value">62%</div><div class="metric-label">市场认知度</div></div>
-        <div class="metric"><div class="metric-value">4.2</div><div class="metric-label">消费者满意度</div></div>
-        <div class="metric"><div class="metric-value">A-</div><div class="metric-label">SEO 评级</div></div>
+    <div class="content">
+      <h2>一、${meta.summaryTitle}</h2>
+      <div class="card">
+        <p>${safeBrandName} 当前处于 ${safeCategory} 场景下的重点分析路径中。${meta.summaryText}</p>
+        <div class="grid">${metricCards}</div>
       </div>
-    </div>
 
-    <h2>二、核心卖点分析</h2>
-    <p>系统识别到以下核心卖点：</p>
-    <div style="margin: 8px 0 16px;">${info.sellingPoints.map(sp => `<span class="tag">${sp}</span>`).join('')}</div>
-    <div class="card">
-      <h3>卖点竞争力评估</h3>
-      <table>
-        <thead><tr><th>卖点</th><th>市场差异度</th><th>消费者感知度</th><th>建议优先级</th></tr></thead>
-        <tbody>
-          ${info.sellingPoints.map((sp, i) => `<tr><td>${sp}</td><td>${['高', '中', '高'][i % 3]}</td><td>${['强', '中', '弱'][i % 3]}</td><td>${['P0', 'P1', 'P0'][i % 3]}</td></tr>`).join('')}
-        </tbody>
-      </table>
-    </div>
+      <h2>二、${meta.sectionTwoTitle}</h2>
+      <p>${meta.sectionTwoText}</p>
+      <div style="margin: 8px 0 12px;">${safeTags}</div>
+      <div class="card">
+        <h3>优先级建议</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>要点</th>
+              <th>市场差异</th>
+              <th>用户感知</th>
+              <th>优先级</th>
+            </tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
 
-    <h2>三、市场竞争格局</h2>
-    <div class="card">
-      <p>${info.category} 市场正处于快速增长阶段，主要竞争者集中在中高端价位段。${info.brandName} 在 ${info.sellingPoints[0] || '产品创新'} 方面具有明显优势，但在品牌知名度方面仍有提升空间。</p>
-      <h3>竞品对比矩阵</h3>
-      <table>
-        <thead><tr><th>维度</th><th>${info.brandName}</th><th>竞品 A</th><th>竞品 B</th></tr></thead>
-        <tbody>
-          <tr><td>产品力</td><td>★★★★☆</td><td>★★★★★</td><td>★★★☆☆</td></tr>
-          <tr><td>品牌力</td><td>★★★☆☆</td><td>★★★★★</td><td>★★★★☆</td></tr>
-          <tr><td>渠道力</td><td>★★★★☆</td><td>★★★☆☆</td><td>★★★★☆</td></tr>
-          <tr><td>价格竞争力</td><td>★★★★★</td><td>★★★☆☆</td><td>★★★★☆</td></tr>
-        </tbody>
-      </table>
-    </div>
+      <h2>三、${meta.sectionThreeTitle}</h2>
+      <div class="card">
+        <p>${meta.sectionThreeText}</p>
+        <p>建议优先围绕 <strong>${escapeHtml(safeSellingPoints[0])}</strong> 做主表达，再用竞品线索补足差异化与说服力。</p>
+      </div>
 
-    <h2>四、消费者洞察</h2>
-    <div class="card">
-      <p>目标消费者画像：${info.targetMarket}，偏好线上购物，关注产品品质与口碑评价。核心购买动机集中在 ${info.sellingPoints.slice(0, 2).join('、')} 等方面。</p>
-    </div>
+      <h2>四、${meta.sectionFourTitle}</h2>
+      <div class="card">
+        <p>${meta.sectionFourText}</p>
+        <p>目标市场暂以 <strong>${safeTargetMarket}</strong> 作为核心受众范围，执行时可结合渠道数据再细分人群。</p>
+      </div>
 
-    <h2>五、策略建议</h2>
-    <div class="card">
-      <h3>短期行动计划（1-3个月）</h3>
-      <p>1. 强化 ${info.sellingPoints[0] || '核心卖点'} 的内容营销，提升消费者认知<br/>
-      2. 优化${info.websiteType}的 SEO 结构与用户体验<br/>
-      3. 建立社交媒体矩阵，重点布局小红书与抖音</p>
-      <h3>中期规划（3-6个月）</h3>
-      <p>1. 拓展 ${info.businessDirection} 渠道覆盖<br/>
-      2. 启动 KOL/KOC 合作计划<br/>
-      3. 建立消费者数据中台</p>
-    </div>
+      <h2>五、${meta.sectionFiveTitle}</h2>
+      <div class="card">
+        <p>${meta.sectionFiveText}</p>
+        <p>建议输出时同步保留品牌、品类、卖点与业务方向，方便后续进入 ORAN 系列工作流继续处理。</p>
+      </div>
 
-    <div class="footer">
-      本报告由ORAN INSIGHT自动生成 · ${new Date().toLocaleDateString('zh-CN')} · 仅供参考
+      <div class="footer">
+        本${meta.label}由 ORAN INSIGHT 自动生成 · ${new Date().toLocaleDateString('zh-CN')} · 仅供内部讨论参考
+      </div>
     </div>
   </div>
 </body>
@@ -134,6 +344,7 @@ function generateReportHTML(info: ExtractedInfo): string {
 
 export function InsightWorkbenchReport({
   extractedInfo,
+  reportType = 'insight',
   onBack,
   onRestart,
   embedded = false,
@@ -142,64 +353,65 @@ export function InsightWorkbenchReport({
 }: Props) {
   const reportRef = useRef<HTMLDivElement>(null);
   const { addEntry, setDrawerOpen } = useMemory();
-  const reportHTML = generateReportHTML(extractedInfo);
+  const meta = REPORT_META[reportType];
+  const reportHTML = useMemo(() => generateReportHTML(extractedInfo, reportType), [extractedInfo, reportType]);
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(reportHTML).then(() => {
-      toast.success('HTML 报告已复制到剪贴板');
+      toast.success(`HTML ${meta.label}已复制到剪贴板`);
     });
-  }, [reportHTML]);
+  }, [meta.label, reportHTML]);
 
   const handleExport = useCallback(() => {
     const blob = new Blob([reportHTML], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${extractedInfo.brandName}-洞察报告.html`;
-    a.click();
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `${extractedInfo.brandName || '未命名品牌'}-${meta.label}.html`;
+    anchor.click();
     URL.revokeObjectURL(url);
-    toast.success('报告已导出');
-  }, [reportHTML, extractedInfo.brandName]);
+    toast.success(`${meta.label}已导出`);
+  }, [extractedInfo.brandName, meta.label, reportHTML]);
 
   const handlePreview = useCallback(() => {
-    const win = window.open('', '_blank');
-    if (win) {
-      win.document.write(reportHTML);
-      win.document.close();
+    const previewWindow = window.open('', '_blank');
+    if (previewWindow) {
+      previewWindow.document.write(reportHTML);
+      previewWindow.document.close();
     }
   }, [reportHTML]);
 
   const handleCopyToMemory = useCallback(() => {
     addEntry({
-      title: `${extractedInfo.brandName} 洞察报告`,
+      title: `${extractedInfo.brandName || '未命名品牌'} ${meta.label}`,
       content: `品牌：${extractedInfo.brandName}\n品类：${extractedInfo.category}\n目标市场：${extractedInfo.targetMarket}\n卖点：${extractedInfo.sellingPoints.join('、')}\n业务方向：${extractedInfo.businessDirection}`,
-      category: '洞察报告',
-      tags: [extractedInfo.category, extractedInfo.businessDirection],
+      category: meta.memoryCategory,
+      tags: [extractedInfo.category, extractedInfo.businessDirection].filter(Boolean),
     });
     setDrawerOpen(true);
-    toast.success('已保存到记忆库');
-  }, [extractedInfo, addEntry, setDrawerOpen]);
+    toast.success(`已保存到记忆库`);
+  }, [addEntry, extractedInfo, meta.label, meta.memoryCategory, setDrawerOpen]);
 
   const actionBar = (
     <div className={embedded ? 'flex flex-wrap items-center gap-2' : 'flex items-center gap-2'}>
-      <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={handlePreview}>
-        <Eye className="w-3.5 h-3.5 mr-1" />
+      <Button variant="outline" size="sm" className="h-8 rounded-lg text-xs" onClick={handlePreview}>
+        <Eye className="mr-1 h-3.5 w-3.5" />
         预览
       </Button>
-      <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={handleCopy}>
-        <Copy className="w-3.5 h-3.5 mr-1" />
+      <Button variant="outline" size="sm" className="h-8 rounded-lg text-xs" onClick={handleCopy}>
+        <Copy className="mr-1 h-3.5 w-3.5" />
         复制 HTML
       </Button>
-      <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={handleExport}>
-        <Download className="w-3.5 h-3.5 mr-1" />
+      <Button variant="outline" size="sm" className="h-8 rounded-lg text-xs" onClick={handleExport}>
+        <Download className="mr-1 h-3.5 w-3.5" />
         导出
       </Button>
-      <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={handleCopyToMemory}>
-        <FileText className="w-3.5 h-3.5 mr-1" />
+      <Button variant="outline" size="sm" className="h-8 rounded-lg text-xs" onClick={handleCopyToMemory}>
+        <FileText className="mr-1 h-3.5 w-3.5" />
         存入记忆库
       </Button>
-      <Button variant="ghost" size="sm" className="text-xs h-8 rounded-lg" onClick={onRestart}>
-        <RefreshCw className="w-3.5 h-3.5 mr-1" />
+      <Button variant="ghost" size="sm" className="h-8 rounded-lg text-xs" onClick={onRestart}>
+        <RefreshCw className="mr-1 h-3.5 w-3.5" />
         重新生成
       </Button>
     </div>
@@ -213,9 +425,9 @@ export function InsightWorkbenchReport({
             {showEmbeddedBackButton ? (
               <button
                 onClick={onBack}
-                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
+                <ArrowLeft className="h-3.5 w-3.5" />
                 返回确认信息
               </button>
             ) : (
@@ -225,11 +437,11 @@ export function InsightWorkbenchReport({
           </div>
         )}
 
-        <Card className="flex-1 min-h-0 overflow-hidden border-border/30 shadow-md">
+        <Card className="min-h-0 flex-1 overflow-hidden border-border/30 shadow-md">
           <div ref={reportRef} className="h-full bg-muted/20 p-4 md:p-6">
             <iframe
               srcDoc={reportHTML}
-              title="报告预览"
+              title={`${meta.label}预览`}
               className="h-full w-full rounded-xl border-0 bg-white"
               style={{ minHeight: '100%', height: '100%' }}
               sandbox="allow-same-origin"
@@ -241,47 +453,27 @@ export function InsightWorkbenchReport({
   }
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Action bar */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-border/30">
+    <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between border-b border-border/30 px-6 py-3">
         <div className="flex items-center gap-2">
-          <button onClick={onBack} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="w-3.5 h-3.5" />
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
             返回修改
           </button>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={handlePreview}>
-            <Eye className="w-3.5 h-3.5 mr-1" />
-            预览
-          </Button>
-          <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={handleCopy}>
-            <Copy className="w-3.5 h-3.5 mr-1" />
-            复制 HTML
-          </Button>
-          <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={handleExport}>
-            <Download className="w-3.5 h-3.5 mr-1" />
-            导出
-          </Button>
-          <Button variant="outline" size="sm" className="text-xs h-8 rounded-lg" onClick={handleCopyToMemory}>
-            <FileText className="w-3.5 h-3.5 mr-1" />
-            存入记忆库
-          </Button>
-          <Button variant="ghost" size="sm" className="text-xs h-8 rounded-lg" onClick={onRestart}>
-            <RefreshCw className="w-3.5 h-3.5 mr-1" />
-            重新生成
-          </Button>
-        </div>
+        <div className="flex items-center gap-2">{actionBar}</div>
       </div>
 
-      {/* Report preview */}
       <div className="flex-1 overflow-y-auto bg-muted/30 p-6">
-        <div className="max-w-4xl mx-auto">
-          <Card className="border-border/30 shadow-md overflow-hidden">
+        <div className="mx-auto max-w-4xl">
+          <Card className="overflow-hidden border-border/30 shadow-md">
             <div ref={reportRef}>
               <iframe
                 srcDoc={reportHTML}
-                title="报告预览"
+                title={`${meta.label}预览`}
                 className="w-full border-0"
                 style={{ minHeight: '800px', height: '100%' }}
                 sandbox="allow-same-origin"

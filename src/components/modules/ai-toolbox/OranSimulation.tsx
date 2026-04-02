@@ -25,8 +25,17 @@ const HOME_COPY: Record<Locale, { subtitle: string }> = {
   },
 };
 
+const EXAMPLE_PROMPTS: Record<Locale, string[]> = {
+  zh: ['帮我预测未来30天内舆情', '帮我预测未来30天在TikTok平台的品牌声量'],
+  en: [
+    'Help me predict public sentiment in the next 30 days',
+    'Help me predict brand share of voice on TikTok in the next 30 days',
+  ],
+};
+
 export function OranSimulation(_: OranSimulationProps) {
   const [step, setStep] = useState<OranSimulationStep>('home');
+  const [promptValue, setPromptValue] = useState('');
   const [selectedMemoryIds, setSelectedMemoryIds] = useState<string[]>([]);
   const [memoryDialogOpen, setMemoryDialogOpen] = useState(false);
   const { i18n } = useTranslation();
@@ -37,6 +46,7 @@ export function OranSimulation(_: OranSimulationProps) {
     [i18n.language],
   );
   const copy = HOME_COPY[locale];
+  const examplePrompts = EXAMPLE_PROMPTS[locale];
 
   const memoryItems: MemorySelectItem[] = useMemo(
     () =>
@@ -60,7 +70,7 @@ export function OranSimulation(_: OranSimulationProps) {
 
   const selectedMemorySummary = selectedMemoryNames.join('、');
   const selectedMemorySummaryNeedsFade = selectedMemorySummary.length > 25;
-  const canSubmit = selectedMemoryIds.length > 0;
+  const canSubmit = promptValue.trim().length > 0 || selectedMemoryIds.length > 0;
 
   const toggleMemory = useCallback((id: string) => {
     setSelectedMemoryIds((prev) =>
@@ -79,8 +89,8 @@ export function OranSimulation(_: OranSimulationProps) {
   return (
     <>
       <div className="oran-sim-home-page h-full min-h-0 overflow-auto bg-background">
-        <div className="flex min-h-full flex-col items-center justify-start px-6 pb-6 pt-[100px] md:px-8 md:pb-8 md:pt-[180px]">
-          <section className="mt-10 w-full max-w-5xl">
+        <div className="flex min-h-full flex-col items-center justify-start px-6 pb-6 pt-[100px] md:px-8 md:pb-8 md:pt-[170px]">
+          <section className=" w-full max-w-5xl">
             <InsightComposerPanel
               title="ORAN SIM"
               subtitle={copy.subtitle}
@@ -104,12 +114,14 @@ export function OranSimulation(_: OranSimulationProps) {
               selectedMemoryIds={selectedMemoryIds}
               selectedMemorySummary={selectedMemorySummary}
               selectedMemorySummaryNeedsFade={selectedMemorySummaryNeedsFade}
+              promptValue={promptValue}
+              onPromptValueChange={setPromptValue}
               effectiveBrandName=""
               onOpenMemoryDialog={() => setMemoryDialogOpen(true)}
               planningActionLabel={
                 locale === 'zh'
-                  ? '提示词：输入或选择预测问题...'
-                  : 'Prompt: enter or select a prediction question...'
+                  ? '上传附件后，输入或选择预测问题...'
+                  : 'After uploading attachments, enter or select a prediction question...'
               }
               emptyMemoryLabel={locale === 'zh' ? '选择预测问题' : 'Select a prediction question'}
               canSubmit={canSubmit}
@@ -119,7 +131,20 @@ export function OranSimulation(_: OranSimulationProps) {
                 }
               }}
               submitAriaLabel={locale === 'zh' ? '进入仿真' : 'Open simulation'}
+              submitLabel={locale === 'zh' ? '开始预测' : 'Start Prediction'}
             />
+            <div className="mt-10 flex flex-wrap gap-3 px-2">
+              {examplePrompts.map((example) => (
+                <button
+                  key={example}
+                  type="button"
+                  onClick={() => setPromptValue(example)}
+                  className="rounded-full bg-muted/30 px-8 py-2 text-sm text-muted-foreground/80 transition-colors hover:bg-muted/80 hover:text-foreground"
+                >
+                  {example}
+                </button>
+              ))}
+            </div>
           </section>
         </div>
       </div>

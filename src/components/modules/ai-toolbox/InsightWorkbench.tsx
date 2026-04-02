@@ -7,13 +7,9 @@ import {
   ChevronRight,
   FileText,
   Loader2,
-  Plus,
-  X,
 } from 'lucide-react';
 import type { KeyboardEvent } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useCredits } from '@/contexts/CreditsContext';
 import { useMemory } from '@/contexts/MemoryContext';
@@ -29,6 +25,7 @@ import { InsightWorkbenchReport } from './InsightWorkbenchReport';
 
 type Step = 'input' | 'reading' | 'confirm' | 'generating' | 'report';
 type ReportType = 'insight' | 'planning';
+type PlanningInputSource = 'memory' | 'insight';
 
 interface ExtractedInfo {
   brandName: string;
@@ -97,6 +94,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   const [brandName, setBrandName] = useState('');
   const [category, setCategory] = useState('');
   const [reportType, setReportType] = useState<ReportType>('insight');
+  const [planningInputSource, setPlanningInputSource] = useState<PlanningInputSource>('memory');
   const [reportTypeMenuOpen, setReportTypeMenuOpen] = useState(false);
   const [competitors, setCompetitors] = useState<string[]>([]);
   const [competitorInput, setCompetitorInput] = useState('');
@@ -105,7 +103,6 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   const [creditsDrawerOpen, setCreditsDrawerOpen] = useState(false);
   const [readingProgress, setReadingProgress] = useState<boolean[]>([]);
   const [generatingPhases, setGeneratingPhases] = useState<boolean[]>([]);
-  const [newTag, setNewTag] = useState('');
   const [casesPage, setCasesPage] = useState(0);
   const [extractedInfo, setExtractedInfo] = useState<ExtractedInfo>({
     brandName: '',
@@ -119,7 +116,6 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
 
   const competitorInputRef = useRef<HTMLInputElement>(null);
   const readingTextViewportRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const processingViewportRef = useRef<HTMLDivElement | null>(null);
   const latestProcessingItemRef = useRef<HTMLDivElement | null>(null);
   const [completedReadingDocCount, setCompletedReadingDocCount] = useState(0);
   const [visibleReadingDocCount, setVisibleReadingDocCount] = useState(1);
@@ -146,11 +142,16 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   const selectedMemoryPrimaryName = selectedMemoryNames[0] ?? '';
   const selectedMemorySummary = selectedMemoryNames.join('、');
   const selectedMemorySummaryNeedsFade = selectedMemorySummary.length > 25;
+  const isPlanningFromInsight = reportType === 'planning' && planningInputSource === 'insight';
   const effectiveBrandName =
-    reportType === 'planning' ? selectedMemoryPrimaryName || brandName.trim() : brandName.trim();
+    reportType === 'planning' && !isPlanningFromInsight
+      ? selectedMemoryPrimaryName || brandName.trim()
+      : brandName.trim();
   const canSubmit =
     reportType === 'planning'
-      ? selectedMemoryIds.length > 0 && Boolean(effectiveBrandName)
+      ? isPlanningFromInsight
+        ? Boolean(effectiveBrandName)
+        : selectedMemoryIds.length > 0 && Boolean(effectiveBrandName)
       : brandName.trim() && category.trim() && competitors.length > 0;
   const activeCases = useMemo(
     () =>
@@ -174,13 +175,25 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   );
   const streamRequestText = useMemo(() => {
     if (reportType === 'planning') {
+      if (isPlanningFromInsight) {
+        return `基于当前洞察，为我生成 ${effectiveBrandName || '该品牌'} 的${reportTypeLabel}。`;
+      }
+
       const memoryPrefix = selectedMemorySummary || '记忆库资料';
       return `基于 ${memoryPrefix}，为我生成 ${effectiveBrandName || '该品牌'} 的${reportTypeLabel}。`;
     }
 
     const competitorsText = competitors.length > 0 ? competitors.join('、') : '竞品线索';
     return `为我生成 ${effectiveBrandName || '该品牌'}、${category || '目标品类'}、${competitorsText} 的${reportTypeLabel}。`;
-  }, [category, competitors, effectiveBrandName, reportType, reportTypeLabel, selectedMemorySummary]);
+  }, [
+    category,
+    competitors,
+    effectiveBrandName,
+    isPlanningFromInsight,
+    reportType,
+    reportTypeLabel,
+    selectedMemorySummary,
+  ]);
   const readingDocumentItems = useMemo(() => {
     if (selectedMemoryFiles.length === 0) {
       return [
@@ -206,7 +219,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   }, [entries, reportType, selectedMemoryFiles, streamRequestText]);
   const hasReachedStep = (target: Exclude<Step, 'input'>) => {
     const order: Array<Exclude<Step, 'input'>> = ['reading', 'confirm', 'generating', 'report'];
-    return order.indexOf(step) >= order.indexOf(target);
+    return step === 'input' ? false : order.indexOf(step) >= order.indexOf(target);
   };
 
   useEffect(() => {
@@ -269,19 +282,24 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     startTransition(() => setStep('reading'));
   }, [canSubmit, category, competitors, effectiveBrandName, reportType, selectedMemoryIds.length]);
 
-  const handleConfirmGenerate = useCallback(() => {
-    if (!canAfford(GENERATION_COST)) {
-      setCreditsDrawerOpen(true);
-      return;
+  const handleBack = useCallback((target: Step) => {
+    if (target === 'input') {
+      setPlanningInputSource('memory');
     }
 
-    deduct(GENERATION_COST, `${reportTypeLabel}生成`);
-    startTransition(() => setStep('generating'));
-  }, [canAfford, deduct, reportTypeLabel]);
-
-  const handleBack = useCallback((target: Step) => {
     startTransition(() => setStep(target));
   }, []);
+
+  const handleReportTypeChange = useCallback(
+    (value: ReportType) => {
+      if (value !== 'planning' || step === 'input') {
+        setPlanningInputSource('memory');
+      }
+
+      setReportType(value);
+    },
+    [step]
+  );
 
   const addCompetitor = useCallback(
     (value: string) => {
@@ -299,31 +317,6 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
 
   const removeCompetitor = useCallback((name: string) => {
     setCompetitors((prev) => prev.filter((item) => item !== name));
-  }, []);
-
-  const addSellingPoint = useCallback(() => {
-    const trimmed = newTag.trim();
-    if (!trimmed || extractedInfo.sellingPoints.includes(trimmed)) {
-      setNewTag('');
-      return;
-    }
-
-    setExtractedInfo((prev) => ({
-      ...prev,
-      sellingPoints: [...prev.sellingPoints, trimmed],
-    }));
-    setNewTag('');
-  }, [extractedInfo.sellingPoints, newTag]);
-
-  const removeSellingPoint = useCallback((index: number) => {
-    setExtractedInfo((prev) => ({
-      ...prev,
-      sellingPoints: prev.sellingPoints.filter((_, currentIndex) => currentIndex !== index),
-    }));
-  }, []);
-
-  const updateField = useCallback((field: keyof ExtractedInfo, value: string) => {
-    setExtractedInfo((prev) => ({ ...prev, [field]: value }));
   }, []);
 
   const toggleMemory = useCallback((id: string) => {
@@ -355,122 +348,20 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     setBrandName('');
     setCategory('');
     setReportType('insight');
+    setPlanningInputSource('memory');
     setCompetitors([]);
     setCompetitorInput('');
     setSelectedMemoryIds([]);
-    setNewTag('');
     onNavigate?.('insight-workbench');
   }, [onNavigate]);
 
   const completedReadingSteps = readingProgress.filter(Boolean).length;
-  const insightReadingStageTitle =
-    step === 'reading' && completedReadingSteps < 2
-      ? '正在读取品牌信息'
-      : '正在整合品牌输入、竞品线索与参考资料';
-  const insightReadingSubtitle =
-    step === 'reading'
-      ? `正在为 ${effectiveBrandName || '该品牌'} 建立统一的洞察分析上下文`
-      : `已完成 ${effectiveBrandName || '该品牌'} 的前置资料整理，正在进入洞察生成阶段`;
-  const insightReadingStageDetails = [
-    {
-      label: '品牌输入',
-      value: effectiveBrandName || '等待品牌信息',
-    },
-    {
-      label: '竞品线索',
-      value: competitors.length > 0 ? competitors.join('、') : '等待竞品线索',
-    },
-    {
-      label: '参考资料',
-      value: selectedMemoryIds.length > 0 ? `已接入 ${selectedMemoryIds.length} 份记忆库资料` : '等待参考资料接入',
-    },
-  ];
-  const visibleInsightReadingStageDetails =
-    step === 'reading'
-      ? insightReadingStageDetails.slice(
-          0,
-          Math.min(insightReadingStageDetails.length, 1 + completedReadingSteps)
-        )
-      : insightReadingStageDetails;
-  const insightProgressItems = [
-    { label: '读取任务输入', state: 'done' as const },
-    {
-      label: '识别品牌与品类',
-      state: step !== 'reading' || readingProgress[0] ? ('done' as const) : ('active' as const),
-    },
-    {
-      label: '扫描记忆库文本',
-      state:
-        step !== 'reading'
-          ? ('done' as const)
-          : readingProgress[1]
-            ? ('done' as const)
-            : readingProgress[0]
-              ? ('active' as const)
-              : ('pending' as const),
-    },
-    {
-      label: '等待生成洞察框架',
-      state:
-        step !== 'reading'
-          ? ('done' as const)
-          : readingProgress[1]
-            ? ('active' as const)
-            : ('pending' as const),
-    },
-  ];
-  const visibleInsightProgressItems =
-    step === 'reading'
-      ? insightProgressItems.slice(0, Math.min(insightProgressItems.length, 2 + completedReadingSteps))
-      : insightProgressItems;
-  const insightReadingDocs =
-    selectedMemoryFiles.length > 0
-      ? selectedMemoryFiles.slice(0, 4).map((item, index) => {
-          const status =
-            step !== 'reading'
-              ? 'connected'
-              : index < completedReadingSteps
-                ? 'connected'
-                : index === Math.min(completedReadingSteps, selectedMemoryFiles.length - 1)
-                  ? 'reading'
-                  : 'pending';
-
-          const previewSource = item.desc || '正在接入文档文本内容...';
-          const previewText = `${previewSource} ${previewSource}`.trim().slice(0, 140);
-
-          return {
-            id: item.id,
-            name: item.name,
-            fileType: '.md / 记忆库文档',
-            status,
-            previewText,
-          };
-        })
-      : [
-          {
-            id: 'memory-placeholder',
-            name: '暂未接入记忆库文档',
-            fileType: '.md / 记忆库文档',
-            status: 'pending',
-            previewText: '正在等待文档接入，接入后会在这里呈现扫描中的文本读取效果。',
-          },
-        ];
   const workflowStatus =
     step === 'report'
       ? 'completed'
       : step === 'generating'
         ? 'generating_report'
         : 'processing_context';
-  const processingTitle =
-    workflowStatus === 'generating_report'
-      ? `正在生成${reportTypeLabel}`
-      : completedReadingSteps === 0
-        ? '正在读取任务输入'
-        : '正在整理任务输入与参考资料';
-  const processingSubtitle =
-    workflowStatus === 'generating_report'
-      ? `系统正在整理结构并输出 ${reportTypeLabel}，完成后会自动切换到结果页。`
-      : `系统正在整合${effectiveBrandName || '当前品牌'}、竞品线索与参考资料，准备进入报告生成阶段。`;
   const processingSummaryItems = [
     { label: '品牌', value: effectiveBrandName || '待补充' },
     { label: '品类', value: category || '待补充' },
@@ -481,45 +372,6 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     { label: '输出类型', value: reportTypeLabel },
     { label: '记忆库', value: `${selectedMemoryIds.length} 份资料` },
   ];
-  const progressMemoryLabel =
-    selectedMemoryIds.length > 0 ? '已接入记忆库资料' : '无需接入记忆库资料';
-  const contextProgressLabel = reportType === 'planning' ? '正在整理策划上下文' : '正在整理洞察上下文';
-  const processingProgressItems = [
-    {
-      label: '已读取任务输入',
-      state:
-        workflowStatus === 'processing_context' && completedReadingSteps === 0
-          ? ('active' as const)
-          : ('completed' as const),
-    },
-    {
-      label: progressMemoryLabel,
-      state:
-        workflowStatus === 'generating_report' || workflowStatus === 'completed'
-          ? ('completed' as const)
-          : completedReadingSteps >= 1
-            ? ('completed' as const)
-            : ('pending' as const),
-    },
-    {
-      label: contextProgressLabel,
-      state:
-        workflowStatus === 'generating_report' || workflowStatus === 'completed'
-          ? ('completed' as const)
-          : completedReadingSteps >= 1
-            ? ('active' as const)
-            : ('pending' as const),
-    },
-    {
-      label: '等待生成 HTML 报告',
-      state:
-        workflowStatus === 'generating_report'
-          ? ('active' as const)
-          : workflowStatus === 'completed'
-            ? ('completed' as const)
-            : ('pending' as const),
-      },
-    ];
   const completedGeneratingPhases = generatingPhases.filter(Boolean).length;
   const activeGeneratingIndex = Math.min(completedGeneratingPhases, GENERATING_PHASES.length - 1);
   const generatingProgressItems = GENERATING_PHASES.map((phase, index) => {
@@ -545,13 +397,15 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     : `${reportTypeLabel}已生成`;
   const processingRequestLabel =
     reportType === 'planning'
-      ? '参考资料'
+      ? isPlanningFromInsight
+        ? '当前洞察'
+        : '参考资料'
       : selectedMemoryFiles.length > 0
         ? 'user'
         : '用户请求';
-  const selectedMemoryFilesLabel = `${selectedMemoryFiles.length} file${
-    selectedMemoryFiles.length === 1 ? '' : 's'
-  }`;
+  const selectedMemoryFilesLabel = isPlanningFromInsight
+    ? '1 report'
+    : `${selectedMemoryFiles.length} file${selectedMemoryFiles.length === 1 ? '' : 's'}`;
   const processingEntityItems = [
     { label: '品牌名', value: effectiveBrandName || '待补充' },
     { label: '品类', value: category || '待补充' },
@@ -592,6 +446,46 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
       : workflowStatus === 'generating_report'
         ? generatingProgressItems.slice(0, Math.min(completedGeneratingPhases + 1, GENERATING_PHASES.length))
         : [];
+  const showFollowUpActions = workflowStatus === 'completed' && reportType === 'insight';
+
+  const handleGeneratePlanningFromInsight = useCallback(() => {
+    const nextBrandName = brandName.trim() || extractedInfo.brandName;
+    const nextCategory = category.trim() || extractedInfo.category;
+
+    if (!canAfford(GENERATION_COST)) {
+      setCreditsDrawerOpen(true);
+      return;
+    }
+
+    setBrandName(nextBrandName);
+    setCategory(nextCategory);
+    setPlanningInputSource('insight');
+    setReportType('planning');
+    setExtractedInfo(
+      buildExtractedInfo({
+        brandName: nextBrandName,
+        category: nextCategory,
+        competitors,
+        selectedMemoryCount: selectedMemoryIds.length,
+        reportType: 'planning',
+      })
+    );
+    deduct(GENERATION_COST, `${REPORT_TYPE_LABELS.planning}生成`);
+    startTransition(() => setStep('generating'));
+  }, [
+    brandName,
+    canAfford,
+    category,
+    competitors,
+    deduct,
+    extractedInfo.brandName,
+    extractedInfo.category,
+    selectedMemoryIds.length,
+  ]);
+
+  const handleJumpToOranGen = useCallback(() => {
+    onNavigate?.('oran-gen');
+  }, [onNavigate]);
 
   useEffect(() => {
     if (step !== 'reading') {
@@ -735,7 +629,6 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div
-        ref={workflowStatus !== 'completed' ? processingViewportRef : undefined}
         className={cn(
           'h-full min-h-0 flex-1',
           workflowStatus === 'completed' ? 'overflow-hidden overscroll-none' : 'overflow-y-auto'
@@ -750,7 +643,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
               reportTypeLabel={reportTypeLabel}
               reportTypeMenuOpen={reportTypeMenuOpen}
               onReportTypeMenuOpenChange={setReportTypeMenuOpen}
-              onReportTypeChange={setReportType}
+              onReportTypeChange={handleReportTypeChange}
               brandName={brandName}
               onBrandNameChange={setBrandName}
               category={category}
@@ -1092,6 +985,45 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                           完整流程已保留在左侧，右侧可继续预览、复制 HTML 与导出报告。
                         </p>
                       </section>
+
+                      {showFollowUpActions && (
+                        <section className="space-y-3 ">
+                          <div className="space-y-1">
+                            <h3 className="text-[18px] font-light tracking-tight text-foreground">
+                              接下来
+                            </h3>
+                            
+                          </div>
+
+                          <div className="space-y-4 ">
+                            <button
+                              type="button"
+                              onClick={handleGeneratePlanningFromInsight}
+                              className="group flex min-h-[30px] w-full items-center justify-between rounded-[22px] border border-border/40 bg-background/90 px-5 py-1.5 text-left transition-all hover:border-foreground/25 hover:bg-muted/30"
+                            >
+                              <div className="space-y-1">
+                                <div className="text-[15px] font-medium text-foreground/70">
+                                  基于当前洞察报告，继续生成策划方案
+                                </div>
+                              </div>
+                              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={handleJumpToOranGen}
+                              className="group flex min-h-[30px] w-full items-center justify-between rounded-[22px] border border-border/40 bg-background/90 px-5 py-1.5 text-left transition-all hover:border-foreground/25 hover:bg-muted/30"
+                            >
+                              <div className="space-y-1">
+                                <div className="text-[15px] font-medium text-foreground/70">
+                                  基于当前洞察报告，继续生成爆款内容
+                                </div>
+                              </div>
+                              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+                            </button>
+                          </div>
+                        </section>
+                      )}
                     </div>
                   </aside>
 
@@ -1099,6 +1031,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                     <div className="min-h-0 flex-1 transition-all duration-700 ease-out">
                       <InsightWorkbenchReport
                         extractedInfo={extractedInfo}
+                        reportType={reportType}
                         embedded
                         showEmbeddedToolbar
                         showEmbeddedBackButton={false}

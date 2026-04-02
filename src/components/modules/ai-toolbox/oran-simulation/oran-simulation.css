@@ -125,6 +125,16 @@
   border-bottom: 1px solid;
 }
 
+.oran-simulation-root .oran-detail-panel::before {
+  top: -10px;
+  left: -10px;
+}
+
+.oran-simulation-root .oran-detail-panel::after {
+  right: -10px;
+  bottom: -10px;
+}
+
 .oran-simulation-root .scan-grid {
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),

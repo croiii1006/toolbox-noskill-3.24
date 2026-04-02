@@ -53,25 +53,7 @@ export default function DetailPanel({
   locale,
 }: DetailPanelProps) {
   if (!node) {
-    return (
-      <aside className="kernel-shell open-frame animate-panel flex h-full min-h-0 flex-col justify-between overflow-y-auto px-6 py-6 text-white">
-        <div className="space-y-4">
-          <div className="font-pixel text-[11px] uppercase tracking-[0.34em] text-white/44">
-            {t(locale, "nodeDetail")}
-          </div>
-          <div className="font-display text-[28px] leading-none tracking-[0.08em] text-white">
-            {t(locale, "selectNode")}
-          </div>
-          <p className="max-w-[34ch] text-sm leading-7 text-white/62">
-            {t(locale, "emptyDetailDesc")}
-          </p>
-        </div>
-
-        <div className="border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-7 text-white/52">
-          {t(locale, "emptyDetailHint")}
-        </div>
-      </aside>
-    );
+    return null;
   }
 
   const connectedEdges = graphDataset.undirected.get(node.id) ?? [];
@@ -90,186 +72,188 @@ export default function DetailPanel({
     .map((edge) => `${toLabel(edge.target)} (${edge.weight.toFixed(2)})`);
 
   return (
-    <aside className="kernel-shell open-frame animate-panel flex h-full min-h-0 flex-col gap-4 overflow-y-auto px-6 py-6 text-white">
-      <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
-        <div>
-          <div className="font-pixel text-[11px] uppercase tracking-[0.34em] text-white/44">
-            {t(locale, "nodeDetail")}
+    <div className="open-frame oran-detail-panel animate-panel w-full max-w-[300px] text-white">
+      <aside className="kernel-shell flex max-h-[min(78vh,450px)] w-full flex-col gap-4 overflow-y-auto px-5 py-5 shadow-[0_28px_80px_rgba(0,0,0,0.42)]">
+        <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
+          <div>
+            <div className="font-pixel text-[11px] uppercase tracking-[0.34em] text-white/44">
+              {t(locale, "nodeDetail")}
+            </div>
+            <div className="mt-2 font-display text-[28px] leading-none tracking-[0.08em] text-white">
+              {node.label}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Tag>{getFilterLabel(locale, node.filterType)}</Tag>
+              <Tag>{getLayerLabel(locale, node.layer)}</Tag>
+              <Tag>{node.entityType}</Tag>
+            </div>
           </div>
-          <div className="mt-2 font-display text-[28px] leading-none tracking-[0.08em] text-white">
-            {node.label}
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Tag>{getFilterLabel(locale, node.filterType)}</Tag>
-            <Tag>{getLayerLabel(locale, node.layer)}</Tag>
-            <Tag>{node.entityType}</Tag>
-          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="border border-white/12 px-3 py-2 font-pixel text-[10px] uppercase tracking-[0.2em] text-white/62 transition hover:border-white/22 hover:text-white"
+          >
+            {t(locale, "close")}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="border border-white/12 px-3 py-2 font-pixel text-[10px] uppercase tracking-[0.2em] text-white/62 transition hover:border-white/22 hover:text-white"
-        >
-          {t(locale, "close")}
-        </button>
-      </div>
 
-      <KernelSection title={t(locale, "basicInfo")}>
-        <GridInfo
-          items={[
-            [t(locale, "nodeName"), node.label],
-            [t(locale, "nodeType"), node.entityType],
-            [t(locale, "layer"), getLayerLabel(locale, node.layer)],
-            [t(locale, "nodeId"), node.id],
-            ["CONNECTIONS", String(connectedEdges.length)],
-            ["COORD", `${Math.round(node.x)}, ${Math.round(node.y)}`],
-            ["WEIGHT", node.weight.toFixed(2)],
-            ["TOP EDGE", strongest.weight],
-            ["CONFIDENCE", strongest.confidence],
-          ]}
-        />
-      </KernelSection>
-
-      <KernelSection title={t(locale, "nodeSummary")}>
-        <p className="text-sm leading-7 text-white/72">{node.summary}</p>
-      </KernelSection>
-
-      <KernelSection title={t(locale, "keyAttributes")}>
-        {node.sourceDetails ? (
+        <KernelSection title={t(locale, "basicInfo")}>
           <GridInfo
             items={[
-              [t(locale, "sourceType"), node.sourceDetails.sourceType],
-              [t(locale, "sourceSummary"), node.sourceDetails.shortSummary],
-              [t(locale, "reliability"), `${Math.round(node.sourceDetails.reliability * 100)}%`],
-              [t(locale, "excerpt"), node.sourceDetails.excerpt],
+              [t(locale, "nodeName"), node.label],
+              [t(locale, "nodeType"), node.entityType],
+              [t(locale, "layer"), getLayerLabel(locale, node.layer)],
+              [t(locale, "nodeId"), node.id],
+              ["CONNECTIONS", String(connectedEdges.length)],
+              ["COORD", `${Math.round(node.x)}, ${Math.round(node.y)}`],
+              ["WEIGHT", node.weight.toFixed(2)],
+              ["TOP EDGE", strongest.weight],
+              ["CONFIDENCE", strongest.confidence],
             ]}
           />
-        ) : null}
+        </KernelSection>
 
-        {node.factDetails ? (
-          <GridInfo
-            items={[
-              [t(locale, "category"), node.factDetails.category],
-              [
-                t(locale, "relatedContext"),
+        <KernelSection title={t(locale, "nodeSummary")}>
+          <p className="text-sm leading-7 text-white/72">{node.summary}</p>
+        </KernelSection>
+
+        <KernelSection title={t(locale, "keyAttributes")}>
+          {node.sourceDetails ? (
+            <GridInfo
+              items={[
+                [t(locale, "sourceType"), node.sourceDetails.sourceType],
+                [t(locale, "sourceSummary"), node.sourceDetails.shortSummary],
+                [t(locale, "reliability"), `${Math.round(node.sourceDetails.reliability * 100)}%`],
+                [t(locale, "excerpt"), node.sourceDetails.excerpt],
+              ]}
+            />
+          ) : null}
+
+          {node.factDetails ? (
+            <GridInfo
+              items={[
+                [t(locale, "category"), node.factDetails.category],
                 [
-                  ...(node.factDetails.relatedBrands ?? []),
-                  ...(node.factDetails.relatedPlatforms ?? []),
-                  ...(node.factDetails.relatedUsers ?? []),
-                ].join(" / ") || t(locale, "none"),
-              ],
-              [t(locale, "topConnections"), topConnections.join(" / ") || t(locale, "none")],
-            ]}
-          />
-        ) : null}
+                  t(locale, "relatedContext"),
+                  [
+                    ...(node.factDetails.relatedBrands ?? []),
+                    ...(node.factDetails.relatedPlatforms ?? []),
+                    ...(node.factDetails.relatedUsers ?? []),
+                  ].join(" / ") || t(locale, "none"),
+                ],
+                [t(locale, "topConnections"), topConnections.join(" / ") || t(locale, "none")],
+              ]}
+            />
+          ) : null}
 
-        {node.mechanismDetails ? (
+          {node.mechanismDetails ? (
+            <GridInfo
+              items={[
+                [t(locale, "impactDirection"), node.mechanismDetails.impactDirection],
+                [
+                  t(locale, "triggeredBy"),
+                  incomingEdges.map((edge) => toLabel(edge.source)).slice(0, 4).join(" / ") ||
+                    t(locale, "none"),
+                ],
+                [
+                  t(locale, "impacts"),
+                  outgoingEdges.map((edge) => toLabel(edge.target)).slice(0, 4).join(" / ") ||
+                    t(locale, "none"),
+                ],
+              ]}
+            />
+          ) : null}
+
+          {node.outcomeDetails ? (
+            <GridInfo
+              items={[
+                [t(locale, "currentTendency"), node.outcomeDetails.currentTendency],
+                [
+                  t(locale, "upstreamDrivers"),
+                  incomingEdges.map((edge) => toLabel(edge.source)).slice(0, 4).join(" / ") ||
+                    t(locale, "none"),
+                ],
+                [t(locale, "riskHint"), node.outcomeDetails.riskHint],
+              ]}
+            />
+          ) : null}
+        </KernelSection>
+
+        <KernelSection title="FLOW">
           <GridInfo
             items={[
-              [t(locale, "impactDirection"), node.mechanismDetails.impactDirection],
-              [
-                t(locale, "triggeredBy"),
-                incomingEdges.map((edge) => toLabel(edge.source)).slice(0, 4).join(" / ") ||
-                  t(locale, "none"),
-              ],
-              [
-                t(locale, "impacts"),
-                outgoingEdges.map((edge) => toLabel(edge.target)).slice(0, 4).join(" / ") ||
-                  t(locale, "none"),
-              ],
+              [t(locale, "triggeredBy"), upstream.join(" / ") || t(locale, "none")],
+              [t(locale, "impacts"), downstream.join(" / ") || t(locale, "none")],
             ]}
           />
-        ) : null}
+        </KernelSection>
 
-        {node.outcomeDetails ? (
-          <GridInfo
-            items={[
-              [t(locale, "currentTendency"), node.outcomeDetails.currentTendency],
-              [
-                t(locale, "upstreamDrivers"),
-                incomingEdges.map((edge) => toLabel(edge.source)).slice(0, 4).join(" / ") ||
-                  t(locale, "none"),
-              ],
-              [t(locale, "riskHint"), node.outcomeDetails.riskHint],
-            ]}
-          />
-        ) : null}
-      </KernelSection>
-
-      <KernelSection title="FLOW">
-        <GridInfo
-          items={[
-            [t(locale, "triggeredBy"), upstream.join(" / ") || t(locale, "none")],
-            [t(locale, "impacts"), downstream.join(" / ") || t(locale, "none")],
-          ]}
-        />
-      </KernelSection>
-
-      <KernelSection title={t(locale, "linkedPaths")}>
-        <div className="space-y-2">
-          {paths.length > 0 ? (
-            paths.map((path) => (
-              <div
-                key={path.join("-")}
-                className="border border-white/10 bg-white/[0.03] px-4 py-3 font-code text-xs leading-6 text-white/72"
-              >
-                {renderPath(path)}
-              </div>
-            ))
-          ) : (
-            <div className="border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/50">
-              {t(locale, "noPath")}
-            </div>
-          )}
-        </div>
-      </KernelSection>
-
-      <KernelSection title={t(locale, "evidenceBasis")}>
-        <div className="space-y-2">
-          {node.layer === "source" ? (
-            <div className="border border-white/10 bg-white/[0.03] px-4 py-3 text-sm leading-7 text-white/68">
-              {t(locale, "sourceSelf")}
-            </div>
-          ) : evidence.length > 0 ? (
-            evidence.map((item) => {
-              const sourceNode = graphDataset.nodeMap.get(item.sourceId);
-              return (
+        <KernelSection title={t(locale, "linkedPaths")}>
+          <div className="space-y-2">
+            {paths.length > 0 ? (
+              paths.map((path) => (
                 <div
-                  key={item.sourceId}
-                  className="border border-white/10 bg-white/[0.03] px-4 py-3"
+                  key={path.join("-")}
+                  className="border border-white/10 bg-white/[0.03] px-4 py-3 font-code text-xs leading-6 text-white/72"
                 >
-                  <div className="font-pixel text-[11px] uppercase tracking-[0.18em] text-white/44">
-                    {sourceNode?.label ?? item.sourceId}
-                  </div>
-                  <div className="mt-2 text-sm leading-7 text-white/66">
-                    {sourceNode?.sourceDetails?.shortSummary ?? t(locale, "noSourceSummary")}
-                  </div>
+                  {renderPath(path)}
                 </div>
-              );
-            })
-          ) : (
-            <div className="border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/50">
-              {t(locale, "noEvidence")}
-            </div>
-          )}
-        </div>
-      </KernelSection>
+              ))
+            ) : (
+              <div className="border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/50">
+                {t(locale, "noPath")}
+              </div>
+            )}
+          </div>
+        </KernelSection>
 
-      <div className="mt-auto flex flex-col gap-3 border-t border-white/10 pt-4">
-        <button
-          type="button"
-          onClick={() => onHighlight("influence")}
-          className="border border-[var(--scan-cold)] bg-[var(--scan-cold-soft)] px-4 py-3 text-left font-pixel text-sm uppercase tracking-[0.2em] text-[var(--pixel-white)] transition hover:bg-[rgba(180,214,223,0.24)]"
-        >
-          TRACE PATH
-        </button>
-        <div className="grid grid-cols-3 gap-2">
-          <MiniAction label="UP" onClick={() => onHighlight("upstream")} />
-          <MiniAction label="DOWN" onClick={() => onHighlight("downstream")} />
-          <MiniAction label="LINKS" onClick={() => onHighlight("strong")} />
+        <KernelSection title={t(locale, "evidenceBasis")}>
+          <div className="space-y-2">
+            {node.layer === "source" ? (
+              <div className="border border-white/10 bg-white/[0.03] px-4 py-3 text-sm leading-7 text-white/68">
+                {t(locale, "sourceSelf")}
+              </div>
+            ) : evidence.length > 0 ? (
+              evidence.map((item) => {
+                const sourceNode = graphDataset.nodeMap.get(item.sourceId);
+                return (
+                  <div
+                    key={item.sourceId}
+                    className="border border-white/10 bg-white/[0.03] px-4 py-3"
+                  >
+                    <div className="font-pixel text-[11px] uppercase tracking-[0.18em] text-white/44">
+                      {sourceNode?.label ?? item.sourceId}
+                    </div>
+                    <div className="mt-2 text-sm leading-7 text-white/66">
+                      {sourceNode?.sourceDetails?.shortSummary ?? t(locale, "noSourceSummary")}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/50">
+                {t(locale, "noEvidence")}
+              </div>
+            )}
+          </div>
+        </KernelSection>
+
+        <div className="mt-auto flex flex-col gap-3 border-t border-white/10 pt-4">
+          <button
+            type="button"
+            onClick={() => onHighlight("influence")}
+            className="border border-[var(--scan-cold)] bg-[var(--scan-cold-soft)] px-4 py-3 text-left font-pixel text-sm uppercase tracking-[0.2em] text-[var(--pixel-white)] transition hover:bg-[rgba(180,214,223,0.24)]"
+          >
+            TRACE PATH
+          </button>
+          <div className="grid grid-cols-3 gap-2">
+            <MiniAction label="UP" onClick={() => onHighlight("upstream")} />
+            <MiniAction label="DOWN" onClick={() => onHighlight("downstream")} />
+            <MiniAction label="LINKS" onClick={() => onHighlight("strong")} />
+          </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </div>
   );
 }
 

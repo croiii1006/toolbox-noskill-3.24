@@ -25,6 +25,13 @@ export function AIToolboxModule({ activeItem, onNavigate }: AIToolboxModuleProps
       return <InsightWorkbench onNavigate={onNavigate} />;
     case 'oran-simulation':
       return <OranSimulation onNavigate={onNavigate} />;
+    case 'oran-gen':
+      return (
+        <PlaceholderPage
+          title="ORANGEN"
+          description="ORANGEN placeholder. Hot-content generation page is coming soon."
+        />
+      );
     case 'text-to-image':
       return <TextToImage onNavigate={onNavigate} />;
     case 'text-to-video':
