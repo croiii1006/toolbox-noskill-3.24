@@ -14,6 +14,7 @@ export interface MemoryEntry {
 interface MemoryContextValue {
   entries: MemoryEntry[];
   addEntry: (entry: Omit<MemoryEntry, 'id' | 'createdAt' | 'updatedAt'>) => boolean;
+  ensureEntry: (entry: Omit<MemoryEntry, 'id' | 'createdAt' | 'updatedAt'>) => MemoryEntry;
   updateEntry: (entry: MemoryEntry) => void;
   deleteEntry: (id: string) => void;
   importEntries: (data: MemoryEntry[]) => void;
@@ -58,6 +59,23 @@ export function MemoryProvider({ children }: { children: ReactNode }) {
     return true;
   }, [entries]);
 
+  const ensureEntry = useCallback((entry: Omit<MemoryEntry, 'id' | 'createdAt' | 'updatedAt'>): MemoryEntry => {
+    const existing = entries.find(e => e.title.trim() === entry.title.trim());
+    if (existing) {
+      return existing;
+    }
+
+    const now = new Date().toISOString().slice(0, 10);
+    const nextEntry: MemoryEntry = {
+      ...entry,
+      id: crypto.randomUUID(),
+      createdAt: now,
+      updatedAt: now,
+    };
+    setEntries(prev => [...prev, nextEntry]);
+    return nextEntry;
+  }, [entries]);
+
   const updateEntry = useCallback((entry: MemoryEntry) => {
     const now = new Date().toISOString().slice(0, 10);
     setEntries(prev => prev.map(e => e.id === entry.id ? { ...entry, updatedAt: now } : e));
@@ -81,7 +99,7 @@ export function MemoryProvider({ children }: { children: ReactNode }) {
   }, [entries]);
 
   return (
-    <MemoryContext.Provider value={{ entries, addEntry, updateEntry, deleteEntry, importEntries, drawerOpen, setDrawerOpen }}>
+    <MemoryContext.Provider value={{ entries, addEntry, ensureEntry, updateEntry, deleteEntry, importEntries, drawerOpen, setDrawerOpen }}>
       {children}
     </MemoryContext.Provider>
   );

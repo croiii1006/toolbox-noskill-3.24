@@ -7,12 +7,14 @@ import {
   ChevronRight,
   FileText,
   Loader2,
+  Maximize2,
 } from 'lucide-react';
 import type { KeyboardEvent } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useCredits } from '@/contexts/CreditsContext';
 import { useMemory } from '@/contexts/MemoryContext';
+import { useOranSimulationPrefill } from '@/contexts/OranSimulationPrefillContext';
 import { cn } from '@/lib/utils';
 import {
   MemorySelectionDialog,
@@ -21,11 +23,12 @@ import {
 import { InsufficientCreditsDrawer } from '@/components/modules/InsufficientCreditsDrawer';
 import { InsightComposerPanel } from './InsightComposerPanel';
 import { ShowcaseCard, SHOWCASE_CARDS } from './app-plaza/ShowcaseCard';
-import { InsightWorkbenchReport } from './InsightWorkbenchReport';
+import { generateReportHTML, InsightWorkbenchReport } from './InsightWorkbenchReport';
 
 type Step = 'input' | 'reading' | 'confirm' | 'generating' | 'report';
 type ReportType = 'insight' | 'planning';
 type PlanningInputSource = 'memory' | 'insight';
+type PreviewMode = 'auto' | 'insight-history';
 
 interface ExtractedInfo {
   brandName: string;
@@ -35,6 +38,10 @@ interface ExtractedInfo {
   analysisTarget: string;
   websiteType: string;
   businessDirection: string;
+  marketingGoal: string;
+  targetAudience: string;
+  budgetLevel: string;
+  primaryChannels: string;
 }
 
 const GENERATION_COST = 50;
@@ -83,12 +90,21 @@ function buildExtractedInfo(params: {
     websiteType: selectedMemoryCount > 0 ? '结构化输入 + 记忆库' : '结构化品牌输入',
     businessDirection:
       reportType === 'planning' ? '营销策划 / 执行方案' : '市场洞察 / 竞品分析',
+    marketingGoal:
+      reportType === 'planning' ? '提升品牌声量并带动内容转化' : '',
+    targetAudience:
+      reportType === 'planning' ? `${category.trim() || '目标品类'}核心兴趣人群` : '',
+    budgetLevel:
+      reportType === 'planning' ? '中等预算（20万-50万）' : '',
+    primaryChannels:
+      reportType === 'planning' ? '小红书、抖音' : '',
   };
 }
 
 export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => void }) {
   const { deduct, canAfford, shortfall } = useCredits();
-  const { entries } = useMemory();
+  const { entries, ensureEntry } = useMemory();
+  const { setPrefill: setOranSimulationPrefill } = useOranSimulationPrefill();
 
   const [step, setStep] = useState<Step>('input');
   const [brandName, setBrandName] = useState('');
@@ -112,11 +128,33 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     analysisTarget: '',
     websiteType: '',
     businessDirection: '',
+    marketingGoal: '',
+    targetAudience: '',
+    budgetLevel: '',
+    primaryChannels: '',
   });
+  const [persistedCompletedReportType, setPersistedCompletedReportType] = useState<ReportType>('insight');
+  const [persistedCompletedExtractedInfo, setPersistedCompletedExtractedInfo] = useState<ExtractedInfo>({
+    brandName: '',
+    category: '',
+    sellingPoints: [],
+    targetMarket: '',
+    analysisTarget: '',
+    websiteType: '',
+    businessDirection: '',
+    marketingGoal: '',
+    targetAudience: '',
+    budgetLevel: '',
+    primaryChannels: '',
+  });
+  const [previewMode, setPreviewMode] = useState<PreviewMode>('auto');
 
   const competitorInputRef = useRef<HTMLInputElement>(null);
   const readingTextViewportRefs = useRef<Array<HTMLDivElement | null>>([]);
   const latestProcessingItemRef = useRef<HTMLDivElement | null>(null);
+  const processingViewportRef = useRef<HTMLDivElement | null>(null);
+  const splitLayoutAsideRef = useRef<HTMLElement | null>(null);
+  const previousStepRef = useRef<Step>('input');
   const [completedReadingDocCount, setCompletedReadingDocCount] = useState(0);
   const [visibleReadingDocCount, setVisibleReadingDocCount] = useState(1);
 
@@ -301,6 +339,22 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     [step]
   );
 
+  const updateField = useCallback((field: keyof ExtractedInfo, value: string) => {
+    setExtractedInfo((prev) => ({ ...prev, [field]: value }));
+  }, []);
+
+  const handleSellingPointsChange = useCallback((value: string) => {
+    const nextSellingPoints = value
+      .split(/[、,，\n]/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    setExtractedInfo((prev) => ({
+      ...prev,
+      sellingPoints: nextSellingPoints,
+    }));
+  }, []);
+
   const addCompetitor = useCallback(
     (value: string) => {
       const trimmed = value.trim();
@@ -349,6 +403,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     setCategory('');
     setReportType('insight');
     setPlanningInputSource('memory');
+    setPreviewMode('auto');
     setCompetitors([]);
     setCompetitorInput('');
     setSelectedMemoryIds([]);
@@ -362,6 +417,39 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
       : step === 'generating'
         ? 'generating_report'
         : 'processing_context';
+  const useSplitLayout = workflowStatus === 'completed' || (isPlanningFromInsight && step !== 'input');
+  const shouldShowPreviousInsightHistory =
+    isPlanningFromInsight &&
+    persistedCompletedReportType === 'insight' &&
+    Boolean(persistedCompletedExtractedInfo.brandName);
+  const isShowingPreviousInsightPreview =
+    previewMode === 'insight-history' && shouldShowPreviousInsightHistory;
+  const activePreviewReportType = isShowingPreviousInsightPreview
+    ? 'insight'
+    : workflowStatus === 'completed'
+      ? reportType
+      : persistedCompletedReportType;
+  const activePreviewExtractedInfo = isShowingPreviousInsightPreview
+    ? persistedCompletedExtractedInfo
+    : workflowStatus === 'completed'
+      ? extractedInfo
+      : persistedCompletedExtractedInfo;
+  const previousInsightRequestText = shouldShowPreviousInsightHistory
+    ? `为我生成 ${persistedCompletedExtractedInfo.brandName || '该品牌'}、${
+        persistedCompletedExtractedInfo.category || '目标品类'
+      }、${persistedCompletedExtractedInfo.analysisTarget || '竞品线索'} 的${REPORT_TYPE_LABELS.insight}。`
+    : '';
+  const previousInsightFilesLabel = `${selectedMemoryIds.length} file${selectedMemoryIds.length === 1 ? '' : 's'}`;
+  const previousInsightSummaryItems = [
+    { label: '品牌', value: persistedCompletedExtractedInfo.brandName || '待补充' },
+    { label: '品类', value: persistedCompletedExtractedInfo.category || '待补充' },
+    {
+      label: '竞品',
+      value: persistedCompletedExtractedInfo.analysisTarget || '待补充',
+    },
+    { label: '输出类型', value: REPORT_TYPE_LABELS.insight },
+    { label: '记忆库', value: `${selectedMemoryIds.length} 份资料` },
+  ];
   const processingSummaryItems = [
     { label: '品牌', value: effectiveBrandName || '待补充' },
     { label: '品类', value: category || '待补充' },
@@ -372,6 +460,29 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     { label: '输出类型', value: reportTypeLabel },
     { label: '记忆库', value: `${selectedMemoryIds.length} 份资料` },
   ];
+  const planningDraftItems = [
+    { label: '营销目标', value: extractedInfo.marketingGoal || '待确认' },
+    { label: '目标人群', value: extractedInfo.targetAudience || '待确认' },
+    {
+      label: '核心卖点',
+      value: extractedInfo.sellingPoints.length > 0 ? extractedInfo.sellingPoints.join('、') : '待确认',
+    },
+    { label: '预算量级', value: extractedInfo.budgetLevel || '待确认' },
+    { label: '主攻渠道', value: extractedInfo.primaryChannels || '待确认' },
+  ];
+  const planningExtractionSteps = [
+    '提取营销目标',
+    '整理目标人群',
+    '提炼核心卖点',
+    '估算预算量级',
+    '匹配主攻渠道',
+  ];
+  const canConfirmPlanning =
+    extractedInfo.marketingGoal.trim().length > 0 &&
+    extractedInfo.targetAudience.trim().length > 0 &&
+    extractedInfo.sellingPoints.length > 0 &&
+    extractedInfo.budgetLevel.trim().length > 0 &&
+    extractedInfo.primaryChannels.trim().length > 0;
   const completedGeneratingPhases = generatingPhases.filter(Boolean).length;
   const activeGeneratingIndex = Math.min(completedGeneratingPhases, GENERATING_PHASES.length - 1);
   const generatingProgressItems = GENERATING_PHASES.map((phase, index) => {
@@ -392,9 +503,6 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
       state: index === activeGeneratingIndex ? ('active' as const) : ('pending' as const),
     };
   });
-  const completedStreamTitle = effectiveBrandName
-    ? `已生成 ${effectiveBrandName} 的${reportTypeLabel}`
-    : `${reportTypeLabel}已生成`;
   const processingRequestLabel =
     reportType === 'planning'
       ? isPlanningFromInsight
@@ -426,16 +534,34 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   const showBrandInfoSection = step !== 'reading' || docsReadFinished;
   const showGeneratingSection = workflowStatus === 'generating_report' || workflowStatus === 'completed';
   const readingSectionTitle = docsReadFinished
-    ? selectedMemoryFiles.length > 0
-      ? '已完成参考资料读取...'
-      : '已完成任务输入读取...'
-    : selectedMemoryFiles.length > 0
-      ? '正在读取参考资料...'
-      : '正在读取任务输入...';
+    ? reportType === 'planning'
+      ? '已完成策划信息提取...'
+      : selectedMemoryFiles.length > 0
+        ? '已完成参考资料读取...'
+        : '已完成任务输入读取...'
+    : reportType === 'planning'
+      ? isPlanningFromInsight
+        ? '正在根据洞察报告和记忆库提取策划信息...'
+        : '正在根据记忆库提取策划信息...'
+      : selectedMemoryFiles.length > 0
+        ? '正在读取参考资料...'
+        : '正在读取任务输入...';
   const brandInfoSectionTitle =
-    step === 'reading' ? '正在整理品牌信息...' : '已完成品牌信息整理...';
+    reportType === 'planning'
+      ? step === 'reading'
+        ? '正在整理策划关键信息...'
+        : '已完成策划关键信息提取...'
+      : step === 'reading'
+        ? '正在整理品牌信息...'
+        : '已完成品牌信息整理...';
   const brandInfoTaskLabel =
-    step === 'reading' ? '正在提取品牌与产品信息' : '已完成品牌与产品信息提取';
+    reportType === 'planning'
+      ? step === 'reading'
+        ? '正在根据洞察报告和记忆库提取策划方案所需信息'
+        : '已完成营销目标、目标人群、预算与渠道信息提取'
+      : step === 'reading'
+        ? '正在提取品牌与产品信息'
+        : '已完成品牌与产品信息提取';
   const generatingSectionTitle =
     workflowStatus === 'generating_report'
       ? `正在为您生成${reportTypeLabel}...`
@@ -446,17 +572,50 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
       : workflowStatus === 'generating_report'
         ? generatingProgressItems.slice(0, Math.min(completedGeneratingPhases + 1, GENERATING_PHASES.length))
         : [];
-  const showFollowUpActions = workflowStatus === 'completed' && reportType === 'insight';
+  const showInsightFollowUpActions = workflowStatus === 'completed' && reportType === 'insight';
+  const showPlanningFollowUpActions = workflowStatus === 'completed' && reportType === 'planning';
+  const previousInsightPreviewHtml = useMemo(
+    () =>
+      shouldShowPreviousInsightHistory
+        ? generateReportHTML(persistedCompletedExtractedInfo, 'insight')
+        : '',
+    [persistedCompletedExtractedInfo, shouldShowPreviousInsightHistory]
+  );
+  const currentReportPreviewHtml = useMemo(
+    () => generateReportHTML(extractedInfo, reportType),
+    [extractedInfo, reportType]
+  );
+  const hasMultiplePreviewFiles = shouldShowPreviousInsightHistory && workflowStatus === 'completed';
+  const previewToolbarItems = useMemo(
+    () => [
+      ...(hasMultiplePreviewFiles
+        ? [
+            {
+              key: 'insight-history' as const,
+              label: 'File 01',
+            },
+          ]
+        : []),
+      {
+        key: (hasMultiplePreviewFiles ? 'auto' : activePreviewReportType === 'insight' ? 'insight-history' : 'auto') as
+          | 'insight-history'
+          | 'auto',
+        label: hasMultiplePreviewFiles ? 'File 02' : 'File 01',
+      },
+    ],
+    [activePreviewReportType, hasMultiplePreviewFiles]
+  );
+  const activePreviewToolbarIndex = previewToolbarItems.findIndex((item) => item.key === previewMode);
+  const resolvedActivePreviewToolbarIndex =
+    activePreviewToolbarIndex >= 0 ? activePreviewToolbarIndex : previewToolbarItems.length - 1;
 
   const handleGeneratePlanningFromInsight = useCallback(() => {
     const nextBrandName = brandName.trim() || extractedInfo.brandName;
     const nextCategory = category.trim() || extractedInfo.category;
 
-    if (!canAfford(GENERATION_COST)) {
-      setCreditsDrawerOpen(true);
-      return;
-    }
-
+    setPreviewMode('auto');
+    setPersistedCompletedReportType('insight');
+    setPersistedCompletedExtractedInfo(extractedInfo);
     setBrandName(nextBrandName);
     setCategory(nextCategory);
     setPlanningInputSource('insight');
@@ -470,27 +629,181 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
         reportType: 'planning',
       })
     );
-    deduct(GENERATION_COST, `${REPORT_TYPE_LABELS.planning}生成`);
-    startTransition(() => setStep('generating'));
+    startTransition(() => setStep('reading'));
   }, [
     brandName,
-    canAfford,
     category,
     competitors,
-    deduct,
-    extractedInfo.brandName,
-    extractedInfo.category,
+    extractedInfo,
     selectedMemoryIds.length,
   ]);
+
+  const handleShowPreviousInsightPreview = useCallback(() => {
+    if (!shouldShowPreviousInsightHistory) {
+      return;
+    }
+
+    setPreviewMode('insight-history');
+  }, [shouldShowPreviousInsightHistory]);
+
+  const handleShowCurrentReportPreview = useCallback(() => {
+    setPreviewMode('auto');
+  }, []);
+
+  const handlePreviewToolbarSelect = useCallback(
+    (index: number) => {
+      const target = previewToolbarItems[index];
+      if (!target) {
+        return;
+      }
+
+      if (target.key === 'insight-history') {
+        handleShowPreviousInsightPreview();
+        return;
+      }
+
+      handleShowCurrentReportPreview();
+    },
+    [handleShowCurrentReportPreview, handleShowPreviousInsightPreview, previewToolbarItems]
+  );
+
+  const handlePreviewToolbarStep = useCallback(
+    (direction: 'prev' | 'next') => {
+      if (previewToolbarItems.length <= 1) {
+        return;
+      }
+
+      const nextIndex =
+        direction === 'prev'
+          ? Math.max(0, resolvedActivePreviewToolbarIndex - 1)
+          : Math.min(previewToolbarItems.length - 1, resolvedActivePreviewToolbarIndex + 1);
+
+      if (nextIndex === resolvedActivePreviewToolbarIndex) {
+        return;
+      }
+
+      handlePreviewToolbarSelect(nextIndex);
+    },
+    [handlePreviewToolbarSelect, previewToolbarItems.length, resolvedActivePreviewToolbarIndex]
+  );
+
+  const previewToolbarControl = (
+    <div className="inline-flex items-center gap-1  bg-background/88 py-1 ">
+      {hasMultiplePreviewFiles && (
+        <button
+          type="button"
+          onClick={() => handlePreviewToolbarStep('prev')}
+          disabled={resolvedActivePreviewToolbarIndex <= 0}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-35"
+          aria-label="查看上一个文件"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+      )}
+      <span
+        className="min-w-[30px] px-3 py-1 text-[14px] font-medium text-foreground/78"
+        aria-label={`当前文件 ${previewToolbarItems[resolvedActivePreviewToolbarIndex]?.label ?? 'File 01'}`}
+      >
+        {previewToolbarItems[resolvedActivePreviewToolbarIndex]?.label ?? 'File 01'}
+      </span>
+      {hasMultiplePreviewFiles && (
+        <button
+          type="button"
+          onClick={() => handlePreviewToolbarStep('next')}
+          disabled={resolvedActivePreviewToolbarIndex >= previewToolbarItems.length - 1}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-35"
+          aria-label="查看下一个文件"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  );
+
+  const handleOpenPreviewWindow = useCallback((html: string) => {
+    const previewWindow = window.open('', '_blank');
+    if (!previewWindow) {
+      return;
+    }
+
+    previewWindow.document.write(html);
+    previewWindow.document.close();
+  }, []);
 
   const handleJumpToOranGen = useCallback(() => {
     onNavigate?.('oran-gen');
   }, [onNavigate]);
 
+  const handleJumpToPrediction = useCallback(() => {
+    const attachmentEntry = ensureEntry({
+      title: `${extractedInfo.brandName || '未命名品牌'} 策划方案附件`,
+      content: [
+        `品牌：${extractedInfo.brandName || '待补充'}`,
+        `品类：${extractedInfo.category || '待补充'}`,
+        `营销目标：${extractedInfo.marketingGoal || '待确认'}`,
+        `目标人群：${extractedInfo.targetAudience || '待确认'}`,
+        `核心卖点：${extractedInfo.sellingPoints.join('、') || '待确认'}`,
+        `预算量级：${extractedInfo.budgetLevel || '待确认'}`,
+        `主攻渠道：${extractedInfo.primaryChannels || '待确认'}`,
+      ].join('\n'),
+      category: '策划方案',
+      tags: [extractedInfo.category, extractedInfo.primaryChannels, extractedInfo.budgetLevel].filter(Boolean),
+    });
+
+    setOranSimulationPrefill({
+      attachmentIds: [attachmentEntry.id],
+      attachmentNames: [attachmentEntry.title],
+      prompt: `基于附件中的策划方案，预测后续传播表现与执行风险。`,
+      autoStart: true,
+    });
+    onNavigate?.('oran-simulation');
+  }, [ensureEntry, extractedInfo, onNavigate, setOranSimulationPrefill]);
+
+  const handleJumpToContentGeneration = useCallback(() => {
+    // Reserved content-generation entry point for future report handoff.
+    onNavigate?.('oran-gen');
+  }, [onNavigate]);
+
+  const handleConfirmPlanningGenerate = useCallback(() => {
+    if (!canConfirmPlanning) {
+      return;
+    }
+
+    if (!canAfford(GENERATION_COST)) {
+      setCreditsDrawerOpen(true);
+      return;
+    }
+
+    deduct(GENERATION_COST, `${REPORT_TYPE_LABELS.planning}生成`);
+    startTransition(() => setStep('generating'));
+  }, [canAfford, canConfirmPlanning, deduct]);
+
+  useEffect(() => {
+    if (previousStepRef.current !== 'report' && step === 'report') {
+      const shouldPreserveInsightHistory =
+        isPlanningFromInsight &&
+        reportType === 'planning' &&
+        persistedCompletedReportType === 'insight' &&
+        Boolean(persistedCompletedExtractedInfo.brandName);
+
+      if (!shouldPreserveInsightHistory) {
+        setPersistedCompletedReportType(reportType);
+        setPersistedCompletedExtractedInfo(extractedInfo);
+      }
+    }
+
+    previousStepRef.current = step;
+  }, [
+    extractedInfo,
+    isPlanningFromInsight,
+    persistedCompletedExtractedInfo.brandName,
+    persistedCompletedReportType,
+    reportType,
+    step,
+  ]);
+
   useEffect(() => {
     if (step !== 'reading') {
-      setCompletedReadingDocCount(0);
-      setVisibleReadingDocCount(1);
       return;
     }
 
@@ -505,7 +818,13 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
 
     const viewport = readingTextViewportRefs.current[activeReadingDocIndex];
     if (!viewport) {
-      return;
+      const fallbackTimer = window.setTimeout(() => {
+        setCompletedReadingDocCount((prev) => Math.min(prev + 1, readingDocumentItems.length));
+      }, 760);
+
+      return () => {
+        window.clearTimeout(fallbackTimer);
+      };
     }
 
     let frameId = 0;
@@ -573,6 +892,11 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     );
 
     const doneTimer = window.setTimeout(() => {
+      if (reportType === 'planning') {
+        startTransition(() => setStep('confirm'));
+        return;
+      }
+
       if (!canAfford(GENERATION_COST)) {
         setCreditsDrawerOpen(true);
         return;
@@ -586,15 +910,17 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
       timers.forEach((timer) => window.clearTimeout(timer));
       window.clearTimeout(doneTimer);
     };
-  }, [canAfford, deduct, docsReadFinished, reportTypeLabel, step]);
+  }, [canAfford, deduct, docsReadFinished, reportType, reportTypeLabel, step]);
 
   useEffect(() => {
     if (workflowStatus === 'completed') {
       return;
     }
 
-    const latestItem = latestProcessingItemRef.current;
-    if (!latestItem) {
+    const scrollContainer = useSplitLayout
+      ? splitLayoutAsideRef.current
+      : processingViewportRef.current;
+    if (!scrollContainer) {
       return;
     }
 
@@ -603,10 +929,9 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
 
     frameA = window.requestAnimationFrame(() => {
       frameB = window.requestAnimationFrame(() => {
-        latestItem.scrollIntoView({
+        scrollContainer.scrollTo({
+          top: scrollContainer.scrollHeight,
           behavior: 'smooth',
-          block: 'center',
-          inline: 'nearest',
         });
       });
     });
@@ -621,6 +946,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     completedReadingDocCount,
     docsReadFinished,
     step,
+    useSplitLayout,
     visibleReadingDocCount,
     visibleGeneratingProgressItems.length,
     workflowStatus,
@@ -629,6 +955,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div
+        ref={processingViewportRef}
         className={cn(
           'h-full min-h-0 flex-1',
           workflowStatus === 'completed' ? 'overflow-hidden overscroll-none' : 'overflow-y-auto'
@@ -713,7 +1040,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
         {step !== 'input' && (
           <div
             className={cn(
-              workflowStatus === 'completed'
+              useSplitLayout
                 ? 'h-[calc(100dvh-56px)] overflow-hidden overscroll-none px-5 py-4 md:px-8 md:py-5'
                 : 'min-h-full px-6 pb-16 pt-10 md:px-10'
             )}
@@ -721,10 +1048,10 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
             <div
               className={cn(
                 'w-full',
-                workflowStatus === 'completed' ? 'flex h-full min-h-0 flex-col gap-4' : 'space-y-8'
+                useSplitLayout ? 'flex h-full min-h-0 flex-col gap-4' : 'space-y-8'
               )}
             >
-              {workflowStatus !== 'completed' ? (
+              {!useSplitLayout ? (
                 <div className="relative mx-auto min-h-[calc(100dvh-160px)] w-full max-w-[1180px] pb-16">
                   <button
                     onClick={() => handleBack('input')}
@@ -815,14 +1142,82 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                               )}
                               <span>{brandInfoTaskLabel}</span>
                             </div>
-                            <div className="relative space-y-2.5 pl-6 before:absolute before:left-0 before:top-2 before:h-[calc(100%-14px)] before:w-px before:bg-border/35">
-                              {processingEntityItems.map((item) => (
-                                <div key={item.label} className="relative text-[12px] text-muted-foreground/70">
-                                  <span className="absolute -left-[19px] top-[8px] h-1.5 w-1.5 rounded-full bg-border/60" />
-                                  <span>{item.label}：</span>
-                                  <span>{item.value}</span>
-                                </div>
-                              ))}
+                            {reportType === 'planning' ? (
+                              <div className="relative space-y-2.5 pl-6 before:absolute before:left-0 before:top-2 before:h-[calc(100%-14px)] before:w-px before:bg-border/35">
+                                {planningExtractionSteps.map((item) => (
+                                  <div key={item} className="relative flex items-center gap-2 text-[12px] text-muted-foreground/70">
+                                    <span className="absolute -left-[19px] top-[8px] h-1.5 w-1.5 rounded-full bg-border/60" />
+                                    {step === 'reading' ? (
+                                      <Loader2 className="h-3 w-3 shrink-0 animate-spin text-muted-foreground/58" />
+                                    ) : (
+                                      <Check className="h-3 w-3 shrink-0 text-foreground/68" />
+                                    )}
+                                    <span>{item}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="relative space-y-2.5 pl-6 before:absolute before:left-0 before:top-2 before:h-[calc(100%-14px)] before:w-px before:bg-border/35">
+                                {processingEntityItems.map((item) => (
+                                  <div key={item.label} className="relative text-[12px] text-muted-foreground/70">
+                                    <span className="absolute -left-[19px] top-[8px] h-1.5 w-1.5 rounded-full bg-border/60" />
+                                    <span>{item.label}：</span>
+                                    <span>{item.value}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </section>
+                      )}
+
+                      {step === 'confirm' && reportType === 'planning' && (
+                        <section
+                          ref={latestProcessingItemRef}
+                          className="space-y-3.5 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
+                        >
+                          <h2 className="text-[14px] font-normal text-foreground/70">
+                            需要你确认以下策划信息
+                          </h2>
+                          <div className="space-y-4 rounded-[20px] border border-border/25 bg-card/82 p-5 shadow-sm">
+                            <ConfirmField
+                              label="营销目标"
+                              value={extractedInfo.marketingGoal}
+                              onChange={(value) => updateField('marketingGoal', value)}
+                            />
+                            <ConfirmField
+                              label="目标人群"
+                              value={extractedInfo.targetAudience}
+                              onChange={(value) => updateField('targetAudience', value)}
+                            />
+                            <ConfirmField
+                              label="核心卖点"
+                              value={extractedInfo.sellingPoints.join('、')}
+                              onChange={handleSellingPointsChange}
+                            />
+                            <ConfirmField
+                              label="预算量级"
+                              value={extractedInfo.budgetLevel}
+                              onChange={(value) => updateField('budgetLevel', value)}
+                            />
+                            <ConfirmField
+                              label="主攻渠道"
+                              value={extractedInfo.primaryChannels}
+                              onChange={(value) => updateField('primaryChannels', value)}
+                            />
+
+                            <div className="flex items-center justify-between rounded-[16px] bg-muted/35 px-4 py-3">
+                              <div className="text-[12px] leading-6 text-muted-foreground">
+                                确认后将继续生成{reportTypeLabel}，并输出最终 HTML 结果。
+                              </div>
+                              <button
+                                type="button"
+                                onClick={handleConfirmPlanningGenerate}
+                                disabled={!canConfirmPlanning}
+                                className="rounded-full bg-foreground px-4 py-2 text-[12px] text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-35"
+                              >
+                                确认并生成
+                              </button>
                             </div>
                           </div>
                         </section>
@@ -870,7 +1265,10 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                 </div>
               ) : (
                 <div className="grid min-h-0 flex-1 gap-6 overflow-hidden overscroll-none xl:grid-cols-[340px_minmax(0,1fr)] xl:items-stretch">
-                  <aside className="h-full min-h-0 overflow-y-auto overscroll-contain pr-2 pb-6 animate-in fade-in-0 slide-in-from-right-4 duration-500">
+                  <aside
+                    ref={splitLayoutAsideRef}
+                    className="h-full min-h-0 overflow-y-auto overscroll-contain pr-2 pb-6 animate-in fade-in-0 slide-in-from-right-4 duration-500"
+                  >
                     <div className="space-y-5">
                       <button
                         onClick={() => handleBack('input')}
@@ -880,34 +1278,169 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                         <ArrowLeft className="h-4 w-4" />
                       </button>
 
-                      <section className="space-y-2.5">
+                      {shouldShowPreviousInsightHistory && (
+                        <>
+                          <section className="space-y-1.5">
+                            <div className="text-right text-xs text-muted-foreground">user</div>
+                            <div className="text-right text-[10px] uppercase tracking-[0.16em] text-muted-foreground/55">
+                              {previousInsightFilesLabel}
+                            </div>
+                            <div className="rounded-[26px] bg-muted/80 px-4 py-2 text-[13px] leading-5 text-foreground/78 ">
+                              {previousInsightRequestText}
+                            </div>
+                          </section>
+
+                          <section className="space-y-3">
+                            <div className="space-y-1">
+                              <h3 className="text-[17px] font-light tracking-tight text-foreground">
+                                已完成参考资料读取...
+                              </h3>
+                              <p className="text-[12px] leading-6 text-muted-foreground">
+                                洞察阶段的输入信息与参考文档已完成接入，过程记录已完整保留。
+                              </p>
+                            </div>
+                            <div className="space-y-3">
+                              {readingDocumentItems.map((doc) => (
+                                <div
+                                  key={`insight-history-${doc.id}`}
+                                  className="flex items-start gap-3 rounded-[22px] border border-border/25 bg-card/82 px-4 py-4 shadow-sm"
+                                >
+                                  <div className="mt-0.5 flex h-[18px] w-[18px] items-center justify-center">
+                                    <FileText className="h-[18px] w-[18px] text-muted-foreground/72" />
+                                  </div>
+                                  <div className="min-w-0 flex-1 space-y-1.5">
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="min-w-0">
+                                        <div className="truncate text-[13px] text-foreground/84">{doc.name}</div>
+                                        <div className="mt-1 text-[11px] text-muted-foreground">.md / 记忆库文档</div>
+                                      </div>
+                                      <div className="rounded-full border border-border/25 bg-background/75 px-2.5 py-1 text-[11px] text-foreground/68">
+                                        已接入
+                                      </div>
+                                    </div>
+                                    <div className="rounded-[18px] bg-muted/35 px-4 py-3 text-[12px] leading-7 text-foreground/42">
+                                      {doc.text.slice(0, 120)}
+                                      {doc.text.length > 120 ? '...' : ''}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </section>
+
+                          <section className="space-y-3">
+                            <div className="space-y-1">
+                              <h3 className="text-[17px] font-light tracking-tight text-foreground">
+                                已完成品牌信息整理...
+                              </h3>
+                              <p className="text-[12px] leading-6 text-muted-foreground">
+                                洞察阶段的品牌、品类、竞品与参考资料已整理完毕。
+                              </p>
+                            </div>
+                            <div className="space-y-2 pl-12">
+                              <div className="flex items-center gap-2 text-[12px] text-foreground/76">
+                                <Check className="h-3.5 w-3.5 shrink-0 text-foreground/72" />
+                                <span>已完成品牌与产品信息提取</span>
+                              </div>
+                              <div className="relative space-y-2 pl-5 before:absolute before:left-0 before:top-2 before:h-[calc(100%-14px)] before:w-px before:bg-border/35">
+                                {previousInsightSummaryItems.map((item) => (
+                                  <div key={`insight-summary-${item.label}`} className="relative text-[12px] text-muted-foreground/72">
+                                    <span className="absolute -left-[18px] top-[8px] h-1.5 w-1.5 rounded-full bg-border/60" />
+                                    <span>{item.label}：</span>
+                                    <span>{item.value}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </section>
+
+                          <section className="space-y-3">
+                            <div className="space-y-1">
+                              <h3 className="text-[17px] font-light tracking-tight text-foreground">
+                                已完成洞察报告生成...
+                              </h3>
+                              <p className="text-[12px] leading-6 text-muted-foreground">
+                                洞察阶段的生成步骤已完成，右侧当前保留这份已完成报告。
+                              </p>
+                            </div>
+                            <div className="space-y-1.5 pl-12">
+                              {GENERATING_PHASES.map((item) => (
+                                <div
+                                  key={`insight-generating-${item.label}`}
+                                  className="flex items-center gap-2 text-[12px] text-foreground/76"
+                                >
+                                  <Check className="h-3.5 w-3.5 shrink-0 text-foreground/72" />
+                                  <span>{item.label}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </section>
+
+                          <ReportPreviewCard
+                            title={`已生成${persistedCompletedExtractedInfo.brandName || '该品牌'}的洞察报告`}
+                            html={previousInsightPreviewHtml}
+                            active={isShowingPreviousInsightPreview}
+                            onSelect={handleShowPreviousInsightPreview}
+                            onExpand={() => handleOpenPreviewWindow(previousInsightPreviewHtml)}
+                          />
+                        </>
+                      )}
+
+                      <section className="space-y-1.5">
                         <div className="text-right text-xs text-muted-foreground">user</div>
                         <div className="text-right text-[10px] uppercase tracking-[0.16em] text-muted-foreground/55">
                           {selectedMemoryFilesLabel}
                         </div>
-                        <div className="rounded-[26px] border border-border/40 bg-muted/35 px-4 py-3 text-[13px] leading-7 text-foreground/78 shadow-sm">
+                        <div className="rounded-[26px]  bg-muted/80 px-4 py-1.5 text-[13px] leading-7 text-foreground/78 ">
                           {streamRequestText}
                         </div>
                       </section>
 
                       {hasReachedStep('reading') && (
-                        <section className="space-y-3">
-                          <div className="space-y-1">
-                            <h3 className="text-[17px] font-light tracking-tight text-foreground">
-                              已完成参考资料读取...
-                            </h3>
-                            <p className="text-[12px] leading-6 text-muted-foreground">
-                              输入信息与参考文档已完成接入，左侧保留完整过程记录。
-                            </p>
+                      <section className="space-y-3">
+                        <div className="space-y-1">
+                          <h3 className="text-[17px] font-light tracking-tight text-foreground">
+                            {reportType === 'planning' && !docsReadFinished && step === 'reading'
+                              ? '正在读取策划所需资料...'
+                              : reportType === 'planning'
+                                ? '已完成策划资料读取...'
+                                : '已完成参考资料读取...'}
+                          </h3>
+                          <p className="text-[12px] leading-6 text-muted-foreground">
+                            {reportType === 'planning' && !docsReadFinished && step === 'reading'
+                              ? '洞察报告与可用记忆库资料正在接入，左侧继续追加策划方案所需上下文。'
+                              : reportType === 'planning'
+                                ? '洞察报告与可用记忆库资料已接入，左侧保留完整提取过程记录。'
+                                : '输入信息与参考文档已完成接入，左侧保留完整过程记录。'}
+                          </p>
                           </div>
                           <div className="space-y-3">
-                            {readingDocumentItems.map((doc) => (
+                            {(step === 'reading' ? visibleReadingDocuments : readingDocumentItems).map((doc, index) => {
+                              const status =
+                                step === 'reading'
+                                  ? index < completedReadingDocCount
+                                    ? 'completed'
+                                    : index === activeReadingDocIndex
+                                      ? 'active'
+                                      : 'pending'
+                                  : 'completed';
+
+                              return (
                               <div
                                 key={doc.id}
                                 className="flex items-start gap-3 rounded-[22px] border border-border/25 bg-card/82 px-4 py-4 shadow-sm"
                               >
                                 <div className="mt-0.5 flex h-[18px] w-[18px] items-center justify-center">
-                                  <FileText className="h-[18px] w-[18px] text-muted-foreground/72" />
+                                  <FileText
+                                    className={cn(
+                                      'h-[18px] w-[18px]',
+                                      status === 'active'
+                                        ? 'animate-pulse text-foreground/78'
+                                        : status === 'completed'
+                                          ? 'text-muted-foreground/72'
+                                          : 'text-muted-foreground/48'
+                                    )}
+                                  />
                                 </div>
                                 <div className="min-w-0 flex-1 space-y-1.5">
                                   <div className="flex items-start justify-between gap-3">
@@ -916,7 +1449,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                                       <div className="mt-1 text-[11px] text-muted-foreground">.md / 记忆库文档</div>
                                     </div>
                                     <div className="rounded-full border border-border/25 bg-background/75 px-2.5 py-1 text-[11px] text-foreground/68">
-                                      已接入
+                                      {status === 'active' ? '读取中' : status === 'completed' ? '已接入' : '等待中'}
                                     </div>
                                   </div>
                                   <div className="rounded-[18px] bg-muted/35 px-4 py-3 text-[12px] leading-7 text-foreground/42">
@@ -925,51 +1458,167 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                                   </div>
                                 </div>
                               </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </section>
                       )}
 
-                      <section className="space-y-3">
-                        <div className="space-y-1">
-                          <h3 className="text-[17px] font-light tracking-tight text-foreground">
-                            已完成品牌信息整理...
-                          </h3>
-                          <p className="text-[12px] leading-6 text-muted-foreground">
-                            品牌、品类、竞品与记忆库资料已整理完毕，供报告生成阶段引用。
-                          </p>
-                        </div>
-                        <div className="space-y-2 pl-12">
-                          <div className="flex items-center gap-2 text-[12px] text-foreground/76">
-                            <Check className="h-3.5 w-3.5 shrink-0 text-foreground/72" />
-                            <span>已完成品牌与产品信息提取</span>
+                      {(reportType !== 'planning' || docsReadFinished || step !== 'reading') && (
+                        <section className="space-y-3">
+                          <div className="space-y-1">
+                            <h3 className="text-[17px] font-light tracking-tight text-foreground">
+                              {reportType === 'planning' && step === 'reading'
+                                ? '正在提取策划关键信息...'
+                                : reportType === 'planning'
+                                  ? '已完成策划关键信息提取...'
+                                  : '已完成品牌信息整理...'}
+                            </h3>
+                            <p className="text-[12px] leading-6 text-muted-foreground">
+                              {reportType === 'planning' && step === 'reading'
+                                ? '正在根据洞察报告和记忆库提取营销目标、目标人群、预算量级与主攻渠道。'
+                                : reportType === 'planning'
+                                  ? '已根据洞察报告与记忆库整理出策划方案所需的核心输入信息。'
+                                  : '品牌、品类、竞品与记忆库资料已整理完毕，供报告生成阶段引用。'}
+                            </p>
                           </div>
-                          <div className="relative space-y-2 pl-5 before:absolute before:left-0 before:top-2 before:h-[calc(100%-14px)] before:w-px before:bg-border/35">
-                            {processingSummaryItems.map((item) => (
-                              <div key={item.label} className="relative text-[12px] text-muted-foreground/72">
-                                <span className="absolute -left-[18px] top-[8px] h-1.5 w-1.5 rounded-full bg-border/60" />
-                                <span>{item.label}：</span>
-                                <span>{item.value}</span>
+                          <div className="space-y-2 pl-12">
+                            <div className="flex items-center gap-2 text-[12px] text-foreground/76">
+                              {reportType === 'planning' && step === 'reading' ? (
+                                <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground/72" />
+                              ) : (
+                                <Check className="h-3.5 w-3.5 shrink-0 text-foreground/72" />
+                              )}
+                              <span>
+                                {reportType === 'planning'
+                                  ? '已完成策划方案关键信息提取'
+                                  : '已完成品牌与产品信息提取'}
+                              </span>
+                            </div>
+                            {reportType === 'planning' && step === 'reading' ? (
+                              <div className="relative space-y-2 pl-5 before:absolute before:left-0 before:top-2 before:h-[calc(100%-14px)] before:w-px before:bg-border/35">
+                                {planningExtractionSteps.map((item) => (
+                                  <div key={item} className="relative flex items-center gap-2 text-[12px] text-muted-foreground/72">
+                                    <span className="absolute -left-[18px] top-[8px] h-1.5 w-1.5 rounded-full bg-border/60" />
+                                    <Loader2 className="h-3 w-3 shrink-0 animate-spin text-muted-foreground/60" />
+                                    <span>{item}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="relative space-y-2 pl-5 before:absolute before:left-0 before:top-2 before:h-[calc(100%-14px)] before:w-px before:bg-border/35">
+                                {(reportType === 'planning' ? planningDraftItems : processingSummaryItems).map((item) => (
+                                  <div key={item.label} className="relative text-[12px] text-muted-foreground/72">
+                                    <span className="absolute -left-[18px] top-[8px] h-1.5 w-1.5 rounded-full bg-border/60" />
+                                    <span>{item.label}：</span>
+                                    <span>{item.value}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </section>
+                      )}
+
+                      {(hasReachedStep('confirm') || (reportType === 'planning' && step === 'confirm')) && reportType === 'planning' && (
+                        <section className="space-y-3">
+                          <div className="space-y-1">
+                            <h3 className="text-[17px] font-light tracking-tight text-foreground">
+                              {step === 'confirm' ? '等待确认策划信息...' : '已完成策划信息确认...'}
+                            </h3>
+                            <p className="text-[12px] leading-6 text-foreground/60">
+                              {step === 'confirm'
+                                ? '请先确认营销目标、目标人群、核心卖点、预算量级与主攻渠道，再继续生成策划方案。'
+                                : '用户已确认营销目标、目标人群、核心卖点、预算量级与主攻渠道。'}
+                            </p>
+                          </div>
+                          <div className="space-y-1.5 pl-12">
+                            {planningDraftItems.map((item) => (
+                              <div key={item.label} className="flex items-start gap-2 text-[12px] text-foreground/50">
+                                {step === 'confirm' ? (
+                                  <Loader2 className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground/50" />
+                                ) : (
+                                  <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-foreground/70" />
+                                )}
+                                <span>
+                                  {item.label}：{item.value}
+                                </span>
                               </div>
                             ))}
                           </div>
-                        </div>
-                      </section>
+
+                          {step === 'confirm' && (
+                            <div className="rounded-[20px] border border-border/25 bg-card/82 p-5 shadow-sm">
+                              <div className="space-y-4">
+                                <ConfirmField
+                                  label="营销目标"
+                                  value={extractedInfo.marketingGoal}
+                                  onChange={(value) => updateField('marketingGoal', value)}
+                                />
+                                <ConfirmField
+                                  label="目标人群"
+                                  value={extractedInfo.targetAudience}
+                                  onChange={(value) => updateField('targetAudience', value)}
+                                />
+                                <ConfirmField
+                                  label="核心卖点"
+                                  value={extractedInfo.sellingPoints.join('、')}
+                                  onChange={handleSellingPointsChange}
+                                />
+                                <ConfirmField
+                                  label="预算量级"
+                                  value={extractedInfo.budgetLevel}
+                                  onChange={(value) => updateField('budgetLevel', value)}
+                                />
+                                <ConfirmField
+                                  label="主攻渠道"
+                                  value={extractedInfo.primaryChannels}
+                                  onChange={(value) => updateField('primaryChannels', value)}
+                                />
+
+                                <div className="flex items-center justify-between rounded-[16px] bg-muted/35 px-4 py-3">
+                                  
+                                  <button
+                                    type="button"
+                                    onClick={handleConfirmPlanningGenerate}
+                                    disabled={!canConfirmPlanning}
+                                    className="rounded-full bg-foreground px-4 py-2 text-[12px] text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-35"
+                                  >
+                                    确认并生成策划报告
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </section>
+                      )}
 
                       {hasReachedStep('generating') && (
                         <section className="space-y-3">
                           <div className="space-y-1">
                             <h3 className="text-[17px] font-light tracking-tight text-foreground">
-                              已完成{reportTypeLabel}生成...
+                              {workflowStatus === 'generating_report'
+                                ? `正在生成${reportTypeLabel}...`
+                                : `已完成${reportTypeLabel}生成...`}
                             </h3>
                             <p className="text-[12px] leading-6 text-muted-foreground">
-                              生成步骤已完成，右侧展示最终 HTML 报告展板。
+                              {workflowStatus === 'generating_report'
+                                ? '策划方案生成中...'
+                                : '生成步骤已完成，右侧展示最终 HTML 报告展板。'}
                             </p>
                           </div>
                           <div className="space-y-1.5 pl-12">
                             {generatingProgressItems.map((item) => (
                               <div key={item.label} className="flex items-center gap-2 text-[12px] text-foreground/76">
-                                <Check className="h-3.5 w-3.5 shrink-0 text-foreground/72" />
+                                {workflowStatus === 'generating_report' && item.state !== 'completed' ? (
+                                  item.state === 'active' ? (
+                                    <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground/72" />
+                                  ) : (
+                                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/35" />
+                                  )
+                                ) : (
+                                  <Check className="h-3.5 w-3.5 shrink-0 text-foreground/72" />
+                                )}
                                 <span>{item.label}</span>
                               </div>
                             ))}
@@ -977,16 +1626,17 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                         </section>
                       )}
 
-                      <section className="space-y-1.5 rounded-[24px] border border-border/25 bg-card/82 p-4 shadow-sm">
-                        <h3 className="text-[18px] font-light tracking-tight text-foreground">
-                          {completedStreamTitle}
-                        </h3>
-                        <p className="text-[13px] leading-6 text-muted-foreground">
-                          完整流程已保留在左侧，右侧可继续预览、复制 HTML 与导出报告。
-                        </p>
-                      </section>
+                      {workflowStatus === 'completed' && (
+                        <ReportPreviewCard
+                          title={`已生成${extractedInfo.brandName || '该品牌'}的${reportTypeLabel}`}
+                          html={currentReportPreviewHtml}
+                          active={!isShowingPreviousInsightPreview}
+                          onSelect={handleShowCurrentReportPreview}
+                          onExpand={() => handleOpenPreviewWindow(currentReportPreviewHtml)}
+                        />
+                      )}
 
-                      {showFollowUpActions && (
+                      {showInsightFollowUpActions && (
                         <section className="space-y-3 ">
                           <div className="space-y-1">
                             <h3 className="text-[18px] font-light tracking-tight text-foreground">
@@ -1024,17 +1674,56 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                           </div>
                         </section>
                       )}
+
+                      {showPlanningFollowUpActions && (
+                        <section className="space-y-3 ">
+                          <div className="space-y-1">
+                            <h3 className="text-[18px] font-light tracking-tight text-foreground">
+                              接下来
+                            </h3>
+                          </div>
+
+                          <div className="space-y-4 ">
+                            <button
+                              type="button"
+                              onClick={handleJumpToPrediction}
+                              className="group flex min-h-[30px] w-full items-center justify-between rounded-[22px] border border-border/40 bg-background/90 px-5 py-1.5 text-left transition-all hover:border-foreground/25 hover:bg-muted/30"
+                            >
+                              <div className="space-y-1">
+                                <div className="text-[15px] font-medium text-foreground/70">
+                                  根据已有报告，进入预测
+                                </div>
+                              </div>
+                              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={handleJumpToContentGeneration}
+                              className="group flex min-h-[30px] w-full items-center justify-between rounded-[22px] border border-border/40 bg-background/90 px-5 py-1.5 text-left transition-all hover:border-foreground/25 hover:bg-muted/30"
+                            >
+                              <div className="space-y-1">
+                                <div className="text-[15px] font-medium text-foreground/70">
+                                  根据已有报告，进入内容生成
+                                </div>
+                              </div>
+                              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+                            </button>
+                          </div>
+                        </section>
+                      )}
                     </div>
                   </aside>
 
                   <section className="flex h-full min-h-0 flex-col gap-3 overflow-hidden overscroll-none animate-in fade-in-0 slide-in-from-right-12 duration-700">
                     <div className="min-h-0 flex-1 transition-all duration-700 ease-out">
                       <InsightWorkbenchReport
-                        extractedInfo={extractedInfo}
-                        reportType={reportType}
+                        extractedInfo={activePreviewExtractedInfo}
+                        reportType={activePreviewReportType}
                         embedded
                         showEmbeddedToolbar
                         showEmbeddedBackButton={false}
+                        embeddedToolbarPrefix={previewToolbarControl}
                         onBack={() => handleBack('input')}
                         onRestart={resetWorkbench}
                       />
@@ -1093,6 +1782,57 @@ function ConfirmField({
         onChange={(event) => onChange(event.target.value)}
         className="w-full h-9 px-3 rounded-lg border border-border/50 bg-background text-sm text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring"
       />
+    </div>
+  );
+}
+
+function ReportPreviewCard({
+  title,
+  html,
+  active,
+  onSelect,
+  onExpand,
+}: {
+  title: string;
+  html: string;
+  active?: boolean;
+  onSelect: () => void;
+  onExpand: () => void;
+}) {
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      aria-pressed={active}
+      onClick={onSelect}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onSelect();
+        }
+      }}
+      className={cn(
+        'relative cursor-pointer overflow-hidden rounded-[20px] border p-4 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/80',
+        active
+          ? 'border-orange-200/90 bg-white shadow-[0_18px_40px_rgba(234,88,12,0.08)]'
+          : 'border-border/30 bg-white hover:border-orange-200/70 hover:bg-white'
+      )}
+    >
+      <div className="relative space-y-1">
+        
+
+        <div className="relative h-[150px] overflow-hidden">
+          <div className="pointer-events-none absolute left-1/2 top-0 h-[980px] w-[760px] origin-top -translate-x-1/2 scale-[0.34] overflow-hidden rounded-[24px] bg-white ">
+            <iframe
+              srcDoc={html}
+              title={`${title}缩略预览`}
+              className="h-full w-full border-0 bg-white"
+              sandbox="allow-same-origin"
+              tabIndex={-1}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,9 +1,11 @@
 import { useCallback, useMemo, useRef } from 'react';
+import type { ReactNode } from 'react';
 import { ArrowLeft, Copy, Download, Eye, FileText, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useMemory } from '@/contexts/MemoryContext';
+import { cn } from '@/lib/utils';
 
 interface ExtractedInfo {
   brandName: string;
@@ -13,9 +15,13 @@ interface ExtractedInfo {
   analysisTarget: string;
   websiteType: string;
   businessDirection: string;
+  marketingGoal: string;
+  targetAudience: string;
+  budgetLevel: string;
+  primaryChannels: string;
 }
 
-type InsightReportType = 'insight' | 'planning';
+export type InsightReportType = 'insight' | 'planning';
 
 interface Props {
   extractedInfo: ExtractedInfo;
@@ -25,6 +31,7 @@ interface Props {
   embedded?: boolean;
   showEmbeddedToolbar?: boolean;
   showEmbeddedBackButton?: boolean;
+  embeddedToolbarPrefix?: ReactNode;
 }
 
 const REPORT_META = {
@@ -81,7 +88,8 @@ function escapeHtml(value: string) {
     .split("'").join('&#39;');
 }
 
-function generateReportHTML(info: ExtractedInfo, reportType: InsightReportType): string {
+// eslint-disable-next-line react-refresh/only-export-components
+export function generateReportHTML(info: ExtractedInfo, reportType: InsightReportType): string {
   const meta = REPORT_META[reportType];
   const safeBrandName = escapeHtml(info.brandName || '未命名品牌');
   const safeCategory = escapeHtml(info.category || '待补充品类');
@@ -89,6 +97,10 @@ function generateReportHTML(info: ExtractedInfo, reportType: InsightReportType):
   const safeWebsiteType = escapeHtml(info.websiteType || '结构化品牌输入');
   const safeBusinessDirection = escapeHtml(info.businessDirection || '待补充方向');
   const safeAnalysisTarget = escapeHtml(info.analysisTarget || '品牌上下文');
+  const safeMarketingGoal = escapeHtml(info.marketingGoal || '待确认营销目标');
+  const safeTargetAudience = escapeHtml(info.targetAudience || '待确认目标人群');
+  const safeBudgetLevel = escapeHtml(info.budgetLevel || '待确认预算量级');
+  const safePrimaryChannels = escapeHtml(info.primaryChannels || '待确认主攻渠道');
   const safeSellingPoints = info.sellingPoints.length > 0 ? info.sellingPoints : ['待补充核心卖点'];
   const safeTags = safeSellingPoints
     .map((item) => `<span class="tag">${escapeHtml(item)}</span>`)
@@ -115,6 +127,28 @@ function generateReportHTML(info: ExtractedInfo, reportType: InsightReportType):
       `
     )
     .join('');
+  const metaItemsHtml =
+    reportType === 'planning'
+      ? `
+      <div class="meta-item"><strong>营销目标</strong>${safeMarketingGoal}</div>
+      <div class="meta-item"><strong>目标人群</strong>${safeTargetAudience}</div>
+      <div class="meta-item"><strong>预算量级</strong>${safeBudgetLevel}</div>
+      <div class="meta-item"><strong>主攻渠道</strong>${safePrimaryChannels}</div>
+    `
+      : `
+      <div class="meta-item"><strong>品类</strong>${safeCategory}</div>
+      <div class="meta-item"><strong>目标市场</strong>${safeTargetMarket}</div>
+      <div class="meta-item"><strong>输入类型</strong>${safeWebsiteType}</div>
+      <div class="meta-item"><strong>业务方向</strong>${safeBusinessDirection}</div>
+    `;
+  const sectionFourDetail =
+    reportType === 'planning'
+      ? `当前策划建议以 <strong>${safeTargetAudience}</strong> 为主目标人群，预算建议为 <strong>${safeBudgetLevel}</strong>，优先布局 <strong>${safePrimaryChannels}</strong>。`
+      : `目标市场暂以 <strong>${safeTargetMarket}</strong> 作为核心受众范围，执行时可结合渠道数据再细分人群。`;
+  const sectionFiveDetail =
+    reportType === 'planning'
+      ? '建议下一步继续拆解为选题、脚本、达人协作与具体素材生产任务。'
+      : '建议输出时同步保留品牌、品类、卖点与业务方向，方便后续进入 ORAN 系列工作流继续处理。';
 
   return `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -124,12 +158,28 @@ function generateReportHTML(info: ExtractedInfo, reportType: InsightReportType):
   <title>${safeBrandName} - ${meta.label}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    html::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #f6f4f1;
       color: #1f1f1f;
       line-height: 1.65;
       padding: 32px;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    body::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
     }
     .container {
       max-width: 920px;
@@ -284,10 +334,7 @@ function generateReportHTML(info: ExtractedInfo, reportType: InsightReportType):
     </div>
 
     <div class="meta">
-      <div class="meta-item"><strong>品类</strong>${safeCategory}</div>
-      <div class="meta-item"><strong>目标市场</strong>${safeTargetMarket}</div>
-      <div class="meta-item"><strong>输入类型</strong>${safeWebsiteType}</div>
-      <div class="meta-item"><strong>业务方向</strong>${safeBusinessDirection}</div>
+      ${metaItemsHtml}
     </div>
 
     <div class="content">
@@ -324,13 +371,13 @@ function generateReportHTML(info: ExtractedInfo, reportType: InsightReportType):
       <h2>四、${meta.sectionFourTitle}</h2>
       <div class="card">
         <p>${meta.sectionFourText}</p>
-        <p>目标市场暂以 <strong>${safeTargetMarket}</strong> 作为核心受众范围，执行时可结合渠道数据再细分人群。</p>
+        <p>${sectionFourDetail}</p>
       </div>
 
       <h2>五、${meta.sectionFiveTitle}</h2>
       <div class="card">
         <p>${meta.sectionFiveText}</p>
-        <p>建议输出时同步保留品牌、品类、卖点与业务方向，方便后续进入 ORAN 系列工作流继续处理。</p>
+        <p>${sectionFiveDetail}</p>
       </div>
 
       <div class="footer">
@@ -350,6 +397,7 @@ export function InsightWorkbenchReport({
   embedded = false,
   showEmbeddedToolbar = true,
   showEmbeddedBackButton = true,
+  embeddedToolbarPrefix,
 }: Props) {
   const reportRef = useRef<HTMLDivElement>(null);
   const { addEntry, setDrawerOpen } = useMemory();
@@ -382,18 +430,45 @@ export function InsightWorkbenchReport({
   }, [reportHTML]);
 
   const handleCopyToMemory = useCallback(() => {
+    const memoryLines =
+      reportType === 'planning'
+        ? [
+            `品牌：${extractedInfo.brandName}`,
+            `品类：${extractedInfo.category}`,
+            `营销目标：${extractedInfo.marketingGoal}`,
+            `目标人群：${extractedInfo.targetAudience}`,
+            `核心卖点：${extractedInfo.sellingPoints.join('、')}`,
+            `预算量级：${extractedInfo.budgetLevel}`,
+            `主攻渠道：${extractedInfo.primaryChannels}`,
+          ]
+        : [
+            `品牌：${extractedInfo.brandName}`,
+            `品类：${extractedInfo.category}`,
+            `目标市场：${extractedInfo.targetMarket}`,
+            `卖点：${extractedInfo.sellingPoints.join('、')}`,
+            `业务方向：${extractedInfo.businessDirection}`,
+          ];
+
     addEntry({
       title: `${extractedInfo.brandName || '未命名品牌'} ${meta.label}`,
-      content: `品牌：${extractedInfo.brandName}\n品类：${extractedInfo.category}\n目标市场：${extractedInfo.targetMarket}\n卖点：${extractedInfo.sellingPoints.join('、')}\n业务方向：${extractedInfo.businessDirection}`,
+      content: memoryLines.join('\n'),
       category: meta.memoryCategory,
-      tags: [extractedInfo.category, extractedInfo.businessDirection].filter(Boolean),
+      tags:
+        reportType === 'planning'
+          ? [extractedInfo.category, extractedInfo.primaryChannels, extractedInfo.budgetLevel].filter(Boolean)
+          : [extractedInfo.category, extractedInfo.businessDirection].filter(Boolean),
     });
     setDrawerOpen(true);
     toast.success(`已保存到记忆库`);
-  }, [addEntry, extractedInfo, meta.label, meta.memoryCategory, setDrawerOpen]);
+  }, [addEntry, extractedInfo, meta.label, meta.memoryCategory, reportType, setDrawerOpen]);
 
   const actionBar = (
-    <div className={embedded ? 'flex flex-wrap items-center gap-2' : 'flex items-center gap-2'}>
+    <div
+      className={cn(
+        embedded ? 'flex flex-wrap items-center gap-2' : 'flex items-center gap-2',
+        '[&>button:last-child]:hidden'
+      )}
+    >
       <Button variant="outline" size="sm" className="h-8 rounded-lg text-xs" onClick={handlePreview}>
         <Eye className="mr-1 h-3.5 w-3.5" />
         预览
@@ -421,8 +496,10 @@ export function InsightWorkbenchReport({
     return (
       <div className="flex h-full min-h-0 flex-col gap-4">
         {showEmbeddedToolbar && (
-          <div className="flex flex-col gap-3 rounded-2xl border border-border/30 bg-card/80 p-4 shadow-sm md:flex-row md:items-center md:justify-between">
-            {showEmbeddedBackButton ? (
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            {embeddedToolbarPrefix ? (
+              embeddedToolbarPrefix
+            ) : showEmbeddedBackButton ? (
               <button
                 onClick={onBack}
                 className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
@@ -437,17 +514,17 @@ export function InsightWorkbenchReport({
           </div>
         )}
 
-        <Card className="min-h-0 flex-1 overflow-hidden border-border/30 shadow-md">
-          <div ref={reportRef} className="h-full bg-muted/20 p-4 md:p-6">
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <div ref={reportRef} className="h-full">
             <iframe
               srcDoc={reportHTML}
               title={`${meta.label}预览`}
-              className="h-full w-full rounded-xl border-0 bg-white"
+              className="h-full w-full border-0 bg-transparent"
               style={{ minHeight: '100%', height: '100%' }}
               sandbox="allow-same-origin"
             />
           </div>
-        </Card>
+        </div>
       </div>
     );
   }

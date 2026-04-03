@@ -1,6 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMemory } from '@/contexts/MemoryContext';
+import { useOranSimulationPrefill } from '@/contexts/OranSimulationPrefillContext';
 import {
   MemorySelectionDialog,
   type MemorySelectItem,
@@ -40,6 +41,7 @@ export function OranSimulation(_: OranSimulationProps) {
   const [memoryDialogOpen, setMemoryDialogOpen] = useState(false);
   const { i18n } = useTranslation();
   const { entries } = useMemory();
+  const { consumePrefill } = useOranSimulationPrefill();
 
   const locale: Locale = useMemo(
     () => (i18n.language.toLowerCase().startsWith('zh') ? 'zh' : 'en'),
@@ -72,6 +74,20 @@ export function OranSimulation(_: OranSimulationProps) {
   const selectedMemorySummaryNeedsFade = selectedMemorySummary.length > 25;
   const canSubmit = promptValue.trim().length > 0 || selectedMemoryIds.length > 0;
 
+  useEffect(() => {
+    const prefill = consumePrefill();
+    if (!prefill) {
+      return;
+    }
+
+    setSelectedMemoryIds(prefill.attachmentIds);
+    setPromptValue(prefill.prompt || '');
+
+    if (prefill.autoStart) {
+      setStep('scene');
+    }
+  }, [consumePrefill]);
+
   const toggleMemory = useCallback((id: string) => {
     setSelectedMemoryIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
@@ -81,7 +97,12 @@ export function OranSimulation(_: OranSimulationProps) {
   if (step === 'scene') {
     return (
       <div className="h-full min-h-0 overflow-hidden bg-background">
-        <OranSimulationScene locale={locale} onBack={() => setStep('home')} />
+        <OranSimulationScene
+          locale={locale}
+          onBack={() => setStep('home')}
+          attachmentNames={selectedMemoryNames}
+          promptValue={promptValue}
+        />
       </div>
     );
   }

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { TikTokInspirationProvider } from "@/contexts/TikTokInspirationContext";
 import { ReplicatePrefillProvider } from "@/contexts/ReplicatePrefillContext";
+import { OranSimulationPrefillProvider } from "@/contexts/OranSimulationPrefillContext";
 import { CreditsProvider } from "@/contexts/CreditsContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -17,15 +18,17 @@ const App = () => (
       <CreditsProvider>
         <TikTokInspirationProvider>
           <ReplicatePrefillProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
+            <OranSimulationPrefillProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </OranSimulationPrefillProvider>
           </ReplicatePrefillProvider>
         </TikTokInspirationProvider>
       </CreditsProvider>

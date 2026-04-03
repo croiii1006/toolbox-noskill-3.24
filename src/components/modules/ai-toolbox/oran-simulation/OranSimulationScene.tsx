@@ -147,9 +147,13 @@ const defaultHighlight = buildNodeHighlight("product_scalp_repair_serum", "influ
 export default function OranSimulationScene({
   locale,
   onBack,
+  attachmentNames = [],
+  promptValue = "",
 }: {
   locale: Locale;
   onBack?: () => void;
+  attachmentNames?: string[];
+  promptValue?: string;
 }) {
   const [phase, setPhase] = useState<"loading" | "ready">("loading");
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -223,9 +227,20 @@ export default function OranSimulationScene({
         <ResizablePanel defaultSize={50} minSize={28} className="min-w-0">
           <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-white px-8 py-8 text-[var(--workbench-ink)]">
             {isReady ? (
-              <InfoStream cards={copy.cards} eyebrow={copy.streamEyebrow} onBack={onBack} />
+              <InfoStream
+                cards={copy.cards}
+                eyebrow={copy.streamEyebrow}
+                onBack={onBack}
+                attachmentNames={attachmentNames}
+                promptValue={promptValue}
+              />
             ) : (
-              <LoadingStream copy={copy} onBack={onBack} />
+              <LoadingStream
+                copy={copy}
+                onBack={onBack}
+                attachmentNames={attachmentNames}
+                promptValue={promptValue}
+              />
             )}
           </section>
         </ResizablePanel>
@@ -301,9 +316,13 @@ export default function OranSimulationScene({
 function LoadingStream({
   copy,
   onBack,
+  attachmentNames,
+  promptValue,
 }: {
   copy: (typeof sceneCopy)[Locale];
   onBack?: () => void;
+  attachmentNames?: string[];
+  promptValue?: string;
 }) {
   return (
     <div className="flex h-full flex-col">
@@ -335,6 +354,23 @@ function LoadingStream({
         <span className="h-2.5 w-2.5 rounded-full bg-orange-400/60 animate-pulse [animation-delay:360ms]" />
       </div>
 
+      {attachmentNames && attachmentNames.length > 0 ? (
+        <div className="mt-8 space-y-3 rounded-[24px] bg-black/[0.035] px-5 py-5">
+          <div className="font-pixel text-[10px] uppercase tracking-[0.24em] text-black/32">ATTACHMENTS</div>
+          <div className="flex flex-wrap gap-2">
+            {attachmentNames.map((name) => (
+              <span
+                key={name}
+                className="rounded-full border border-black/10 bg-white/70 px-3 py-1 text-xs text-black/58"
+              >
+                {name}
+              </span>
+            ))}
+          </div>
+          {promptValue ? <div className="text-sm leading-7 text-black/50">{promptValue}</div> : null}
+        </div>
+      ) : null}
+
       <div className="mt-8 grid gap-4">
         {[0, 1, 2].map((item) => (
           <div
@@ -360,10 +396,14 @@ function InfoStream({
   eyebrow,
   cards,
   onBack,
+  attachmentNames,
+  promptValue,
 }: {
   eyebrow: string;
   cards: (typeof sceneCopy)[Locale]["cards"];
   onBack?: () => void;
+  attachmentNames?: string[];
+  promptValue?: string;
 }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -381,6 +421,22 @@ function InfoStream({
         <div className="font-pixel text-[20px] uppercase tracking-[0.28em] text-orange-500">{eyebrow}</div>
       </div>
       <div className="mt-6 min-h-0 flex-1 overflow-y-auto pr-3">
+        {attachmentNames && attachmentNames.length > 0 ? (
+          <div className="mb-4 space-y-3 rounded-[24px] bg-black/[0.03] px-5 py-5">
+            <div className="font-pixel text-[10px] uppercase tracking-[0.24em] text-black/28">ATTACHMENTS</div>
+            <div className="flex flex-wrap gap-2">
+              {attachmentNames.map((name) => (
+                <span
+                  key={name}
+                  className="rounded-full border border-black/10 bg-white/85 px-3 py-1 text-xs text-black/58"
+                >
+                  {name}
+                </span>
+              ))}
+            </div>
+            {promptValue ? <div className="text-sm leading-7 text-black/48">{promptValue}</div> : null}
+          </div>
+        ) : null}
         <div className="grid gap-4">
           {cards.map((card, index) => (
             <article
