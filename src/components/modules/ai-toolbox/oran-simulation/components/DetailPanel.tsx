@@ -18,7 +18,6 @@ import {
 interface DetailPanelProps {
   node: GraphNode | null;
   onHighlight: (mode: HighlightMode) => void;
-  onClose: () => void;
   locale: Locale;
 }
 
@@ -49,7 +48,6 @@ function topEdgeScore(edges: GraphEdge[]) {
 export default function DetailPanel({
   node,
   onHighlight,
-  onClose,
   locale,
 }: DetailPanelProps) {
   if (!node) {
@@ -72,14 +70,12 @@ export default function DetailPanel({
     .map((edge) => `${toLabel(edge.target)} (${edge.weight.toFixed(2)})`);
 
   return (
-    <div className="open-frame oran-detail-panel animate-panel w-full max-w-[300px] text-white">
-      <aside className="kernel-shell flex max-h-[min(78vh,450px)] w-full flex-col gap-4 overflow-y-auto px-5 py-5 shadow-[0_28px_80px_rgba(0,0,0,0.42)]">
-        <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
+    <div className="open-frame oran-detail-panel animate-panel w-full max-w-[300px] text-[var(--workbench-ink)]">
+      <aside className="relative flex max-h-[min(78vh,450px)] w-full flex-col gap-4 overflow-y-auto rounded-[16px] border border-black/10 bg-white/72 px-5 py-5 shadow-[0_24px_60px_rgba(15,18,23,0.12)] backdrop-blur-xl">
+        <div className="flex items-start gap-4 border-b border-black/10 pb-4">
           <div>
-            <div className="font-pixel text-[11px] uppercase tracking-[0.34em] text-white/44">
-              {t(locale, "nodeDetail")}
-            </div>
-            <div className="mt-2 font-display text-[28px] leading-none tracking-[0.08em] text-white">
+            
+            <div className="mt-2 font-display text-[20px] leading-none tracking-[0.08em] text-black">
               {node.label}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -88,13 +84,6 @@ export default function DetailPanel({
               <Tag>{node.entityType}</Tag>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="border border-white/12 px-3 py-2 font-pixel text-[10px] uppercase tracking-[0.2em] text-white/62 transition hover:border-white/22 hover:text-white"
-          >
-            {t(locale, "close")}
-          </button>
         </div>
 
         <KernelSection title={t(locale, "basicInfo")}>
@@ -114,7 +103,7 @@ export default function DetailPanel({
         </KernelSection>
 
         <KernelSection title={t(locale, "nodeSummary")}>
-          <p className="text-sm leading-7 text-white/72">{node.summary}</p>
+          <p className="text-sm leading-7 text-black/72">{node.summary}</p>
         </KernelSection>
 
         <KernelSection title={t(locale, "keyAttributes")}>
@@ -194,13 +183,13 @@ export default function DetailPanel({
               paths.map((path) => (
                 <div
                   key={path.join("-")}
-                  className="border border-white/10 bg-white/[0.03] px-4 py-3 font-code text-xs leading-6 text-white/72"
+                  className="border border-black/10 bg-white/46 px-4 py-3 font-code text-xs leading-6 text-black/72"
                 >
                   {renderPath(path)}
                 </div>
               ))
             ) : (
-              <div className="border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/50">
+              <div className="border border-black/10 bg-white/46 px-4 py-3 text-sm text-black/50">
                 {t(locale, "noPath")}
               </div>
             )}
@@ -210,7 +199,7 @@ export default function DetailPanel({
         <KernelSection title={t(locale, "evidenceBasis")}>
           <div className="space-y-2">
             {node.layer === "source" ? (
-              <div className="border border-white/10 bg-white/[0.03] px-4 py-3 text-sm leading-7 text-white/68">
+              <div className="border border-black/10 bg-white/46 px-4 py-3 text-sm leading-7 text-black/68">
                 {t(locale, "sourceSelf")}
               </div>
             ) : evidence.length > 0 ? (
@@ -219,30 +208,30 @@ export default function DetailPanel({
                 return (
                   <div
                     key={item.sourceId}
-                    className="border border-white/10 bg-white/[0.03] px-4 py-3"
+                    className="border border-black/10 bg-white/46 px-4 py-3"
                   >
-                    <div className="font-pixel text-[11px] uppercase tracking-[0.18em] text-white/44">
+                    <div className="font-pixel text-[11px] uppercase tracking-[0.18em] text-black/44">
                       {sourceNode?.label ?? item.sourceId}
                     </div>
-                    <div className="mt-2 text-sm leading-7 text-white/66">
+                    <div className="mt-2 text-sm leading-7 text-black/66">
                       {sourceNode?.sourceDetails?.shortSummary ?? t(locale, "noSourceSummary")}
                     </div>
                   </div>
                 );
               })
             ) : (
-              <div className="border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/50">
+              <div className="border border-black/10 bg-white/46 px-4 py-3 text-sm text-black/50">
                 {t(locale, "noEvidence")}
               </div>
             )}
           </div>
         </KernelSection>
 
-        <div className="mt-auto flex flex-col gap-3 border-t border-white/10 pt-4">
+        <div className="mt-auto flex flex-col gap-3 border-t border-black/10 pt-4">
           <button
             type="button"
             onClick={() => onHighlight("influence")}
-            className="border border-[var(--scan-cold)] bg-[var(--scan-cold-soft)] px-4 py-3 text-left font-pixel text-sm uppercase tracking-[0.2em] text-[var(--pixel-white)] transition hover:bg-[rgba(180,214,223,0.24)]"
+            className="border border-orange-200 bg-orange-50/80 px-4 py-3 text-left font-pixel text-sm uppercase tracking-[0.2em] text-orange-600 transition hover:bg-orange-100/90"
           >
             TRACE PATH
           </button>
@@ -265,8 +254,8 @@ function KernelSection({
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-3 border border-white/10 bg-white/[0.02] px-4 py-4">
-      <div className="font-pixel text-[11px] uppercase tracking-[0.28em] text-white/42">
+    <section className="space-y-3 rounded-[16px] border border-black/10 bg-white/38 px-4 py-4">
+      <div className="font-pixel text-[11px] uppercase tracking-[0.28em] text-black/42">
         {title}
       </div>
       {children}
@@ -279,10 +268,10 @@ function GridInfo({ items }: { items: Array<[string, string]> }) {
     <div className="grid gap-3">
       {items.map(([label, value]) => (
         <div key={`${label}-${value}`} className="grid gap-1">
-          <div className="font-pixel text-[10px] uppercase tracking-[0.22em] text-white/36">
+          <div className="font-pixel text-[10px] uppercase tracking-[0.22em] text-black/36">
             {label}
           </div>
-          <div className="text-sm leading-7 text-white/74">{value}</div>
+          <div className="text-sm leading-7 text-black/74">{value}</div>
         </div>
       ))}
     </div>
@@ -291,7 +280,7 @@ function GridInfo({ items }: { items: Array<[string, string]> }) {
 
 function Tag({ children }: { children: ReactNode }) {
   return (
-    <span className="border border-white/12 px-2 py-1 font-pixel text-[10px] uppercase tracking-[0.18em] text-white/58">
+    <span className="border border-black/12 bg-white/44 px-2 py-1 font-pixel text-[10px] uppercase tracking-[0.18em] text-black/58">
       {children}
     </span>
   );
@@ -308,7 +297,7 @@ function MiniAction({
     <button
       type="button"
       onClick={onClick}
-      className="border border-white/10 px-3 py-2 font-pixel text-[10px] uppercase tracking-[0.2em] text-white/58 transition hover:border-white/18 hover:text-white"
+      className="border border-black/10 bg-white/40 px-3 py-2 font-pixel text-[10px] uppercase tracking-[0.2em] text-black/58 transition hover:border-black/18 hover:bg-white/68 hover:text-black"
     >
       {label}
     </button>

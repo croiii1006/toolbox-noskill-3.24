@@ -13,7 +13,7 @@ import {
   graphDataset,
   type GraphHighlight,
 } from "./lib/graphData";
-import { type Locale } from "./lib/graphI18n";
+import { t, type Locale } from "./lib/graphI18n";
 
 const allTypes = [
   "source",
@@ -28,6 +28,35 @@ const allTypes = [
 ] as const;
 
 const LOADING_DURATION_MS = 2200;
+
+const topMetricLabels: Record<
+  Locale,
+  {
+    status: string;
+    nodes: string;
+    edges: string;
+    focus: string;
+    active: string;
+    global: string;
+  }
+> = {
+  zh: {
+    status: "状态",
+    nodes: "节点",
+    edges: "边",
+    focus: "聚焦",
+    active: "激活",
+    global: "全局",
+  },
+  en: {
+    status: "STATUS",
+    nodes: "NODES",
+    edges: "EDGES",
+    focus: "FOCUS",
+    active: "ACTIVE",
+    global: "GLOBAL",
+  },
+};
 
 const sceneCopy: Record<
   Locale,
@@ -157,10 +186,12 @@ export default function OranSimulationScene({
 }) {
   const [phase, setPhase] = useState<"loading" | "ready">("loading");
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [detailPanelNodeId, setDetailPanelNodeId] = useState<string | null>(null);
   const [focusNodeId, setFocusNodeId] = useState<string | null>(null);
   const [highlight, setHighlight] = useState<GraphHighlight | null>(defaultHighlight);
 
   const copy = sceneCopy[locale];
+  const metricLabels = topMetricLabels[locale];
   const activeTypeSet = useMemo(() => new Set(allTypes), []);
   const viewNodeIds = useMemo(() => getViewNodeIds("global"), []);
   const isReady = phase === "ready";
@@ -204,6 +235,9 @@ export default function OranSimulationScene({
   );
 
   const selectedNode = selectedNodeId ? graphDataset.nodeMap.get(selectedNodeId) ?? null : null;
+  const detailPanelNode = detailPanelNodeId
+    ? graphDataset.nodeMap.get(detailPanelNodeId) ?? null
+    : null;
   const activeNodeCount =
     highlight?.nodeIds.length ||
     (selectedNodeId ? selectedRelatedIds.size : visibleNodes.filter((node) => !node.isTail).length);
@@ -211,6 +245,7 @@ export default function OranSimulationScene({
   function handleSelectNode(nodeId: string | null) {
     startTransition(() => {
       setSelectedNodeId(nodeId);
+      setDetailPanelNodeId(nodeId);
       setFocusNodeId(nodeId);
 
       if (!nodeId) {
@@ -218,6 +253,12 @@ export default function OranSimulationScene({
       } else {
         setHighlight(buildLockHighlight(nodeId));
       }
+    });
+  }
+
+  function handleCloseDetailPanel() {
+    startTransition(() => {
+      setDetailPanelNodeId(null);
     });
   }
 
@@ -252,22 +293,40 @@ export default function OranSimulationScene({
 
         <ResizablePanel defaultSize={50} minSize={30} className="min-w-0">
           <section className="kernel-shell open-frame relative h-full min-h-0 min-w-0 overflow-hidden rounded-none text-white">
-            <div className="pointer-events-none absolute inset-x-6 top-5 z-20 flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-white/10 pb-3">
-              <div className="font-pixel text-[11px] uppercase tracking-[0.3em] text-white/42">
+            <div className="pointer-events-none absolute inset-x-6 top-5 z-20 flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-black/12 bg-white/92 pb-3 pt-1 text-black shadow-[0_1px_0_rgba(0,0,0,0.05)]">
+              <div className="font-pixel text-[11px] uppercase tracking-[0.3em] text-black/44">
                 ORAN SIM / GRAPH STAGE
               </div>
-              <div className="font-pixel text-[11px] uppercase tracking-[0.24em] text-white/44">
-                {copy.graphMode}
+              <div className="font-pixel text-[11px] uppercase tracking-[0.24em] text-black/48">
+                {locale === "zh" ? "系统内核" : copy.graphMode}
               </div>
-              <div className="flex flex-wrap gap-x-6 gap-y-2 text-[11px] uppercase tracking-[0.22em] text-white/74">
-                <InlineMetric label="STATUS" value={isReady ? copy.readyStatus : copy.loadingStatus} />
-                <InlineMetric label="NODES" value={isReady ? String(visibleNodes.length) : "--"} />
-                <InlineMetric label="EDGES" value={isReady ? String(visibleEdges.length) : "--"} />
+              <div className="flex flex-wrap gap-x-6 gap-y-2 text-[11px] uppercase tracking-[0.22em] text-black/78">
                 <InlineMetric
-                  label="FOCUS"
-                  value={isReady ? (selectedNode ? selectedNode.label : "GLOBAL") : copy.pendingFocus}
+                  label={metricLabels.status}
+                  value={isReady ? copy.readyStatus : copy.loadingStatus}
                 />
-                <InlineMetric label="ACTIVE" value={isReady ? String(activeNodeCount) : "--"} />
+                <InlineMetric
+                  label={metricLabels.nodes}
+                  value={isReady ? String(visibleNodes.length) : "--"}
+                />
+                <InlineMetric
+                  label={metricLabels.edges}
+                  value={isReady ? String(visibleEdges.length) : "--"}
+                />
+                <InlineMetric
+                  label={metricLabels.focus}
+                  value={
+                    isReady
+                      ? selectedNode
+                        ? selectedNode.label
+                        : metricLabels.global
+                      : copy.pendingFocus
+                  }
+                />
+                <InlineMetric
+                  label={metricLabels.active}
+                  value={isReady ? String(activeNodeCount) : "--"}
+                />
               </div>
             </div>
 
@@ -277,6 +336,7 @@ export default function OranSimulationScene({
                 edges={visibleEdges}
                 selectedNodeId={selectedNodeId}
                 focusNodeId={focusNodeId}
+                horizontalOffset={detailPanelNode ? 400 : 0}
                 highlight={highlight}
                 onSelectNode={handleSelectNode}
                 locale={locale}
@@ -286,21 +346,20 @@ export default function OranSimulationScene({
               <BlankGraphStage title={copy.graphBlankTitle} subtitle={copy.graphBlankSubtitle} />
             )}
 
-            {isReady && selectedNode ? (
+            {isReady && detailPanelNode ? (
               <div
-                className="absolute inset-0 z-30 flex items-center justify-center bg-black/56 p-5 backdrop-blur-[2px]"
-                onClick={() => handleSelectNode(null)}
+                className="absolute inset-0 z-30 flex items-center justify-center bg-black/32 p-5"
+                onClick={handleCloseDetailPanel}
               >
-                <div className="w-full max-w-[760px]" onClick={(event) => event.stopPropagation()}>
+                <div className="w-fit max-w-[300px]" onClick={(event) => event.stopPropagation()}>
                   <DetailPanel
-                    node={selectedNode}
+                    node={detailPanelNode}
                     onHighlight={(mode) => {
                       if (!selectedNodeId) {
                         return;
                       }
                       setHighlight(buildNodeHighlight(selectedNodeId, mode));
                     }}
-                    onClose={() => handleSelectNode(null)}
                     locale={locale}
                   />
                 </div>
@@ -500,8 +559,8 @@ function InlineMetric({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-white/34">{label}</span>
-      <span className="text-white">{value}</span>
+      <span className="text-black/38">{label}</span>
+      <span className="text-black">{value}</span>
     </div>
   );
 }

@@ -4,7 +4,6 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
-  type WheelEvent as ReactWheelEvent,
 } from "react";
 import type { GraphEdge, GraphHighlight, GraphNode } from "../lib/graphData";
 import { type Locale, localizeHighlightTitle, t } from "../lib/graphI18n";
@@ -14,6 +13,7 @@ interface GraphCanvasProps {
   edges: GraphEdge[];
   selectedNodeId: string | null;
   focusNodeId: string | null;
+  horizontalOffset?: number;
   highlight: GraphHighlight | null;
   onSelectNode: (nodeId: string | null) => void;
   locale: Locale;
@@ -35,6 +35,7 @@ type InteractionState =
       originX: number;
       originY: number;
       moved: boolean;
+      startTime: number;
     }
   | null;
 
@@ -51,7 +52,13 @@ const LAYOUT_SPREAD_Y = 1.08;
 const EXPANDED_WORLD_WIDTH = WORLD_WIDTH * LAYOUT_SPREAD_X;
 const EXPANDED_WORLD_HEIGHT = WORLD_HEIGHT * LAYOUT_SPREAD_Y;
 const CLICK_MOVE_THRESHOLD = 11;
-const FOCUS_DURATION_MS = 420;
+const CLICK_PRIORITY_MS = 200;
+const CLICK_TARGET_BUFFER = 10;
+const LABEL_ALWAYS_VISIBLE_SIZE = 15;
+const FOCUS_DURATION_MIN_MS = 240;
+const FOCUS_DURATION_MAX_MS = 520;
+const FOCUS_RESERVED_WIDTH_RATIO = 0.26;
+const FOCUS_RESERVED_WIDTH_MAX = 280;
 const PAN_DRAG_DAMPING = 0.92;
 const PIXEL_SIZE_SCALE = 0.84;
 const NODE_SIZE_CURVE = {
@@ -68,13 +75,13 @@ const HOVER_RADIUS = {
   focusBonus: 8,
 } as const;
 const NODE_OPACITY = {
-  dimmedByHighlight: 0.22,
-  selectedConnected: 0.94,
-  selectedUnrelated: 0.36,
-  tailFloor: 0.3,
-  nodeFloor: 0.52,
-  selectedBoost: 1.18,
-  hoveredBoost: 1.1,
+  dimmedByHighlight: 0.18,
+  selectedConnected: 0.72,
+  selectedUnrelated: 0.1,
+  tailFloor: 0.1,
+  nodeFloor: 0.18,
+  selectedBoost: 1.22,
+  hoveredBoost: 1.12,
 } as const;
 const EDGE_STYLE = {
   default: {
@@ -87,7 +94,7 @@ const EDGE_STYLE = {
     widthWeight: 0.82,
     highlightWidthBase: 1.48,
     highlightWidthWeight: 0.44,
-    stroke: "rgba(255,255,255,0.38)",
+    stroke: "rgba(255,138,76,0.38)",
   },
   hover: {
     directMinOpacity: 0.76,
@@ -97,7 +104,7 @@ const EDGE_STYLE = {
     highlightBase: 0.28,
     highlightWeight: 0.18,
     unrelatedFade: 0.5,
-    stroke: "rgba(245,247,248,0.72)",
+    stroke: "rgba(255,128,56,0.74)",
     widthBase: 1.24,
     widthWeight: 0.38,
   },
@@ -108,11 +115,11 @@ const EDGE_STYLE = {
     highlightMinOpacity: 0.56,
     highlightBase: 0.38,
     highlightWeight: 0.22,
-    unrelatedFade: 0.92,
-    stroke: "rgba(180,214,223,0.88)",
-    unrelatedStroke: "rgba(226, 232, 236, 0.81)",
-    widthBase: 1.92,
-    widthWeight: 0.72,
+    unrelatedFade: 0.2,
+    stroke: "rgba(255,90,31,0.96)",
+    unrelatedStroke: "rgba(255,166,130,0.28)",
+    widthBase: 2.85,
+    widthWeight: 1.05,
     unrelatedWidthBase: 0.92,
     unrelatedWidthWeight: 0.36,
   },
@@ -186,6 +193,7 @@ export default function GraphCanvas({
   edges,
   selectedNodeId,
   focusNodeId,
+  horizontalOffset = 0,
   highlight,
   onSelectNode,
   locale,
@@ -204,6 +212,7 @@ export default function GraphCanvas({
   const overlayFrameRef = useRef<number | null>(null);
   const focusFrameRef = useRef<number | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [pressedNodeId, setPressedNodeId] = useState<string | null>(null);
   const [transform, setTransform] = useState<TransformState>({
     x: 60,
     y: 40,
@@ -238,6 +247,43 @@ export default function GraphCanvas({
   const highlightNodes = useMemo(() => new Set(highlight?.nodeIds ?? []), [highlight]);
   const highlightEdges = useMemo(() => new Set(highlight?.edgeIds ?? []), [highlight]);
 
+  const orderedNodes = useMemo(() => {
+    const indexById = new Map(nodes.map((node, index) => [node.id, index]));
+    const priority = (node: GraphNode) => {
+      if (selectedNodeId === node.id) {
+        return 4;
+      }
+      if (hoveredNodeId === node.id) {
+        return 3;
+      }
+      if (highlightNodes.has(node.id)) {
+        return 2;
+      }
+      if (selectedNodeId && selectedNeighborhood.has(node.id)) {
+        return 1;
+      }
+      return 0;
+    };
+
+    return [...nodes].sort((left, right) => {
+      const priorityDelta = priority(left) - priority(right);
+      if (priorityDelta !== 0) {
+        return priorityDelta;
+      }
+      return (indexById.get(left.id) ?? 0) - (indexById.get(right.id) ?? 0);
+    });
+  }, [highlightNodes, hoveredNodeId, nodes, selectedNeighborhood, selectedNodeId]);
+
+  const renderedNodes = useMemo(() => {
+    if (!selectedNodeId) {
+      return orderedNodes;
+    }
+
+    const selectedNodes = orderedNodes.filter((node) => node.id === selectedNodeId);
+    const remainingNodes = orderedNodes.filter((node) => node.id !== selectedNodeId);
+    return [...remainingNodes, ...selectedNodes];
+  }, [orderedNodes, selectedNodeId]);
+
   const orderedEdges = useMemo(() => {
     const background: GraphEdge[] = [];
     const activeHighlight: GraphEdge[] = [];
@@ -253,13 +299,13 @@ export default function GraphCanvas({
         (edge.source === selectedNodeId || edge.target === selectedNodeId);
       const isHighlightEdge = highlightEdges.has(edge.id);
 
-      if (isHoverEdge) {
-        hoverRelated.push(edge);
+      if (isSelectedEdge) {
+        selectedRelated.push(edge);
         return;
       }
 
-      if (isSelectedEdge) {
-        selectedRelated.push(edge);
+      if (isHoverEdge) {
+        hoverRelated.push(edge);
         return;
       }
 
@@ -271,7 +317,7 @@ export default function GraphCanvas({
       background.push(edge);
     });
 
-    return [...background, ...activeHighlight, ...selectedRelated, ...hoverRelated];
+    return [...background, ...activeHighlight, ...hoverRelated, ...selectedRelated];
   }, [edges, highlightEdges, hoveredNodeId, selectedNodeId]);
 
   const hoveredEdges = useMemo(
@@ -355,12 +401,29 @@ export default function GraphCanvas({
     const height = containerRef.current.clientHeight;
     const start = transformRef.current;
     const targetPoint = toLayoutPosition(node.x, node.y);
-    const targetX = width / 2 - targetPoint.x * start.scale;
-    const targetY = height / 2 - targetPoint.y * start.scale;
+    const reservedWidth =
+      selectedNodeId && focusNodeId === selectedNodeId
+        ? Math.min(width * FOCUS_RESERVED_WIDTH_RATIO, FOCUS_RESERVED_WIDTH_MAX)
+        : 0;
+    const effectiveHorizontalOffset = horizontalOffset || reservedWidth;
+    const viewportTargetX = (width - effectiveHorizontalOffset) / 2;
+    const viewportTargetY = height / 2;
+    const targetX = viewportTargetX - targetPoint.x * start.scale;
+    const targetY = viewportTargetY - targetPoint.y * start.scale;
+    const currentScreenX = targetPoint.x * start.scale + start.x;
+    const currentScreenY = targetPoint.y * start.scale + start.y;
+    const travelDistance = Math.hypot(
+      viewportTargetX - currentScreenX,
+      viewportTargetY - currentScreenY,
+    );
+    const normalizedDistance = Math.min(1, travelDistance / Math.max(width, height, 1));
+    const focusDuration =
+      FOCUS_DURATION_MIN_MS +
+      (1 - normalizedDistance) * (FOCUS_DURATION_MAX_MS - FOCUS_DURATION_MIN_MS);
     const startTime = performance.now();
 
     const step = (now: number) => {
-      const progress = Math.min(1, (now - startTime) / FOCUS_DURATION_MS);
+      const progress = Math.min(1, (now - startTime) / focusDuration);
       const eased = 1 - Math.pow(1 - progress, 3);
 
       setTransform((current) => ({
@@ -384,7 +447,7 @@ export default function GraphCanvas({
         focusFrameRef.current = null;
       }
     };
-  }, [focusNodeId, nodesById]);
+  }, [focusNodeId, horizontalOffset, nodesById, selectedNodeId]);
 
   useEffect(() => {
     const canvas = overlayCanvasRef.current;
@@ -454,7 +517,7 @@ export default function GraphCanvas({
       const threshold =
         Math.max(
           node.isTail ? HOVER_RADIUS.tail : HOVER_RADIUS.base,
-          metrics.span + (node.isTail ? 6 : HOVER_RADIUS.focusBonus),
+          metrics.span + (node.isTail ? 6 : HOVER_RADIUS.focusBonus) + CLICK_TARGET_BUFFER,
         ) / currentScale;
       const thresholdSq = threshold * threshold;
 
@@ -552,7 +615,7 @@ export default function GraphCanvas({
           point.y,
           active ? 0.34 : 0.14,
           active ? 2.4 : 1.6,
-          active ? "180,214,223" : "255,255,255",
+          active ? "255,126,58" : "255,188,146",
         );
       });
 
@@ -567,7 +630,7 @@ export default function GraphCanvas({
           20 + index * 4,
         );
 
-        drawParticle(point.x, point.y, 0.12, 1.8, "180,214,223");
+        drawParticle(point.x, point.y, 0.12, 1.8, "255,170,124");
       });
 
       const pointerState = pointerStateRef.current;
@@ -587,7 +650,7 @@ export default function GraphCanvas({
             metrics.span * transformRef.current.scale + 10,
           );
           const corner = bracketSize * 0.32;
-          const stroke = "rgba(245,247,248,0.88)";
+          const stroke = "rgba(255,126,58,0.9)";
 
           ctx.strokeStyle = stroke;
           ctx.lineWidth = 1;
@@ -637,7 +700,7 @@ export default function GraphCanvas({
           ctx.setLineDash([]);
 
           ctx.font = "11px 'Pixelify Sans'";
-          ctx.fillStyle = "rgba(180,214,223,0.96)";
+          ctx.fillStyle = "rgba(255,126,58,0.96)";
           ctx.textAlign = "left";
           ctx.fillText(
             hovered.label,
@@ -646,7 +709,7 @@ export default function GraphCanvas({
           );
 
           ctx.font = "9px 'Space Mono'";
-          ctx.fillStyle = "rgba(255,255,255,0.36)";
+          ctx.fillStyle = "rgba(15,18,23,0.36)";
           ctx.fillText(
             `[${Math.round(hovered.x)},${Math.round(hovered.y)}]`,
             position.x + bracketSize + 6,
@@ -655,7 +718,7 @@ export default function GraphCanvas({
         }
 
         const world = screenToWorld(pointerState.clientX, pointerState.clientY);
-        const cursorStroke = hovered ? "rgba(180,214,223,0.78)" : "rgba(255,255,255,0.2)";
+        const cursorStroke = hovered ? "rgba(255,126,58,0.8)" : "rgba(15,18,23,0.18)";
 
         ctx.strokeStyle = cursorStroke;
         ctx.lineWidth = 1;
@@ -676,30 +739,8 @@ export default function GraphCanvas({
         ctx.lineTo(screenX, screenY + 16);
         ctx.stroke();
 
-        ctx.strokeStyle = hovered ? "rgba(180,214,223,0.42)" : "rgba(255,255,255,0.1)";
-        ctx.beginPath();
-        ctx.moveTo(screenX - 10, screenY - 10);
-        ctx.lineTo(screenX - 10, screenY - 6);
-        ctx.lineTo(screenX - 6, screenY - 6);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(screenX + 10, screenY - 10);
-        ctx.lineTo(screenX + 10, screenY - 6);
-        ctx.lineTo(screenX + 6, screenY - 6);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(screenX - 10, screenY + 10);
-        ctx.lineTo(screenX - 10, screenY + 6);
-        ctx.lineTo(screenX - 6, screenY + 6);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(screenX + 10, screenY + 10);
-        ctx.lineTo(screenX + 10, screenY + 6);
-        ctx.lineTo(screenX + 6, screenY + 6);
-        ctx.stroke();
-
         ctx.font = "9px 'Space Mono'";
-        ctx.fillStyle = "rgba(255,255,255,0.32)";
+        ctx.fillStyle = "rgba(15,18,23,0.32)";
         ctx.textAlign = "left";
         ctx.fillText(
           `[${Math.round(world.x / LAYOUT_SPREAD_X)},${Math.round(world.y / LAYOUT_SPREAD_Y)}]`,
@@ -718,6 +759,26 @@ export default function GraphCanvas({
       }
     };
   }, [animatedFlowEdges, highlightEdges, migrationPairs, selectedNeighborhood]);
+
+  function applyWheelZoom(clientX: number, clientY: number, deltaY: number) {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) {
+      return;
+    }
+
+    const cursorX = clientX - rect.left;
+    const cursorY = clientY - rect.top;
+    const delta = deltaY > 0 ? 0.93 : 1.07;
+
+    setTransform((current) => {
+      const nextScale = Math.min(2.15, Math.max(0.46, current.scale * delta));
+      return {
+        scale: nextScale,
+        x: cursorX - ((cursorX - current.x) / current.scale) * nextScale,
+        y: cursorY - ((cursorY - current.y) / current.scale) * nextScale,
+      };
+    });
+  }
 
   useEffect(() => {
     const container = containerRef.current;
@@ -749,6 +810,10 @@ export default function GraphCanvas({
         return;
       }
 
+      if (pressedNodeId !== null) {
+        setPressedNodeId(null);
+      }
+
       setTransform((current) => ({
         ...current,
         x: interaction.originX + dx * PAN_DRAG_DAMPING,
@@ -761,35 +826,21 @@ export default function GraphCanvas({
       updateHoveredNode(null);
     };
 
+    const handleNativeWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      applyWheelZoom(event.clientX, event.clientY, event.deltaY);
+    };
+
     container.addEventListener("pointermove", handlePointerMove);
     container.addEventListener("pointerleave", handlePointerLeave);
+    container.addEventListener("wheel", handleNativeWheel, { passive: false });
 
     return () => {
       container.removeEventListener("pointermove", handlePointerMove);
       container.removeEventListener("pointerleave", handlePointerLeave);
+      container.removeEventListener("wheel", handleNativeWheel);
     };
-  }, []);
-
-  function handleWheel(event: ReactWheelEvent<HTMLDivElement>) {
-    event.preventDefault();
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) {
-      return;
-    }
-
-    const cursorX = event.clientX - rect.left;
-    const cursorY = event.clientY - rect.top;
-    const delta = event.deltaY > 0 ? 0.93 : 1.07;
-
-    setTransform((current) => {
-      const nextScale = Math.min(2.15, Math.max(0.46, current.scale * delta));
-      return {
-        scale: nextScale,
-        x: cursorX - ((cursorX - current.x) / current.scale) * nextScale,
-        y: cursorY - ((cursorY - current.y) / current.scale) * nextScale,
-      };
-    });
-  }
+  }, [pressedNodeId]);
 
   function startPan(event: ReactPointerEvent<HTMLDivElement>) {
     if (event.button !== 0) {
@@ -800,6 +851,7 @@ export default function GraphCanvas({
 
     const { nearestNodeId } = findNearestNode(event.clientX, event.clientY);
     pointerDownNodeRef.current = nearestNodeId;
+    setPressedNodeId(nearestNodeId);
     updateHoveredNode(nearestNodeId);
     pointerStateRef.current.clientX = event.clientX;
     pointerStateRef.current.clientY = event.clientY;
@@ -814,6 +866,7 @@ export default function GraphCanvas({
       originX: transformRef.current.x,
       originY: transformRef.current.y,
       moved: false,
+      startTime: performance.now(),
     };
   }
 
@@ -830,15 +883,22 @@ export default function GraphCanvas({
     const totalDx = event.clientX - interaction.startX;
     const totalDy = event.clientY - interaction.startY;
     const movedDistance = Math.sqrt(totalDx * totalDx + totalDy * totalDy);
-    const treatedAsDrag = interaction.moved || movedDistance > CLICK_MOVE_THRESHOLD;
+    const pressDuration = performance.now() - interaction.startTime;
+    const nearNodeAtRelease = findNearestNode(event.clientX, event.clientY).nearestNodeId;
+    const candidateNodeId =
+      nearNodeAtRelease ?? pointerDownNodeRef.current ?? hoveredNodeRef.current ?? null;
+    const shouldPrioritizeClick =
+      movedDistance <= CLICK_MOVE_THRESHOLD ||
+      (pressDuration < CLICK_PRIORITY_MS && Boolean(candidateNodeId));
+    const treatedAsDrag =
+      !shouldPrioritizeClick && (interaction.moved || movedDistance > CLICK_MOVE_THRESHOLD);
 
     if (!treatedAsDrag) {
-      const { nearestNodeId } = findNearestNode(event.clientX, event.clientY);
-      const nextNodeId =
-        nearestNodeId ?? pointerDownNodeRef.current ?? hoveredNodeRef.current ?? null;
+      const nextNodeId = candidateNodeId;
       onSelectNode(nextNodeId === selectedNodeId ? null : nextNodeId);
     }
 
+    setPressedNodeId(null);
     pointerDownNodeRef.current = null;
     interactionRef.current = null;
   }
@@ -850,6 +910,7 @@ export default function GraphCanvas({
     }
 
     pointerStateRef.current.inside = false;
+    setPressedNodeId(null);
     pointerDownNodeRef.current = null;
     interactionRef.current = null;
     updateHoveredNode(null);
@@ -889,12 +950,12 @@ export default function GraphCanvas({
 
     if (selectedNodeId) {
       if (isSelected) {
-        return Math.min(1, opacity * NODE_OPACITY.selectedBoost);
+        return 1;
       }
       if (connectedToSelected) {
-        opacity *= NODE_OPACITY.selectedConnected;
+        return Math.max(0.68, opacity * NODE_OPACITY.selectedConnected);
       } else {
-        opacity *= NODE_OPACITY.selectedUnrelated;
+        return NODE_OPACITY.selectedUnrelated;
       }
     } else if (hoveredNodeId) {
       if (isHovered) {
@@ -924,18 +985,18 @@ export default function GraphCanvas({
     if (selectedNodeId) {
       if (isSelectedEdge) {
         return Math.max(
-          EDGE_STYLE.selected.directMinOpacity,
+          0.92,
           EDGE_STYLE.selected.directBase + edge.weight * EDGE_STYLE.selected.directWeight,
         );
       }
       if (isHighlightEdge) {
         return Math.max(
-          EDGE_STYLE.selected.highlightMinOpacity,
+          0.42,
           EDGE_STYLE.selected.highlightBase +
             edge.weight * EDGE_STYLE.selected.highlightWeight,
         );
       }
-      return opacity * EDGE_STYLE.selected.unrelatedFade;
+      return EDGE_STYLE.selected.unrelatedFade;
     }
 
     if (hoveredNodeId) {
@@ -965,42 +1026,70 @@ export default function GraphCanvas({
     return opacity;
   }
 
+  function nodeLabelOpacity(node: GraphNode) {
+    const isSelected = selectedNodeId === node.id;
+    const isHovered = hoveredNodeId === node.id;
+    const isConnected = selectedNodeId ? selectedNeighborhood.has(node.id) : false;
+    const inHighlight = highlightNodes.size === 0 || highlightNodes.has(node.id);
+
+    if (!inHighlight && !isSelected) {
+      return 0.1;
+    }
+
+    if (selectedNodeId) {
+      if (isSelected) {
+        return 1;
+      }
+      if (isConnected) {
+        return 0.78;
+      }
+      return 0.1;
+    }
+
+    if (isHovered) {
+      return 0.92;
+    }
+
+    return 0.82;
+  }
+
   return (
     <div
       ref={containerRef}
-      onWheel={handleWheel}
       onPointerDown={startPan}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
-      onPointerLeave={() => {
+      onPointerLeave={(event) => {
         pointerStateRef.current.inside = false;
-        pointerDownNodeRef.current = null;
-        interactionRef.current = null;
+        const interaction = interactionRef.current;
+        if (!interaction || !event.currentTarget.hasPointerCapture(interaction.pointerId)) {
+          setPressedNodeId(null);
+          pointerDownNodeRef.current = null;
+          interactionRef.current = null;
+        }
         updateHoveredNode(null);
       }}
-      className="kernel-shell open-frame relative h-full overflow-hidden rounded-none text-white cursor-none select-none"
+      className="graph-canvas-light kernel-shell open-frame relative h-full overflow-hidden rounded-none text-black cursor-none select-none"
     >
       <div className="scan-grid absolute inset-0 opacity-35" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white/[0.05] to-transparent" />
-      <div className="pointer-events-none animate-scan-line absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-white/[0.08] via-white/[0.02] to-transparent" />
 
       {showHeader ? (
         <div className="pointer-events-none absolute left-6 top-5 right-6 flex items-start justify-between">
           <div>
-            <div className="font-pixel text-[11px] uppercase tracking-[0.34em] text-white/42">
+            <div className="font-pixel text-[11px] uppercase tracking-[0.34em] text-black/42">
               {t(locale, "canvasTitle")}
             </div>
-            <div className="mt-2 font-display text-[26px] leading-none tracking-[0.08em] text-white">
+            <div className="mt-2 font-display text-[26px] leading-none tracking-[0.08em] text-black">
               SYSTEM KERNEL
             </div>
           </div>
-          <div className="font-pixel text-[11px] uppercase tracking-[0.2em] text-white/46">
+          <div className="font-pixel text-[11px] uppercase tracking-[0.2em] text-black/46">
             {localizeHighlightTitle(locale, highlight)}
           </div>
         </div>
       ) : null}
 
-      <div className="pointer-events-none absolute inset-y-20 left-6 w-40 space-y-2 text-[10px] text-white/[0.16]">
+      <div className="pointer-events-none absolute inset-y-20 left-6 w-40 space-y-2 text-[10px] text-black/[0.16]">
         {codeLines.slice(0, 4).map((line) => (
           <div key={line} className="font-code tracking-[0.08em]">
             {line}
@@ -1008,7 +1097,7 @@ export default function GraphCanvas({
         ))}
       </div>
 
-      <div className="pointer-events-none absolute bottom-16 right-8 space-y-2 text-right text-[10px] text-white/[0.16]">
+      <div className="pointer-events-none absolute bottom-16 right-8 space-y-2 text-right text-[10px] text-black/[0.16]">
         {indexLabels.map((label) => (
           <div key={label} className="font-pixel tracking-[0.22em]">
             {label}
@@ -1019,11 +1108,11 @@ export default function GraphCanvas({
       <svg className="h-full w-full">
         <defs>
           <pattern id="kernel-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(15,18,23,0.05)" strokeWidth="1" />
           </pattern>
         </defs>
 
-        <rect x="0" y="0" width="100%" height="100%"  />
+        <rect x="0" y="0" width="100%" height="100%" fill="rgba(255,255,255,0.98)" />
 
         <g transform={`translate(${transform.x} ${transform.y}) scale(${transform.scale})`}>
           <LaneGuide x={toLayoutPosition(60, 0).x} label={t(locale, "laneSource")} />
@@ -1050,12 +1139,13 @@ export default function GraphCanvas({
                   ? EDGE_STYLE.selected.stroke
                   : EDGE_STYLE.default.stroke;
             const dash = edge.confidence < 0.55 ? "5 8" : "4 12";
+            const edgeDelay = `${(index % 9) * -0.6}s`;
             const edgeAnimation =
               selectedRelated
-                ? `edge-breathe ${8.2 + edge.confidence * 1.6}s ease-in-out infinite, data-flow ${6.6 - edge.weight * 1.45}s linear infinite`
+                ? `edge-breathe ${8.2 + edge.confidence * 1.6}s ease-in-out ${edgeDelay} infinite, data-flow ${6.6 - edge.weight * 1.45}s linear ${edgeDelay} infinite`
                 : active || edge.weight > 0.7
-                  ? `edge-breathe ${9 + edge.confidence * 2}s ease-in-out infinite, data-flow ${11 - edge.weight * 2.5}s linear infinite`
-                : `edge-breathe ${10 + edge.weight * 2.5}s ease-in-out infinite`;
+                  ? `edge-breathe ${9 + edge.confidence * 2}s ease-in-out ${edgeDelay} infinite, data-flow ${11 - edge.weight * 2.5}s linear ${edgeDelay} infinite`
+                : `edge-breathe ${10 + edge.weight * 2.5}s ease-in-out ${edgeDelay} infinite`;
 
             return (
               <path
@@ -1082,7 +1172,6 @@ export default function GraphCanvas({
                 strokeDasharray={dash}
                 style={{
                   animation: edgeAnimation,
-                  animationDelay: `${(index % 9) * -0.6}s`,
                 }}
               />
             );
@@ -1093,7 +1182,7 @@ export default function GraphCanvas({
               <path
                 d={edgePath(edge)}
                 fill="none"
-                stroke="rgba(180,214,223,0.1)"
+                stroke="rgba(255,170,124,0.22)"
                 strokeWidth={3.4}
                 strokeLinecap="round"
                 strokeOpacity={0.5}
@@ -1101,7 +1190,7 @@ export default function GraphCanvas({
               <path
                 d={edgePath(edge)}
                 fill="none"
-                stroke="rgba(245,247,248,0.72)"
+                stroke="rgba(255,126,58,0.8)"
                 strokeWidth={1.45}
                 strokeLinecap="round"
                 strokeOpacity={0.66}
@@ -1110,20 +1199,26 @@ export default function GraphCanvas({
             </g>
           ))}
 
-          {nodes.map((node, index) => {
+          {renderedNodes.map((node, index) => {
             const selected = selectedNodeId === node.id;
             const hovered = hoveredNodeId === node.id;
             const highlighted = highlightNodes.has(node.id);
-            const visibleLabel = node.showLabel || selected || highlighted || hovered;
+            const pressed = pressedNodeId === node.id;
+            const visibleLabel =
+              node.showLabel ||
+              node.size > LABEL_ALWAYS_VISIBLE_SIZE ||
+              selected ||
+              highlighted ||
+              hovered;
             const metrics = getNodeRenderMetrics(node.size, Boolean(node.isTail));
             const ambientAnimation = node.isTail
-              ? `ambient-tail ${10 + (index % 5)}s ease-in-out infinite`
-              : `ambient-node ${6 + (index % 4) * 0.9}s ease-in-out infinite`;
+              ? `ambient-tail ${10 + (index % 5)}s ease-in-out ${((index % 7) - 3) * 0.7}s infinite`
+              : `ambient-node ${6 + (index % 4) * 0.9}s ease-in-out ${((index % 7) - 3) * 0.7}s infinite`;
             const emphasisAnimation =
               selected || highlighted
-                ? ", pulse-slow 5.8s ease-in-out infinite"
+                ? `, pulse-slow 5.8s ease-in-out ${((index % 7) - 3) * 0.7}s infinite`
                 : hovered
-                  ? ", pulse-slow 7.2s ease-in-out infinite"
+                  ? `, pulse-slow 7.2s ease-in-out ${((index % 7) - 3) * 0.7}s infinite`
                   : "";
 
             return (
@@ -1134,38 +1229,50 @@ export default function GraphCanvas({
                 <g
                   style={{
                     animation: ambientAnimation + emphasisAnimation,
-                    animationDelay: `${((index % 7) - 3) * 0.7}s`,
                     transformBox: "fill-box",
                     transformOrigin: "center",
                   }}
                 >
-                  <PixelNode
-                    size={node.size}
-                    opacity={nodeOpacity(node)}
-                    selected={selected}
-                    hovered={hovered}
-                    isTail={Boolean(node.isTail)}
-                  />
+                  <g
+                    style={{
+                      transform: pressed ? "scale(1.08)" : "scale(1)",
+                      transformBox: "fill-box",
+                      transformOrigin: "center",
+                      transition: "transform 120ms ease-out",
+                    }}
+                  >
+                    <PixelNode
+                      size={node.size}
+                      opacity={nodeOpacity(node)}
+                      selected={selected}
+                      hovered={hovered}
+                      isTail={Boolean(node.isTail)}
+                    />
 
-                  {selected && <BracketFrame span={metrics.span} selected={selected} />}
+                    {selected && <BracketFrame span={metrics.span} selected={selected} />}
 
-                  {selected && (
-                    <text
-                      x={metrics.span + 18}
-                      y={-metrics.span - 12}
-                      className="font-code text-[10px] uppercase tracking-[0.18em] fill-[rgba(255,255,255,0.64)]"
-                    >
-                      [{Math.round(node.x)},{Math.round(node.y)}]
-                    </text>
-                  )}
-
-                  {visibleLabel && (
-                    <g transform={`translate(${metrics.span + 16} ${node.isTail ? -2 : -10})`}>
-                      <text className="font-pixel text-[11px] uppercase tracking-[0.16em] fill-[rgba(255,255,255,0.82)]">
-                        {node.label}
+                    {selected && (
+                      <text
+                        x={metrics.span + 18}
+                        y={-metrics.span - 12}
+                        className="font-code text-[10px] uppercase tracking-[0.18em]"
+                        fill="rgba(15,18,23,0.84)"
+                      >
+                        [{Math.round(node.x)},{Math.round(node.y)}]
                       </text>
-                    </g>
-                  )}
+                    )}
+
+                    {visibleLabel && (
+                      <g transform={`translate(${metrics.span + 16} ${node.isTail ? -2 : -10})`}>
+                        <text
+                          className="font-pixel text-[11px] uppercase tracking-[0.16em]"
+                          fill={`rgba(15,18,23,${nodeLabelOpacity(node)})`}
+                        >
+                          {node.label}
+                        </text>
+                      </g>
+                    )}
+                  </g>
                 </g>
               </g>
             );
@@ -1175,7 +1282,7 @@ export default function GraphCanvas({
 
       <canvas ref={overlayCanvasRef} className="pointer-events-none absolute inset-0 z-20" />
 
-      <div className="pointer-events-none absolute bottom-5 left-6 border border-white/10 bg-white/[0.03] px-4 py-3 font-pixel text-[11px] uppercase tracking-[0.22em] text-white/52">
+      <div className="pointer-events-none absolute bottom-5 left-6 border border-black/10 bg-white/78 px-4 py-3 font-pixel text-[11px] uppercase tracking-[0.22em] text-black/52">
         {canvasHint}
       </div>
     </div>
@@ -1207,7 +1314,7 @@ function PixelNode({
           y={-1.8}
           width={3.6}
           height={3.6}
-          fill={hovered ? "rgba(245,247,248,1)" : "rgba(248,249,250,0.96)"}
+          fill={hovered ? "rgba(15,18,23,1)" : "rgba(15,18,23,0.92)"}
           fillOpacity={Math.max(0.5, opacity)}
         />
         <rect
@@ -1215,7 +1322,7 @@ function PixelNode({
           y={-1.05}
           width={1.7}
           height={1.7}
-          fill="rgba(248,249,250,0.8)"
+          fill="rgba(15,18,23,0.72)"
           fillOpacity={Math.max(0.28, opacity * 0.82)}
         />
         <rect
@@ -1223,7 +1330,7 @@ function PixelNode({
           y={0.9}
           width={1.4}
           height={1.4}
-          fill="rgba(248,249,250,0.74)"
+          fill="rgba(15,18,23,0.64)"
           fillOpacity={Math.max(0.24, opacity * 0.68)}
         />
       </g>
@@ -1254,7 +1361,7 @@ function PixelNode({
           y={-(radius + 3) * (unit + gap)}
           width={(radius * 2 + 6) * (unit + gap)}
           height={(radius * 2 + 6) * (unit + gap)}
-          fill="rgba(180,214,223,0.05)"
+          fill="rgba(255,90,31,0.14)"
         />
       ) : null}
       {pixels.map((pixel, index) => (
@@ -1266,10 +1373,10 @@ function PixelNode({
           height={unit}
           fill={
             selected
-              ? "rgba(248,249,250,1)"
+              ? "rgba(255,90,31,0.98)"
               : hovered
-                ? "rgba(245,247,248,0.98)"
-                : "rgba(244,246,248,0.98)"
+                ? "rgba(15,18,23,0.94)"
+                : "rgba(15,18,23,0.88)"
           }
           fillOpacity={opacity * pixel.alpha}
         />
@@ -1287,10 +1394,13 @@ function BracketFrame({
 }) {
   const offset = span + 10;
   const arm = 10;
-  const stroke = selected ? "rgba(180,214,223,0.92)" : "rgba(255,255,255,0.78)";
+  const stroke = selected ? "rgba(255,90,31,0.96)" : "rgba(15,18,23,0.72)";
+  const animation = selected
+    ? "oran-bracket-fade 220ms ease-out forwards, oran-bracket-pulse 1.45s ease-in-out 220ms infinite"
+    : "oran-bracket-fade 220ms ease-out forwards";
 
   return (
-    <g className="animate-bracket" stroke={stroke} strokeWidth="1.1" fill="none">
+    <g stroke={stroke} strokeWidth="1.1" fill="none" style={{ animation }}>
       <path d={`M ${-offset} ${-offset + arm} L ${-offset} ${-offset} L ${-offset + arm} ${-offset}`} />
       <path d={`M ${offset - arm} ${-offset} L ${offset} ${-offset} L ${offset} ${-offset + arm}`} />
       <path d={`M ${-offset} ${offset - arm} L ${-offset} ${offset} L ${-offset + arm} ${offset}`} />
@@ -1306,12 +1416,12 @@ function BracketFrame({
 function LaneGuide({ x, label }: { x: number; label: string }) {
   return (
     <g>
-      <path d={`M ${x} 88 L ${x} 900`} stroke="rgba(255,255,255,0.09)" strokeDasharray="4 12" />
-      <path d={`M ${x + 250} 88 L ${x + 250} 900`} stroke="rgba(255,255,255,0.05)" strokeDasharray="4 12" />
+      <path d={`M ${x} 88 L ${x} 900`} stroke="rgba(15,18,23,0.09)" strokeDasharray="4 12" />
+      <path d={`M ${x + 250} 88 L ${x + 250} 900`} stroke="rgba(15,18,23,0.05)" strokeDasharray="4 12" />
       <text
         x={x + 12}
         y={70}
-        className="font-pixel text-[11px] uppercase tracking-[0.22em] fill-[rgba(255,255,255,0.42)]"
+        className="font-pixel text-[11px] uppercase tracking-[0.22em] fill-[rgba(15,18,23,0.42)]"
       >
         {label}
       </text>

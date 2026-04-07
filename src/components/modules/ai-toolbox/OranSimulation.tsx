@@ -96,7 +96,7 @@ export function OranSimulation(_: OranSimulationProps) {
 
   if (step === 'scene') {
     return (
-      <div className="h-full min-h-0 overflow-hidden bg-background">
+      <div className="h-[calc(100dvh-56px)] min-h-0 overflow-hidden bg-background">
         <OranSimulationScene
           locale={locale}
           onBack={() => setStep('home')}

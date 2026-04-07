@@ -701,7 +701,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
         </button>
       )}
       <span
-        className="min-w-[30px] px-3 py-1 text-[14px] font-medium text-foreground/78"
+        className="min-w-[30px] px-3 py-1 text-[14px] font-normal font-urbanist text-foreground/78"
         aria-label={`当前文件 ${previewToolbarItems[resolvedActivePreviewToolbarIndex]?.label ?? 'File 01'}`}
       >
         {previewToolbarItems[resolvedActivePreviewToolbarIndex]?.label ?? 'File 01'}
@@ -1292,7 +1292,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
 
                           <section className="space-y-3">
                             <div className="space-y-1">
-                              <h3 className="text-[17px] font-light tracking-tight text-foreground">
+                              <h3 className="text-[14px] font-light tracking-tight text-foreground">
                                 已完成参考资料读取...
                               </h3>
                               <p className="text-[12px] leading-6 text-muted-foreground">
@@ -1330,8 +1330,8 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
 
                           <section className="space-y-3">
                             <div className="space-y-1">
-                              <h3 className="text-[17px] font-light tracking-tight text-foreground">
-                                已完成品牌信息整理...
+                              <h3 className="text-[14px] font-light tracking-tight text-foreground">
+                                已完成品牌信息整理
                               </h3>
                               <p className="text-[12px] leading-6 text-muted-foreground">
                                 洞察阶段的品牌、品类、竞品与参考资料已整理完毕。
@@ -1356,8 +1356,8 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
 
                           <section className="space-y-3">
                             <div className="space-y-1">
-                              <h3 className="text-[17px] font-light tracking-tight text-foreground">
-                                已完成洞察报告生成...
+                              <h3 className="text-[14px] font-light tracking-tight text-foreground">
+                                已完成洞察报告生成
                               </h3>
                               <p className="text-[12px] leading-6 text-muted-foreground">
                                 洞察阶段的生成步骤已完成，右侧当前保留这份已完成报告。
@@ -1399,12 +1399,12 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                       {hasReachedStep('reading') && (
                       <section className="space-y-3">
                         <div className="space-y-1">
-                          <h3 className="text-[17px] font-light tracking-tight text-foreground">
+                          <h3 className="text-[14px] font-light tracking-tight text-foreground">
                             {reportType === 'planning' && !docsReadFinished && step === 'reading'
                               ? '正在读取策划所需资料...'
                               : reportType === 'planning'
-                                ? '已完成策划资料读取...'
-                                : '已完成参考资料读取...'}
+                                ? '已完成策划资料读取'
+                                : '已完成参考资料读取'}
                           </h3>
                           <p className="text-[12px] leading-6 text-muted-foreground">
                             {reportType === 'planning' && !docsReadFinished && step === 'reading'
@@ -1467,12 +1467,12 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                       {(reportType !== 'planning' || docsReadFinished || step !== 'reading') && (
                         <section className="space-y-3">
                           <div className="space-y-1">
-                            <h3 className="text-[17px] font-light tracking-tight text-foreground">
+                            <h3 className="text-[14px] font-light tracking-tight text-foreground">
                               {reportType === 'planning' && step === 'reading'
                                 ? '正在提取策划关键信息...'
                                 : reportType === 'planning'
-                                  ? '已完成策划关键信息提取...'
-                                  : '已完成品牌信息整理...'}
+                                  ? '已完成策划关键信息提取'
+                                  : '已完成品牌信息整理'}
                             </h3>
                             <p className="text-[12px] leading-6 text-muted-foreground">
                               {reportType === 'planning' && step === 'reading'
@@ -1523,8 +1523,8 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                       {(hasReachedStep('confirm') || (reportType === 'planning' && step === 'confirm')) && reportType === 'planning' && (
                         <section className="space-y-3">
                           <div className="space-y-1">
-                            <h3 className="text-[17px] font-light tracking-tight text-foreground">
-                              {step === 'confirm' ? '等待确认策划信息...' : '已完成策划信息确认...'}
+                            <h3 className="text-[14px] font-light tracking-tight text-foreground">
+                              {step === 'confirm' ? '等待确认策划信息...' : '已完成策划信息确认'}
                             </h3>
                             <p className="text-[12px] leading-6 text-foreground/60">
                               {step === 'confirm'
@@ -1596,7 +1596,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                       {hasReachedStep('generating') && (
                         <section className="space-y-3">
                           <div className="space-y-1">
-                            <h3 className="text-[17px] font-light tracking-tight text-foreground">
+                            <h3 className="text-[14px] font-light tracking-tight text-foreground">
                               {workflowStatus === 'generating_report'
                                 ? `正在生成${reportTypeLabel}...`
                                 : `已完成${reportTypeLabel}生成...`}
@@ -1639,7 +1639,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                       {showInsightFollowUpActions && (
                         <section className="space-y-3 ">
                           <div className="space-y-1">
-                            <h3 className="text-[18px] font-light tracking-tight text-foreground">
+                            <h3 className="text-[14px] font-light tracking-tight text-foreground">
                               接下来
                             </h3>
                             
@@ -1652,7 +1652,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                               className="group flex min-h-[30px] w-full items-center justify-between rounded-[22px] border border-border/40 bg-background/90 px-5 py-1.5 text-left transition-all hover:border-foreground/25 hover:bg-muted/30"
                             >
                               <div className="space-y-1">
-                                <div className="text-[15px] font-medium text-foreground/70">
+                                <div className="text-[13px] font-medium text-foreground/70">
                                   基于当前洞察报告，继续生成策划方案
                                 </div>
                               </div>
@@ -1665,7 +1665,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                               className="group flex min-h-[30px] w-full items-center justify-between rounded-[22px] border border-border/40 bg-background/90 px-5 py-1.5 text-left transition-all hover:border-foreground/25 hover:bg-muted/30"
                             >
                               <div className="space-y-1">
-                                <div className="text-[15px] font-medium text-foreground/70">
+                                <div className="text-[13px] font-medium text-foreground/70">
                                   基于当前洞察报告，继续生成爆款内容
                                 </div>
                               </div>
@@ -1678,7 +1678,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                       {showPlanningFollowUpActions && (
                         <section className="space-y-3 ">
                           <div className="space-y-1">
-                            <h3 className="text-[18px] font-light tracking-tight text-foreground">
+                            <h3 className="text-[14px] font-light tracking-tight text-foreground">
                               接下来
                             </h3>
                           </div>
@@ -1690,7 +1690,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                               className="group flex min-h-[30px] w-full items-center justify-between rounded-[22px] border border-border/40 bg-background/90 px-5 py-1.5 text-left transition-all hover:border-foreground/25 hover:bg-muted/30"
                             >
                               <div className="space-y-1">
-                                <div className="text-[15px] font-medium text-foreground/70">
+                                <div className="text-[13px] font-medium text-foreground/70">
                                   根据已有报告，进入预测
                                 </div>
                               </div>
@@ -1703,7 +1703,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                               className="group flex min-h-[30px] w-full items-center justify-between rounded-[22px] border border-border/40 bg-background/90 px-5 py-1.5 text-left transition-all hover:border-foreground/25 hover:bg-muted/30"
                             >
                               <div className="space-y-1">
-                                <div className="text-[15px] font-medium text-foreground/70">
+                                <div className="text-[13px] font-medium text-foreground/70">
                                   根据已有报告，进入内容生成
                                 </div>
                               </div>
