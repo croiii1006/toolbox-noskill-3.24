@@ -891,6 +891,20 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
       attachmentNames: attachmentEntries.map((entry) => entry.title),
       prompt,
       autoStart: true,
+      brandName:
+        planningSource?.brandName ||
+        insightSource?.brandName ||
+        brandName.trim() ||
+        persistedCompletedExtractedInfo.brandName ||
+        extractedInfo.brandName ||
+        '',
+      category:
+        planningSource?.category ||
+        insightSource?.category ||
+        category.trim() ||
+        persistedCompletedExtractedInfo.category ||
+        extractedInfo.category ||
+        '',
     });
     onNavigate?.('oran-simulation');
   }, [

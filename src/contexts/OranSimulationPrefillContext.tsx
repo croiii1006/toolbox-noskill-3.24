@@ -5,6 +5,8 @@ export interface OranSimulationPrefill {
   attachmentNames: string[];
   prompt?: string;
   autoStart?: boolean;
+  brandName?: string;
+  category?: string;
 }
 
 interface OranSimulationPrefillContextValue {
