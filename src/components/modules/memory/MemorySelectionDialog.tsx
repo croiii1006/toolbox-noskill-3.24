@@ -31,10 +31,10 @@ export function MemorySelectionDialog({
   selectedIds,
   onToggle,
   maxChars = CHAR_LIMIT,
-  className
+  className,
 }: MemorySelectionDialogProps) {
   const totalChars = useMemo(
-    () => items.filter((i) => selectedIds.includes(i.id)).reduce((sum, i) => sum + i.charCount, 0),
+    () => items.filter(i => selectedIds.includes(i.id)).reduce((sum, i) => sum + i.charCount, 0),
     [items, selectedIds]
   );
 
@@ -57,12 +57,12 @@ export function MemorySelectionDialog({
             )}>
               已选 {totalChars.toLocaleString()} / {maxChars.toLocaleString()} 字符
             </span>
-            {isOverLimit &&
-            <span className="flex items-center gap-1 text-destructive font-medium">
+            {isOverLimit && (
+              <span className="flex items-center gap-1 text-destructive font-medium">
                 <AlertTriangle className="w-3 h-3" />
                 超出上限
               </span>
-            }
+            )}
           </div>
           <div className="h-1.5 rounded-full bg-muted/50 overflow-hidden">
             <div
@@ -70,13 +70,13 @@ export function MemorySelectionDialog({
                 'h-full rounded-full transition-all duration-300',
                 isOverLimit ? 'bg-destructive' : nearLimit ? 'bg-amber-500' : 'bg-foreground/60'
               )}
-              style={{ width: `${Math.min(100, totalChars / maxChars * 100)}%` }} />
-            
+              style={{ width: `${Math.min(100, (totalChars / maxChars) * 100)}%` }}
+            />
           </div>
         </div>
 
         <div className="space-y-1.5 mt-2 max-h-[50vh] overflow-y-auto scrollbar-thin">
-          {items.map((item) => {
+          {items.map(item => {
             const selected = selectedIds.includes(item.id);
             return (
               <button
@@ -84,11 +84,11 @@ export function MemorySelectionDialog({
                 onClick={() => onToggle(item.id)}
                 className={cn(
                   'w-full text-left px-4 py-3 rounded-xl border text-sm transition-all',
-                  selected ?
-                  'border-foreground/20 bg-foreground/[0.03]' :
-                  'border-border/30 hover:border-border/60'
-                )}>
-                
+                  selected
+                    ? 'border-foreground/20 bg-foreground/[0.03]'
+                    : 'border-border/30 hover:border-border/60'
+                )}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className={cn(
@@ -99,33 +99,30 @@ export function MemorySelectionDialog({
                     </div>
                     <span className="font-medium text-foreground">{item.name}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground/50">{item.charCount}字</span>
-                    
-                  </div>
+                   <span className="text-[10px] text-muted-foreground/50">{item.charCount}字</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1 ml-[30px]">{item.desc}</p>
-              </button>);
-
+              </button>
+            );
           })}
         </div>
 
         <div className="flex items-center justify-between mt-3">
-          {isOverLimit &&
-          <p className="text-[11px] text-destructive">请减少选择，当前超出 {(totalChars - maxChars).toLocaleString()} 字符</p>
-          }
+          {isOverLimit && (
+            <p className="text-[11px] text-destructive">请减少选择，当前超出 {(totalChars - maxChars).toLocaleString()} 字符</p>
+          )}
           <div className="ml-auto">
             <Button
               onClick={() => onOpenChange(false)}
               size="sm"
               disabled={isOverLimit}
-              className="rounded-lg h-8 px-5 bg-foreground text-background hover:bg-foreground/90 text-xs disabled:opacity-40 disabled:cursor-not-allowed">
-              
+              className="rounded-lg h-8 px-5 bg-foreground text-background hover:bg-foreground/90 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+            >
               确认 ({selectedIds.length})
             </Button>
           </div>
         </div>
       </DialogContent>
-    </Dialog>);
-
+    </Dialog>
+  );
 }

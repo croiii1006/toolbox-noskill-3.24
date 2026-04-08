@@ -6,14 +6,24 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
+  History,
   Loader2,
   Maximize2,
+  X,
 } from 'lucide-react';
 import type { KeyboardEvent } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { useCredits } from '@/contexts/CreditsContext';
 import { useMemory } from '@/contexts/MemoryContext';
+import { useOranGenPrefill } from '@/contexts/OranGenPrefillContext';
 import { useOranSimulationPrefill } from '@/contexts/OranSimulationPrefillContext';
 import { cn } from '@/lib/utils';
 import {
@@ -47,6 +57,7 @@ interface ExtractedInfo {
 const GENERATION_COST = 50;
 const CASES_PER_PAGE = 16;
 const DEBUG_STAY_ON_PROCESSING_PAGE = false;
+const INSIGHT_HISTORY_STORAGE_KEY = 'oran-insight-history';
 
 const REPORT_TYPE_LABELS: Record<ReportType, string> = {
   insight: '洞察报告',
@@ -66,6 +77,34 @@ const GENERATING_PHASES = [
   { label: '补充策略建议', delay: 5000 },
   { label: '合成 HTML 结果', delay: 6600 },
 ];
+
+interface InsightHistoryItem {
+  id: string;
+  date: string;
+  step: 'input' | 'report';
+  brandName: string;
+  category: string;
+  reportType: ReportType;
+  planningInputSource: PlanningInputSource;
+  competitors: string[];
+  selectedMemoryIds: string[];
+  extractedInfo: ExtractedInfo;
+  persistedCompletedReportType: ReportType;
+  persistedCompletedExtractedInfo: ExtractedInfo;
+}
+
+function loadInsightHistory(): InsightHistoryItem[] {
+  try {
+    const raw = localStorage.getItem(INSIGHT_HISTORY_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as InsightHistoryItem[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveInsightHistory(items: InsightHistoryItem[]) {
+  localStorage.setItem(INSIGHT_HISTORY_STORAGE_KEY, JSON.stringify(items));
+}
 
 function buildExtractedInfo(params: {
   brandName: string;
@@ -104,6 +143,7 @@ function buildExtractedInfo(params: {
 export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => void }) {
   const { deduct, canAfford, shortfall } = useCredits();
   const { entries, ensureEntry } = useMemory();
+  const { setPrefill: setOranGenPrefill } = useOranGenPrefill();
   const { setPrefill: setOranSimulationPrefill } = useOranSimulationPrefill();
 
   const [step, setStep] = useState<Step>('input');
@@ -155,8 +195,10 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   const processingViewportRef = useRef<HTMLDivElement | null>(null);
   const splitLayoutAsideRef = useRef<HTMLElement | null>(null);
   const previousStepRef = useRef<Step>('input');
+  const isRestoringHistoryRef = useRef(false);
   const [completedReadingDocCount, setCompletedReadingDocCount] = useState(0);
   const [visibleReadingDocCount, setVisibleReadingDocCount] = useState(1);
+  const [history, setHistory] = useState<InsightHistoryItem[]>(loadInsightHistory);
 
   const memoryItems: MemorySelectItem[] = useMemo(
     () =>
@@ -592,7 +634,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
         ? [
             {
               key: 'insight-history' as const,
-              label: 'File 01',
+              label: REPORT_TYPE_LABELS.insight,
             },
           ]
         : []),
@@ -600,7 +642,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
         key: (hasMultiplePreviewFiles ? 'auto' : activePreviewReportType === 'insight' ? 'insight-history' : 'auto') as
           | 'insight-history'
           | 'auto',
-        label: hasMultiplePreviewFiles ? 'File 02' : 'File 01',
+        label: hasMultiplePreviewFiles ? REPORT_TYPE_LABELS.planning : REPORT_TYPE_LABELS[activePreviewReportType],
       },
     ],
     [activePreviewReportType, hasMultiplePreviewFiles]
@@ -667,56 +709,30 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     [handleShowCurrentReportPreview, handleShowPreviousInsightPreview, previewToolbarItems]
   );
 
-  const handlePreviewToolbarStep = useCallback(
-    (direction: 'prev' | 'next') => {
-      if (previewToolbarItems.length <= 1) {
-        return;
-      }
-
-      const nextIndex =
-        direction === 'prev'
-          ? Math.max(0, resolvedActivePreviewToolbarIndex - 1)
-          : Math.min(previewToolbarItems.length - 1, resolvedActivePreviewToolbarIndex + 1);
-
-      if (nextIndex === resolvedActivePreviewToolbarIndex) {
-        return;
-      }
-
-      handlePreviewToolbarSelect(nextIndex);
-    },
-    [handlePreviewToolbarSelect, previewToolbarItems.length, resolvedActivePreviewToolbarIndex]
-  );
-
   const previewToolbarControl = (
-    <div className="inline-flex items-center gap-1  bg-background/88 py-1 ">
-      {hasMultiplePreviewFiles && (
-        <button
-          type="button"
-          onClick={() => handlePreviewToolbarStep('prev')}
-          disabled={resolvedActivePreviewToolbarIndex <= 0}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-35"
-          aria-label="查看上一个文件"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-      )}
-      <span
-        className="min-w-[30px] px-3 py-1 text-[14px] font-normal font-urbanist text-foreground/78"
-        aria-label={`当前文件 ${previewToolbarItems[resolvedActivePreviewToolbarIndex]?.label ?? 'File 01'}`}
-      >
-        {previewToolbarItems[resolvedActivePreviewToolbarIndex]?.label ?? 'File 01'}
-      </span>
-      {hasMultiplePreviewFiles && (
-        <button
-          type="button"
-          onClick={() => handlePreviewToolbarStep('next')}
-          disabled={resolvedActivePreviewToolbarIndex >= previewToolbarItems.length - 1}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-35"
-          aria-label="查看下一个文件"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      )}
+    <div className="inline-flex items-center gap-3 bg-background/88 py-1">
+      {previewToolbarItems.map((item, index) => {
+        const isActive = index === resolvedActivePreviewToolbarIndex;
+
+        return (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => handlePreviewToolbarSelect(index)}
+            className={cn(
+              'inline-flex h-2.5 w-2.5 items-center justify-center rounded-full transition-colors',
+              isActive
+                ? 'bg-accent/80'
+                : 'bg-muted-foreground/15 hover:bg-accent/40'
+            )}
+            aria-pressed={isActive}
+            aria-label={`切换到${item.label}`}
+            title={item.label}
+          >
+            <span className="sr-only">{item.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 
@@ -730,39 +746,166 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     previewWindow.document.close();
   }, []);
 
-  const handleJumpToOranGen = useCallback(() => {
-    onNavigate?.('oran-gen');
-  }, [onNavigate]);
+  const jumpToOranGenWithPrefill = useCallback(() => {
+    const insightSource =
+      reportType === 'insight'
+        ? extractedInfo
+        : persistedCompletedReportType === 'insight' && persistedCompletedExtractedInfo.brandName
+          ? persistedCompletedExtractedInfo
+          : null;
 
-  const handleJumpToPrediction = useCallback(() => {
-    const attachmentEntry = ensureEntry({
-      title: `${extractedInfo.brandName || '未命名品牌'} 策划方案附件`,
-      content: [
-        `品牌：${extractedInfo.brandName || '待补充'}`,
-        `品类：${extractedInfo.category || '待补充'}`,
-        `营销目标：${extractedInfo.marketingGoal || '待确认'}`,
-        `目标人群：${extractedInfo.targetAudience || '待确认'}`,
-        `核心卖点：${extractedInfo.sellingPoints.join('、') || '待确认'}`,
-        `预算量级：${extractedInfo.budgetLevel || '待确认'}`,
-        `主攻渠道：${extractedInfo.primaryChannels || '待确认'}`,
-      ].join('\n'),
-      category: '策划方案',
-      tags: [extractedInfo.category, extractedInfo.primaryChannels, extractedInfo.budgetLevel].filter(Boolean),
+    const planningSource =
+      reportType === 'planning'
+        ? extractedInfo
+        : persistedCompletedReportType === 'planning' && persistedCompletedExtractedInfo.brandName
+          ? persistedCompletedExtractedInfo
+          : null;
+
+    const attachmentEntries = [];
+
+    if (insightSource) {
+      attachmentEntries.push(
+        ensureEntry({
+          title: `${insightSource.brandName || '未命名品牌'} 洞察报告附件`,
+          content: [
+            `品牌：${insightSource.brandName || '待补充'}`,
+            `品类：${insightSource.category || '待补充'}`,
+            `分析对象：${insightSource.analysisTarget || '待补充'}`,
+            `业务方向：${insightSource.businessDirection || '待补充'}`,
+            `核心卖点：${insightSource.sellingPoints.join('、') || '待补充'}`,
+          ].join('\n'),
+          category: '洞察报告',
+          tags: [insightSource.category, insightSource.analysisTarget, '洞察报告'].filter(Boolean),
+        })
+      );
+    }
+
+    if (planningSource) {
+      attachmentEntries.push(
+        ensureEntry({
+          title: `${planningSource.brandName || '未命名品牌'} 策划方案附件`,
+          content: [
+            `品牌：${planningSource.brandName || '待补充'}`,
+            `品类：${planningSource.category || '待补充'}`,
+            `营销目标：${planningSource.marketingGoal || '待确认'}`,
+            `目标人群：${planningSource.targetAudience || '待确认'}`,
+            `核心卖点：${planningSource.sellingPoints.join('、') || '待确认'}`,
+            `预算量级：${planningSource.budgetLevel || '待确认'}`,
+            `主攻渠道：${planningSource.primaryChannels || '待确认'}`,
+          ].join('\n'),
+          category: '策划方案',
+          tags: [planningSource.category, planningSource.primaryChannels, planningSource.budgetLevel].filter(Boolean),
+        })
+      );
+    }
+
+    setOranGenPrefill({
+      attachmentIds: attachmentEntries.map((entry) => entry.id),
+      attachmentNames: attachmentEntries.map((entry) => entry.title),
+      category:
+        planningSource?.category ||
+        insightSource?.category ||
+        category.trim() ||
+        persistedCompletedExtractedInfo.category ||
+        undefined,
     });
 
+    onNavigate?.('skills');
+  }, [
+    category,
+    ensureEntry,
+    extractedInfo,
+    onNavigate,
+    persistedCompletedExtractedInfo,
+    persistedCompletedReportType,
+    reportType,
+    setOranGenPrefill,
+  ]);
+
+  const handleJumpToOranGen = useCallback(() => {
+    jumpToOranGenWithPrefill();
+  }, [jumpToOranGenWithPrefill]);
+
+  const handleJumpToPrediction = useCallback(() => {
+    const insightSource =
+      reportType === 'insight'
+        ? extractedInfo
+        : persistedCompletedReportType === 'insight' && persistedCompletedExtractedInfo.brandName
+          ? persistedCompletedExtractedInfo
+          : null;
+
+    const planningSource =
+      reportType === 'planning'
+        ? extractedInfo
+        : persistedCompletedReportType === 'planning' && persistedCompletedExtractedInfo.brandName
+          ? persistedCompletedExtractedInfo
+          : null;
+
+    const attachmentEntries = [];
+
+    if (insightSource) {
+      attachmentEntries.push(
+        ensureEntry({
+          title: `${insightSource.brandName || '未命名品牌'} 洞察报告附件`,
+          content: [
+            `品牌：${insightSource.brandName || '待补充'}`,
+            `品类：${insightSource.category || '待补充'}`,
+            `分析对象：${insightSource.analysisTarget || '待补充'}`,
+            `业务方向：${insightSource.businessDirection || '待补充'}`,
+            `核心卖点：${insightSource.sellingPoints.join('、') || '待补充'}`,
+          ].join('\n'),
+          category: '洞察报告',
+          tags: [insightSource.category, insightSource.analysisTarget, '洞察报告'].filter(Boolean),
+        })
+      );
+    }
+
+    if (planningSource) {
+      attachmentEntries.push(
+        ensureEntry({
+          title: `${planningSource.brandName || '未命名品牌'} 策划方案附件`,
+          content: [
+            `品牌：${planningSource.brandName || '待补充'}`,
+            `品类：${planningSource.category || '待补充'}`,
+            `营销目标：${planningSource.marketingGoal || '待确认'}`,
+            `目标人群：${planningSource.targetAudience || '待确认'}`,
+            `核心卖点：${planningSource.sellingPoints.join('、') || '待确认'}`,
+            `预算量级：${planningSource.budgetLevel || '待确认'}`,
+            `主攻渠道：${planningSource.primaryChannels || '待确认'}`,
+          ].join('\n'),
+          category: '策划方案',
+          tags: [planningSource.category, planningSource.primaryChannels, planningSource.budgetLevel].filter(Boolean),
+        })
+      );
+    }
+
+    const prompt =
+      attachmentEntries.length >= 2
+        ? '基于附件中的洞察报告与策划方案，预测后续传播表现与执行风险。'
+        : planningSource
+          ? '基于附件中的策划方案，预测后续传播表现与执行风险。'
+          : '基于附件中的洞察报告，预测后续传播表现与执行风险。';
+
     setOranSimulationPrefill({
-      attachmentIds: [attachmentEntry.id],
-      attachmentNames: [attachmentEntry.title],
-      prompt: `基于附件中的策划方案，预测后续传播表现与执行风险。`,
+      attachmentIds: attachmentEntries.map((entry) => entry.id),
+      attachmentNames: attachmentEntries.map((entry) => entry.title),
+      prompt,
       autoStart: true,
     });
     onNavigate?.('oran-simulation');
-  }, [ensureEntry, extractedInfo, onNavigate, setOranSimulationPrefill]);
+  }, [
+    ensureEntry,
+    extractedInfo,
+    onNavigate,
+    persistedCompletedExtractedInfo,
+    persistedCompletedReportType,
+    reportType,
+    setOranSimulationPrefill,
+  ]);
 
   const handleJumpToContentGeneration = useCallback(() => {
-    // Reserved content-generation entry point for future report handoff.
-    onNavigate?.('oran-gen');
-  }, [onNavigate]);
+    jumpToOranGenWithPrefill();
+  }, [jumpToOranGenWithPrefill]);
 
   const handleConfirmPlanningGenerate = useCallback(() => {
     if (!canConfirmPlanning) {
@@ -778,8 +921,72 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     startTransition(() => setStep('generating'));
   }, [canAfford, canConfirmPlanning, deduct]);
 
+  const createHistoryItem = useCallback((): InsightHistoryItem => ({
+    id: crypto.randomUUID(),
+    date: new Date().toISOString(),
+    step: 'report',
+    brandName: brandName.trim() || extractedInfo.brandName,
+    category: category.trim() || extractedInfo.category,
+    reportType,
+    planningInputSource,
+    competitors,
+    selectedMemoryIds,
+    extractedInfo,
+    persistedCompletedReportType,
+    persistedCompletedExtractedInfo,
+  }), [
+    brandName,
+    category,
+    competitors,
+    extractedInfo,
+    persistedCompletedExtractedInfo,
+    persistedCompletedReportType,
+    planningInputSource,
+    reportType,
+    selectedMemoryIds,
+  ]);
+
+  const appendHistoryItem = useCallback((item: InsightHistoryItem) => {
+    setHistory((prev) => {
+      const updated = [item, ...prev].slice(0, 20);
+      saveInsightHistory(updated);
+      return updated;
+    });
+  }, []);
+
+  const handleRestoreHistory = useCallback((item: InsightHistoryItem) => {
+    isRestoringHistoryRef.current = true;
+    previousStepRef.current = item.step;
+    setBrandName(item.brandName);
+    setCategory(item.category);
+    setReportType(item.reportType);
+    setPlanningInputSource(item.planningInputSource);
+    setCompetitors(item.competitors);
+    setCompetitorInput('');
+    setSelectedMemoryIds(item.selectedMemoryIds);
+    setExtractedInfo(item.extractedInfo);
+    setPersistedCompletedReportType(item.persistedCompletedReportType);
+    setPersistedCompletedExtractedInfo(item.persistedCompletedExtractedInfo);
+    setPreviewMode('auto');
+    startTransition(() => setStep(item.step));
+  }, []);
+
+  const handleDeleteHistory = useCallback((id: string) => {
+    setHistory((prev) => {
+      const updated = prev.filter((item) => item.id !== id);
+      saveInsightHistory(updated);
+      return updated;
+    });
+  }, []);
+
   useEffect(() => {
     if (previousStepRef.current !== 'report' && step === 'report') {
+      if (isRestoringHistoryRef.current) {
+        isRestoringHistoryRef.current = false;
+        previousStepRef.current = step;
+        return;
+      }
+
       const shouldPreserveInsightHistory =
         isPlanningFromInsight &&
         reportType === 'planning' &&
@@ -790,10 +997,14 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
         setPersistedCompletedReportType(reportType);
         setPersistedCompletedExtractedInfo(extractedInfo);
       }
+
+      appendHistoryItem(createHistoryItem());
     }
 
     previousStepRef.current = step;
   }, [
+    appendHistoryItem,
+    createHistoryItem,
     extractedInfo,
     isPlanningFromInsight,
     persistedCompletedExtractedInfo.brandName,
@@ -801,6 +1012,75 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     reportType,
     step,
   ]);
+
+  const historySheet = (
+    <Sheet>
+      <SheetTrigger asChild>
+        <button className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground">
+          <History className="h-3.5 w-3.5" />
+          <span>历史记录</span>
+        </button>
+      </SheetTrigger>
+      <SheetContent className="w-80 sm:w-96">
+        <SheetHeader>
+          <SheetTitle className="text-base font-medium">历史记录</SheetTitle>
+        </SheetHeader>
+        <div className="mt-4 space-y-3 overflow-y-auto max-h-[calc(100vh-6rem)]">
+          {history.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => handleRestoreHistory(item)}
+              className="group relative w-full rounded-xl border border-border/30 p-3 text-left transition-all hover:border-border/60 hover:bg-muted/20"
+            >
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <span className="truncate text-sm font-medium text-foreground">
+                  {item.brandName || '未命名品牌'} {REPORT_TYPE_LABELS[item.reportType]}
+                </span>
+                <span className="shrink-0 text-[10px] text-muted-foreground">
+                  {new Date(item.date).toLocaleString('zh-CN', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>
+              </div>
+              <p className="truncate text-xs text-muted-foreground">
+                {item.category || '未填写品类'}
+                {item.competitors.length > 0 ? ` · ${item.competitors.join('、')}` : ''}
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-1">
+                {(item.reportType === 'insight' ||
+                  (item.persistedCompletedReportType === 'insight' &&
+                    Boolean(item.persistedCompletedExtractedInfo.brandName))) && (
+                  <span className="rounded-full bg-muted/40 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                    洞察
+                  </span>
+                )}
+                {item.reportType === 'planning' && (
+                  <span className="rounded-full bg-muted/40 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                    策划
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleDeleteHistory(item.id);
+                }}
+                className="absolute bottom-3 right-3 rounded-full p-1 opacity-0 transition-all group-hover:opacity-100 hover:bg-muted/40"
+              >
+                <X className="h-3.5 w-3.5 text-muted-foreground/50" />
+              </button>
+            </button>
+          ))}
+          {history.length === 0 && (
+            <p className="py-8 text-center text-sm text-muted-foreground">暂无历史记录</p>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
 
   useEffect(() => {
     if (step !== 'reading') {
@@ -953,7 +1233,10 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   ]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="relative flex h-full min-h-0 flex-col">
+      {step === 'input' ? (
+        <div className="absolute right-4 top-4 z-20 md:right-8 md:top-6">{historySheet}</div>
+      ) : null}
       <div
         ref={processingViewportRef}
         className={cn(

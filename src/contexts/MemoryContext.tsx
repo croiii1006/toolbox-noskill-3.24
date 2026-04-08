@@ -13,7 +13,7 @@ export interface MemoryEntry {
 
 interface MemoryContextValue {
   entries: MemoryEntry[];
-  addEntry: (entry: Omit<MemoryEntry, 'id' | 'createdAt' | 'updatedAt'>) => boolean;
+  addEntry: (entry: Omit<MemoryEntry, 'id' | 'createdAt' | 'updatedAt'>) => void;
   ensureEntry: (entry: Omit<MemoryEntry, 'id' | 'createdAt' | 'updatedAt'>) => MemoryEntry;
   updateEntry: (entry: MemoryEntry) => void;
   deleteEntry: (id: string) => void;
@@ -47,20 +47,19 @@ export function MemoryProvider({ children }: { children: ReactNode }) {
   const [entries, setEntries] = useState<MemoryEntry[]>(SEED);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const addEntry = useCallback((entry: Omit<MemoryEntry, 'id' | 'createdAt' | 'updatedAt'>): boolean => {
-    const duplicate = entries.some(e => e.title.trim() === entry.title.trim());
-    if (duplicate) {
-      toast.warning('该标题已存在于记忆库中');
-      return false;
-    }
+  const addEntry = useCallback((entry: Omit<MemoryEntry, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString().slice(0, 10);
     setEntries(prev => [...prev, { ...entry, id: crypto.randomUUID(), createdAt: now, updatedAt: now }]);
     toast.success('已添加到记忆库');
-    return true;
-  }, [entries]);
+  }, []);
 
-  const ensureEntry = useCallback((entry: Omit<MemoryEntry, 'id' | 'createdAt' | 'updatedAt'>): MemoryEntry => {
-    const existing = entries.find(e => e.title.trim() === entry.title.trim());
+  const ensureEntry = useCallback((entry: Omit<MemoryEntry, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const existing = entries.find((item) =>
+      item.title === entry.title &&
+      item.content === entry.content &&
+      item.category === entry.category
+    );
+
     if (existing) {
       return existing;
     }
@@ -72,7 +71,8 @@ export function MemoryProvider({ children }: { children: ReactNode }) {
       createdAt: now,
       updatedAt: now,
     };
-    setEntries(prev => [...prev, nextEntry]);
+
+    setEntries((prev) => [...prev, nextEntry]);
     return nextEntry;
   }, [entries]);
 
@@ -86,17 +86,8 @@ export function MemoryProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const importEntries = useCallback((data: MemoryEntry[]) => {
-    const existingTitles = new Set(entries.map(e => e.title.trim()));
-    const unique = data.filter(d => !existingTitles.has(d.title.trim()));
-    const skipped = data.length - unique.length;
-    if (skipped > 0) {
-      toast.warning(`已跳过 ${skipped} 条重复标题的记忆条目`);
-    }
-    if (unique.length > 0) {
-      setEntries(prev => [...prev, ...unique.map(d => ({ ...d, id: crypto.randomUUID() }))]);
-      toast.success(`已导入 ${unique.length} 条记忆条目`);
-    }
-  }, [entries]);
+    setEntries(prev => [...prev, ...data.map(d => ({ ...d, id: crypto.randomUUID() }))]);
+  }, []);
 
   return (
     <MemoryContext.Provider value={{ entries, addEntry, ensureEntry, updateEntry, deleteEntry, importEntries, drawerOpen, setDrawerOpen }}>

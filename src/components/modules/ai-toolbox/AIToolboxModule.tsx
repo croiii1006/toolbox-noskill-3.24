@@ -4,6 +4,7 @@ import { InsightWorkbench } from './InsightWorkbench';
 import { OranSimulation } from './OranSimulation';
 import { ReplicateWorkspace } from './ReplicateWorkspace';
 import { TikTokReport } from './TikTokReport';
+import { SkillsModule } from '../skills/SkillsModule';
 
 interface AIToolboxModuleProps {
   activeItem: string;
@@ -26,18 +27,15 @@ export function AIToolboxModule({ activeItem, onNavigate }: AIToolboxModuleProps
     case 'oran-simulation':
       return <OranSimulation onNavigate={onNavigate} />;
     case 'oran-gen':
-      return (
-        <PlaceholderPage
-          title="ORANGEN"
-          description="ORANGEN placeholder. Hot-content generation page is coming soon."
-        />
-      );
+      return <SkillsModule />;
     case 'text-to-image':
       return <TextToImage onNavigate={onNavigate} />;
     case 'text-to-video':
       return <PlaceholderPage title="文生视频" description="根据文字描述生成短视频" />;
     case 'replicate-video':
       return <ReplicateWorkspace onNavigate={onNavigate} />;
+    case 'skills':
+      return <SkillsModule />;
     case 'tiktok-report':
       return <TikTokReport onNavigate={onNavigate} />;
     default:

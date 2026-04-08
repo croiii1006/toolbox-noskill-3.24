@@ -16,6 +16,7 @@ export default {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         display: ['Urbanist', 'Inter', 'system-ui', 'sans-serif'],
+        pixel: ['"Pixelify Sans"', 'monospace'],
         bitcount: ['"Bitcount Single"', 'monospace'],
       },
       colors: {

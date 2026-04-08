@@ -800,7 +800,7 @@ export function TextToImage({ onNavigate }: TextToImageProps) {
                   className={cn(
                     'h-8 rounded-full border flex items-center justify-center gap-1.5 px-3 transition-all duration-300 ease-out',
                     selectedMemoryIds.length > 0
-                      ? 'border-orange-400/60 bg-orange-400/10 text-orange-400'
+                      ? 'border-orange-400/60 bg-orange-400/10 text-accent/80'
                       : 'border-border/40 text-muted-foreground hover:text-foreground hover:border-border'
                   )}
                 >

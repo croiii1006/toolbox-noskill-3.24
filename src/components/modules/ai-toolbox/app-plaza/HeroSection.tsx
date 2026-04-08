@@ -134,7 +134,7 @@ export function HeroSection({ onNavigate }: HeroSectionProps) {
           <h2 className="text-lg font-normal text-foreground/60 mb-5">AI营销Skills</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FeatureCard
-              title="TikTok解决方案"
+              title="ORAN GEN"
               description="从选题到脚本到素材清单，生成完整可执行的 TikTok 增长方案"
               preview={<PreviewTikTok />}
               onClick={() => {}} />

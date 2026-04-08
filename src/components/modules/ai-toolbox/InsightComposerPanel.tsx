@@ -41,6 +41,7 @@ interface InsightComposerPanelProps {
   onSubmit: () => void;
   statusLabel?: string;
   memoryButtonLabel?: string;
+  memoryHelperText?: string;
   estimatedCost?: number;
   brandPlaceholder?: string;
   categoryPlaceholder?: string;
@@ -85,6 +86,7 @@ export function InsightComposerPanel({
   onSubmit,
   statusLabel = '联网搜索中',
   memoryButtonLabel,
+  memoryHelperText,
   estimatedCost = 50,
   brandPlaceholder = '品牌名称',
   categoryPlaceholder = '选择品类',
@@ -105,7 +107,7 @@ export function InsightComposerPanel({
     <div className="w-full max-w-5xl animate-fade-in py-0">
       <div className="mb-10 text-center">
         <h1 className={cn('text-4xl font-light tracking-[0.2em] text-foreground mb-2', titleClassName)}>{title}</h1>
-        <p className="mt-3 text-sm text-muted-foreground font-light tracking-[0.1em]">{subtitle}</p>
+        <p className="mt-4  text-sm text-muted-foreground font-light tracking-[0.1em]">{subtitle}</p>
       </div>
 
       <div className="relative rounded-2xl border border-border/30 bg-card/80 backdrop-blur-sm shadow-sm transition-shadow hover:shadow-md">
@@ -254,13 +256,15 @@ export function InsightComposerPanel({
 
         <div className="flex items-center justify-between px-5 py-3 border-t border-border/20">
           <div className="flex items-center gap-2 text-[11px]">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent/8 text-accent/80">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent/60 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-accent/80" />
-              </span>
-              <span className="text-[11px] font-medium">{statusLabel}</span>
-            </div>
+            {statusLabel ? (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent/8 text-accent/80">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent/60 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-accent/80" />
+                </span>
+                <span className="text-[11px] font-medium">{statusLabel}</span>
+              </div>
+            ) : null}
 
             <button
               type="button"
@@ -268,13 +272,18 @@ export function InsightComposerPanel({
               className={cn(
                 'h-8 rounded-full border flex items-center justify-center gap-1.5 px-3 transition-all duration-300 ease-out',
                 selectedMemoryIds.length > 0
-                  ? 'border-orange-400/60 bg-orange-400/10 text-orange-400'
+                  ? 'border-orange-400/60 bg-orange-400/10 text-accent/80'
                   : 'border-border/40 text-muted-foreground hover:text-foreground hover:border-border'
               )}
             >
               <Database className="w-4 h-4" />
               <span className="text-[11px] font-medium whitespace-nowrap">{resolvedMemoryButtonLabel}</span>
             </button>
+            {memoryHelperText ? (
+              <span className="text-[11px] font-medium text-accent/80">
+                {memoryHelperText}
+              </span>
+            ) : null}
           </div>
 
           <div className="flex items-center gap-3">
@@ -292,10 +301,10 @@ export function InsightComposerPanel({
                 submitLabel
                   ? canSubmit
                     ? 'border border-orange-200/80 bg-orange-10 text-foreground/60 hover:bg-orange-100'
-                    : 'border border-orange-300/70 bg-orange-50/60 text-foreground/50 cursor-not-allowed'
+                    : 'border border-black-300/70 text-foreground/50 cursor-default'
                   : canSubmit
                     ? 'bg-foreground text-background hover:bg-foreground/90'
-                    : 'bg-muted/60 text-muted-foreground/40 cursor-not-allowed'
+                    : 'bg-muted/60 text-muted-foreground/40 cursor-default'
               )}
             >
               <ArrowUp className={cn('w-4 h-4', submitLabel && 'text-orange-500')} />

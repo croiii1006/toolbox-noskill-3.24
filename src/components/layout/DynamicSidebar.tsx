@@ -22,6 +22,7 @@ import {
   BarChart3,
   Wallet,
   User,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -129,6 +130,12 @@ const sidebarConfig: Record<ModuleType, SidebarSection[]> = {
       id: 'oran-simulation',
       titleKey: 'sidebar.oranSimulation',
       icon: <Zap className="w-4 h-4" />,
+      isGroupHeader: true,
+    },
+    {
+      id: 'skills',
+      titleKey: 'sidebar.skills',
+      icon: <Sparkles className="w-4 h-4" />,
       isGroupHeader: true,
     },
     {
