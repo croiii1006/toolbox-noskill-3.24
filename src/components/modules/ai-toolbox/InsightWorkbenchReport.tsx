@@ -89,6 +89,11 @@ function escapeHtml(value: string) {
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
+export function buildMemoryMarkdownFromHtml(title: string, html: string) {
+  return `# ${title}\n\n\`\`\`html\n${html}\n\`\`\``;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
 export function generateReportHTML(info: ExtractedInfo, reportType: InsightReportType): string {
   const meta = REPORT_META[reportType];
   const safeBrandName = escapeHtml(info.brandName || '未命名品牌');
@@ -451,7 +456,10 @@ export function InsightWorkbenchReport({
 
     addEntry({
       title: `${extractedInfo.brandName || '未命名品牌'} ${meta.label}`,
-      content: memoryLines.join('\n'),
+      content: buildMemoryMarkdownFromHtml(
+        `${extractedInfo.brandName || '未命名品牌'} ${meta.label}`,
+        reportHTML,
+      ),
       category: meta.memoryCategory,
       tags:
         reportType === 'planning'
@@ -460,7 +468,7 @@ export function InsightWorkbenchReport({
     });
     setDrawerOpen(true);
     toast.success(`已保存到记忆库`);
-  }, [addEntry, extractedInfo, meta.label, meta.memoryCategory, reportType, setDrawerOpen]);
+  }, [addEntry, extractedInfo, meta.label, meta.memoryCategory, reportHTML, reportType, setDrawerOpen]);
 
   const actionBar = (
     <div

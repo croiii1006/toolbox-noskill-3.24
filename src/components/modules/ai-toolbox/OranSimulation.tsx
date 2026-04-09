@@ -16,8 +16,9 @@ import {
 } from "@/components/ui/sheet";
 import { InsightComposerPanel } from "./InsightComposerPanel";
 import "./oran-simulation/oran-simulation.css";
-import OranSimulationScene from "./oran-simulation/OranSimulationScene";
+import ImportedWorkflowScene from "./oran-simulation/ImportedWorkflowScene";
 import { type Locale } from "./oran-simulation/lib/graphI18n";
+import { memoryDocumentName } from "./oran-simulation/importedWorkflowCopy";
 import type {
   OranSimulationSceneSnapshot,
   OranSimulationSetupState,
@@ -295,7 +296,7 @@ function HistorySheet({
   );
 }
 
-export function OranSimulation(_: OranSimulationProps) {
+export function OranSimulation({ onNavigate }: OranSimulationProps) {
   const [step, setStep] = useState<OranSimulationStep>("home");
   const [setup, setSetup] = useState<OranSimulationSetupState>(DEFAULT_SETUP);
   const [history, setHistory] = useState<OranSimulationHistoryItem[]>(loadOranSimulationHistory);
@@ -348,20 +349,45 @@ export function OranSimulation(_: OranSimulationProps) {
     }
   }, [consumePrefill, memoryItems]);
 
-  const insightMemoryName = useMemo(
+  const insightMemoryTitle = useMemo(
     () => memoryItems.find((item) => item.id === setup.insightMemoryId)?.name ?? "",
     [memoryItems, setup.insightMemoryId],
   );
-  const planningMemoryName = useMemo(
+  const planningMemoryTitle = useMemo(
     () => memoryItems.find((item) => item.id === setup.planningMemoryId)?.name ?? "",
     [memoryItems, setup.planningMemoryId],
   );
-  const supplementalMemoryNames = useMemo(
+  const supplementalMemoryTitles = useMemo(
     () =>
       setup.supplementalMemoryIds
         .map((id) => memoryItems.find((item) => item.id === id)?.name)
         .filter((name): name is string => Boolean(name)),
     [memoryItems, setup.supplementalMemoryIds],
+  );
+  const insightMemoryName = useMemo(
+    () =>
+      setup.insightMemoryId
+        ? memoryDocumentName("insight", setup.brandName, insightMemoryTitle, locale)
+        : "",
+    [insightMemoryTitle, locale, setup.brandName, setup.insightMemoryId],
+  );
+  const planningMemoryName = useMemo(
+    () =>
+      setup.planningMemoryId
+        ? memoryDocumentName("planning", setup.brandName, planningMemoryTitle, locale)
+        : "",
+    [locale, planningMemoryTitle, setup.brandName, setup.planningMemoryId],
+  );
+  const supplementalMemoryNames = useMemo(
+    () =>
+      supplementalMemoryTitles.map((title) =>
+        memoryDocumentName("supplemental", setup.brandName, title, locale),
+      ),
+    [locale, setup.brandName, supplementalMemoryTitles],
+  );
+  const sceneAttachmentNames = useMemo(
+    () => [insightMemoryTitle, planningMemoryTitle, ...supplementalMemoryTitles].filter(Boolean),
+    [insightMemoryTitle, planningMemoryTitle, supplementalMemoryTitles],
   );
 
   const selectedMemoryIds = useMemo(
@@ -513,13 +539,12 @@ export function OranSimulation(_: OranSimulationProps) {
   if (step === "scene") {
     return (
       <div className="relative h-[calc(100dvh-56px)] min-h-0 overflow-hidden bg-[#090a0c]">
-        <OranSimulationScene
+        <ImportedWorkflowScene
           locale={locale}
           setup={setup}
           sceneSnapshot={sceneSnapshot}
-          attachmentNames={[insightMemoryName, planningMemoryName, ...supplementalMemoryNames].filter(
-            Boolean,
-          )}
+          attachmentNames={sceneAttachmentNames}
+          onNavigate={onNavigate}
           onBack={() => setStep("home")}
           onSnapshotChange={handleSceneSnapshotChange}
         />

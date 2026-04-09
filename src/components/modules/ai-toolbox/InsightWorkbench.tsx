@@ -33,7 +33,11 @@ import {
 import { InsufficientCreditsDrawer } from '@/components/modules/InsufficientCreditsDrawer';
 import { InsightComposerPanel } from './InsightComposerPanel';
 import { ShowcaseCard, SHOWCASE_CARDS } from './app-plaza/ShowcaseCard';
-import { generateReportHTML, InsightWorkbenchReport } from './InsightWorkbenchReport';
+import {
+  buildMemoryMarkdownFromHtml,
+  generateReportHTML,
+  InsightWorkbenchReport,
+} from './InsightWorkbenchReport';
 
 type Step = 'input' | 'reading' | 'confirm' | 'generating' | 'report';
 type ReportType = 'insight' | 'planning';
@@ -766,14 +770,11 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     if (insightSource) {
       attachmentEntries.push(
         ensureEntry({
-          title: `${insightSource.brandName || '未命名品牌'} 洞察报告附件`,
-          content: [
-            `品牌：${insightSource.brandName || '待补充'}`,
-            `品类：${insightSource.category || '待补充'}`,
-            `分析对象：${insightSource.analysisTarget || '待补充'}`,
-            `业务方向：${insightSource.businessDirection || '待补充'}`,
-            `核心卖点：${insightSource.sellingPoints.join('、') || '待补充'}`,
-          ].join('\n'),
+          title: `${insightSource.brandName || '未命名品牌'} 洞察报告`,
+          content: buildMemoryMarkdownFromHtml(
+            `${insightSource.brandName || '未命名品牌'} 洞察报告`,
+            generateReportHTML(insightSource, 'insight'),
+          ),
           category: '洞察报告',
           tags: [insightSource.category, insightSource.analysisTarget, '洞察报告'].filter(Boolean),
         })
@@ -783,16 +784,11 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     if (planningSource) {
       attachmentEntries.push(
         ensureEntry({
-          title: `${planningSource.brandName || '未命名品牌'} 策划方案附件`,
-          content: [
-            `品牌：${planningSource.brandName || '待补充'}`,
-            `品类：${planningSource.category || '待补充'}`,
-            `营销目标：${planningSource.marketingGoal || '待确认'}`,
-            `目标人群：${planningSource.targetAudience || '待确认'}`,
-            `核心卖点：${planningSource.sellingPoints.join('、') || '待确认'}`,
-            `预算量级：${planningSource.budgetLevel || '待确认'}`,
-            `主攻渠道：${planningSource.primaryChannels || '待确认'}`,
-          ].join('\n'),
+          title: `${planningSource.brandName || '未命名品牌'} 策划报告`,
+          content: buildMemoryMarkdownFromHtml(
+            `${planningSource.brandName || '未命名品牌'} 策划报告`,
+            generateReportHTML(planningSource, 'planning'),
+          ),
           category: '策划方案',
           tags: [planningSource.category, planningSource.primaryChannels, planningSource.budgetLevel].filter(Boolean),
         })
@@ -846,14 +842,11 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     if (insightSource) {
       attachmentEntries.push(
         ensureEntry({
-          title: `${insightSource.brandName || '未命名品牌'} 洞察报告附件`,
-          content: [
-            `品牌：${insightSource.brandName || '待补充'}`,
-            `品类：${insightSource.category || '待补充'}`,
-            `分析对象：${insightSource.analysisTarget || '待补充'}`,
-            `业务方向：${insightSource.businessDirection || '待补充'}`,
-            `核心卖点：${insightSource.sellingPoints.join('、') || '待补充'}`,
-          ].join('\n'),
+          title: `${insightSource.brandName || '未命名品牌'} 洞察报告`,
+          content: buildMemoryMarkdownFromHtml(
+            `${insightSource.brandName || '未命名品牌'} 洞察报告`,
+            generateReportHTML(insightSource, 'insight'),
+          ),
           category: '洞察报告',
           tags: [insightSource.category, insightSource.analysisTarget, '洞察报告'].filter(Boolean),
         })
@@ -863,16 +856,11 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     if (planningSource) {
       attachmentEntries.push(
         ensureEntry({
-          title: `${planningSource.brandName || '未命名品牌'} 策划方案附件`,
-          content: [
-            `品牌：${planningSource.brandName || '待补充'}`,
-            `品类：${planningSource.category || '待补充'}`,
-            `营销目标：${planningSource.marketingGoal || '待确认'}`,
-            `目标人群：${planningSource.targetAudience || '待确认'}`,
-            `核心卖点：${planningSource.sellingPoints.join('、') || '待确认'}`,
-            `预算量级：${planningSource.budgetLevel || '待确认'}`,
-            `主攻渠道：${planningSource.primaryChannels || '待确认'}`,
-          ].join('\n'),
+          title: `${planningSource.brandName || '未命名品牌'} 策划报告`,
+          content: buildMemoryMarkdownFromHtml(
+            `${planningSource.brandName || '未命名品牌'} 策划报告`,
+            generateReportHTML(planningSource, 'planning'),
+          ),
           category: '策划方案',
           tags: [planningSource.category, planningSource.primaryChannels, planningSource.budgetLevel].filter(Boolean),
         })
@@ -908,6 +896,8 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     });
     onNavigate?.('oran-simulation');
   }, [
+    brandName,
+    category,
     ensureEntry,
     extractedInfo,
     onNavigate,
