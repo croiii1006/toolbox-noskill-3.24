@@ -260,7 +260,7 @@ export default function ImportedWorkflowScene({
           onSelectStep={setSelectedStep}
           locale={locale}
           setup={setup}
-          showFollowUpActions={completedSteps.includes(9) && selectedStep === 9}
+          showFollowUpActions={completedSteps.includes(9)}
           onContinueToGeneration={handleContinueToGeneration}
         />
       </div>
@@ -279,6 +279,7 @@ export default function ImportedWorkflowScene({
         <div className="flex-1 overflow-y-auto p-5">
           <ImportedWorkflowPanel
             step={selectedStep}
+            currentStep={currentStep}
             completedSteps={completedSteps}
             locale={locale}
             setup={setup}
@@ -290,9 +291,18 @@ export default function ImportedWorkflowScene({
           {steps.map((step) => (
             <button
               key={step.id}
-              onClick={() => setSelectedStep(step.id)}
+              onClick={() => {
+                if (step.status === "done" || step.id === currentStep) {
+                  setSelectedStep(step.id);
+                }
+              }}
+              disabled={!(step.status === "done" || step.id === currentStep)}
               className={`flex-1 border-r border-border/20 py-2.5 text-center transition-colors last:border-r-0 ${
-                step.id === selectedStep ? "bg-card" : "bg-muted/20 hover:bg-muted/35"
+                step.id === selectedStep
+                  ? "bg-card"
+                  : step.status === "done" || step.id === currentStep
+                    ? "bg-muted/20 hover:bg-muted/35"
+                    : "cursor-not-allowed bg-muted/10 opacity-45"
               }`}
             >
               <p

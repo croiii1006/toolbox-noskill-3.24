@@ -50,8 +50,7 @@
 .oran-sim-prompt {
   field-sizing: content;
   caret-color: #ff5a1f;
-  caret-shape: block;
-  font-weight: 450;
+  font-weight: 400;
 }
 
 .oran-sim-home-blur {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2, Database, FileText } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Database, FileText, Loader2, Lock } from "lucide-react";
 import Checklist from "./imported-artifacts/Checklist";
 import ParsedInputs from "./imported-artifacts/ParsedInputs";
 import SimScope from "./imported-artifacts/SimScope";
@@ -26,6 +26,7 @@ import { toast } from "sonner";
 
 interface ImportedWorkflowPanelProps {
   step: number;
+  currentStep: number;
   completedSteps: number[];
   locale: Locale;
   setup: OranSimulationSetupState;
@@ -425,8 +426,51 @@ function ReportWorkspace({
   );
 }
 
+function PendingStepState({
+  locale,
+  step,
+  isRunning,
+}: {
+  locale: Locale;
+  step: number;
+  isRunning: boolean;
+}) {
+  return (
+    <div className="flex h-full min-h-[320px] items-center justify-center rounded-xl border border-border/20 bg-card/90 p-6">
+      <div className="max-w-md space-y-3 text-center">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted/30">
+          {isRunning ? (
+            <Loader2 className="h-5 w-5 animate-spin text-accent/80" />
+          ) : (
+            <Lock className="h-5 w-5 text-muted-foreground/55" />
+          )}
+        </div>
+        <h3 className="text-sm font-medium text-foreground/80">
+          {isRunning
+            ? locale === "zh"
+              ? `步骤 ${String(step).padStart(2, "0")} 处理中`
+              : `Step ${String(step).padStart(2, "0")} is running`
+            : locale === "zh"
+              ? `步骤 ${String(step).padStart(2, "0")} 尚未完成`
+              : `Step ${String(step).padStart(2, "0")} is not ready`}
+        </h3>
+        <p className="text-sm leading-relaxed text-muted-foreground/70">
+          {isRunning
+            ? locale === "zh"
+              ? "当前步骤还在生成中，完成后这里才会展示正式结果。"
+              : "This step is still processing. The final artifact will appear here when it finishes."
+            : locale === "zh"
+              ? "请等待流程推进到这一步并完成后，再查看对应结果。"
+              : "Wait for the workflow to reach and complete this step before viewing the result."}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function ImportedWorkflowPanel({
   step,
+  currentStep,
   completedSteps,
   locale,
   setup,
@@ -434,6 +478,9 @@ export default function ImportedWorkflowPanel({
 }: ImportedWorkflowPanelProps) {
   const { entries, ensureEntry, setDrawerOpen } = useMemory();
   const [previewName, setPreviewName] = useState<string | null>(null);
+  const isStepCompleted = completedSteps.includes(step);
+  const isStepRunning = step === currentStep && !isStepCompleted;
+  const shouldHideArtifact = step >= 2 && !isStepCompleted;
 
   useEffect(() => {
     setPreviewName(null);
@@ -640,6 +687,10 @@ export default function ImportedWorkflowPanel({
         onBack={() => setPreviewName(null)}
       />
     );
+  }
+
+  if (shouldHideArtifact) {
+    return <PendingStepState locale={locale} step={step} isRunning={isStepRunning} />;
   }
 
   switch (step) {
