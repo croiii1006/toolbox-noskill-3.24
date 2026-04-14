@@ -60,7 +60,9 @@ const StepCard = ({
     <button
       onClick={onClick}
       className={`w-full flex items-start gap-3 rounded-xl px-3 py-3 text-left transition-all ${
-        isSelected ? "border border-accent/25 bg-accent/5" : "hover:bg-muted/20"
+        isSelected
+          ? "border border-accent/25 bg-accent/5"
+          : "border border-border/20 bg-muted/10 hover:bg-muted/60"
       }`}
     >
       <div className="w-9 h-9 rounded-lg bg-muted/30 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -116,7 +118,7 @@ const ActionRow = ({
 }) => (
   <button
     onClick={onClick}
-    className="w-full flex items-center gap-3 py-3 hover:bg-muted/20 rounded-xl px-3 transition-colors animate-fade-in-up"
+    className="w-full flex border border-border/20 items-center gap-3 py-3 hover:bg-muted/20 rounded-xl px-3 transition-colors animate-fade-in-up"
   >
     <Icon className="w-3.5 h-3.5 text-muted-foreground/50 flex-shrink-0" />
     <span className="text-sm text-foreground/80">{label}</span>
@@ -179,11 +181,39 @@ export default function ImportedWorkflowStream({
   onContinueToGeneration,
 }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const shouldAutoScrollRef = useRef(true);
+  const frameRef = useRef<number | null>(null);
+
+  const updateAutoScrollState = () => {
+    if (!scrollRef.current) return;
+
+    const { scrollHeight, scrollTop, clientHeight } = scrollRef.current;
+    const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
+    shouldAutoScrollRef.current = distanceFromBottom < 80;
+  };
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (!shouldAutoScrollRef.current) {
+      return;
     }
+
+    if (frameRef.current) {
+      window.cancelAnimationFrame(frameRef.current);
+    }
+
+    frameRef.current = window.requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({
+        block: "end",
+        behavior: "smooth",
+      });
+    });
+
+    return () => {
+      if (frameRef.current) {
+        window.cancelAnimationFrame(frameRef.current);
+      }
+    };
   }, [messages.length]);
 
   const hasSetupSummary = messages.some((m) => m.type === "setup-summary");
@@ -194,7 +224,11 @@ export default function ImportedWorkflowStream({
   );
 
   return (
-    <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 pb-[60px]">
+    <div
+      ref={scrollRef}
+      onScroll={updateAutoScrollState}
+      className="flex-1 overflow-y-auto scrollbar-thin scroll-smooth px-6 py-6 pb-[60px] motion-reduce:scroll-auto"
+    >
       <div className="max-w-3xl mx-auto space-y-3">
         {hasSetupSummary && <SetupSummaryBlock locale={locale} setup={setup} />}
 
@@ -296,6 +330,8 @@ export default function ImportedWorkflowStream({
             </section>
           </>
         ) : null}
+
+        <div ref={bottomRef} aria-hidden="true" className="h-px w-full" />
       </div>
     </div>
   );

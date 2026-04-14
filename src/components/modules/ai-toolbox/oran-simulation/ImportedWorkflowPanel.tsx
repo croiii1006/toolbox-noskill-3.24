@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, CheckCircle2, Database, FileText, Loader2, Lock } from "lucide-react";
 import Checklist from "./imported-artifacts/Checklist";
-import ParsedInputs from "./imported-artifacts/ParsedInputs";
 import SimScope from "./imported-artifacts/SimScope";
 import KnowledgeGraph from "./imported-artifacts/KnowledgeGraph";
 import EnvironmentModel from "./imported-artifacts/EnvironmentModel";
@@ -9,8 +8,13 @@ import AgentClusters from "./imported-artifacts/AgentClusters";
 import ActivationStrategy from "./imported-artifacts/ActivationStrategy";
 import SimMonitor from "./imported-artifacts/SimMonitor";
 import FinalReport from "./imported-artifacts/FinalReport";
+import EditableParsedInputs from "./EditableParsedInputs";
+import { normalizeParsedInputs } from "./parsedInputsData";
 import type { Locale } from "./lib/graphI18n";
-import type { OranSimulationSetupState } from "./workflowTypes";
+import type {
+  OranSimulationSceneSnapshot,
+  OranSimulationSetupState,
+} from "./workflowTypes";
 import { useMemory } from "@/contexts/MemoryContext";
 import { Button } from "@/components/ui/button";
 import { buildMemoryMarkdownFromHtml } from "../InsightWorkbenchReport";
@@ -30,7 +34,10 @@ interface ImportedWorkflowPanelProps {
   completedSteps: number[];
   locale: Locale;
   setup: OranSimulationSetupState;
+  sceneSnapshot: OranSimulationSceneSnapshot;
   attachmentNames: string[];
+  onSnapshotChange: (next: OranSimulationSceneSnapshot) => void;
+  onConfirmParsedInputs?: () => void;
 }
 
 function escapeHtml(value: string) {
@@ -474,7 +481,10 @@ export default function ImportedWorkflowPanel({
   completedSteps,
   locale,
   setup,
+  sceneSnapshot,
   attachmentNames,
+  onSnapshotChange,
+  onConfirmParsedInputs,
 }: ImportedWorkflowPanelProps) {
   const { entries, ensureEntry, setDrawerOpen } = useMemory();
   const [previewName, setPreviewName] = useState<string | null>(null);
@@ -706,7 +716,36 @@ export default function ImportedWorkflowPanel({
         />
       );
     case 2:
-      return <ParsedInputs />;
+      return (
+        <div className="space-y-4">
+          <EditableParsedInputs
+            value={normalizeParsedInputs(sceneSnapshot.parsedInputs)}
+            onChange={(parsedInputs) =>
+              onSnapshotChange({
+                ...sceneSnapshot,
+                parsedInputs,
+              })
+            }
+          />
+
+          {sceneSnapshot.awaitingParsedInputsConfirmation ? (
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                onClick={onConfirmParsedInputs}
+                variant="ghost"
+                className="h-10 rounded-full border border-transparent bg-white px-5 text-xs font-medium text-[#f97316] transition-all hover:bg-[#fff4eb] hover:text-[#ea580c]"
+                style={{
+                  boxShadow:
+                    "-2px -2px 6.5px 0 rgba(255,255,255,0.96), 2px 2px 6.5px 0 rgba(249,115,22,0.18)",
+                }}
+              >
+                确认解析内容，进入 step03
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      );
     case 3:
       return <SimScope />;
     case 4:

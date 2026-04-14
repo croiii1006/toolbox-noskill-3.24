@@ -26,6 +26,16 @@ export type OranSimRunTab =
   | "lifecycle"
   | "compare";
 
+export interface ParsedInputField {
+  label: string;
+  value: string;
+}
+
+export interface ParsedInputSection {
+  title: string;
+  fields: ParsedInputField[];
+}
+
 export interface OranSimulationSetupState {
   projectName: string;
   brandName: string;
@@ -47,4 +57,6 @@ export interface OranSimulationSceneSnapshot {
   selectedView: OranSimWorkspaceView;
   runTab: OranSimRunTab;
   selectedNodeId: string | null;
+  parsedInputs?: ParsedInputSection[];
+  awaitingParsedInputsConfirmation?: boolean;
 }

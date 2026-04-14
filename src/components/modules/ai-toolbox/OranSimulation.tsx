@@ -19,6 +19,10 @@ import "./oran-simulation/oran-simulation.css";
 import ImportedWorkflowScene from "./oran-simulation/ImportedWorkflowScene";
 import { type Locale } from "./oran-simulation/lib/graphI18n";
 import { memoryDocumentName } from "./oran-simulation/importedWorkflowCopy";
+import {
+  DEFAULT_PARSED_INPUTS,
+  normalizeParsedInputs,
+} from "./oran-simulation/parsedInputsData";
 import type {
   OranSimulationSceneSnapshot,
   OranSimulationSetupState,
@@ -67,6 +71,8 @@ const DEFAULT_SCENE_SNAPSHOT: OranSimulationSceneSnapshot = {
   selectedView: "checklist",
   runTab: "diffusion",
   selectedNodeId: null,
+  parsedInputs: DEFAULT_PARSED_INPUTS,
+  awaitingParsedInputsConfirmation: false,
 };
 
 const DEFAULT_SETUP: OranSimulationSetupState = {
@@ -121,7 +127,11 @@ function loadOranSimulationHistory(): OranSimulationHistoryItem[] {
         return {
           ...next,
           title: next.title || buildHistoryTitle(next.setup),
-          sceneSnapshot: next.sceneSnapshot || DEFAULT_SCENE_SNAPSHOT,
+          sceneSnapshot: {
+            ...DEFAULT_SCENE_SNAPSHOT,
+            ...next.sceneSnapshot,
+            parsedInputs: normalizeParsedInputs(next.sceneSnapshot?.parsedInputs),
+          },
         };
       }
 

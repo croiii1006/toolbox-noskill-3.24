@@ -85,6 +85,8 @@ export default function ImportedWorkflowScene({
 
   const initialProgress = Math.min(Math.max(sceneSnapshot.progress || 0, 0), 9);
   const initialSelectedStep = Number.parseInt(sceneSnapshot.selectedNodeId || "", 10);
+  const initialAwaitingParsedInputsConfirmation =
+    Boolean(sceneSnapshot.awaitingParsedInputsConfirmation) && initialProgress === 2;
   const hydratedMessages = templates
     .filter((template) => template.stage <= initialProgress)
     .map((template, index) => ({
@@ -99,9 +101,23 @@ export default function ImportedWorkflowScene({
   const [selectedStep, setSelectedStep] = useState(
     Number.isFinite(initialSelectedStep) ? initialSelectedStep : Math.max(initialProgress, 1),
   );
+  const [awaitingParsedInputsConfirmation, setAwaitingParsedInputsConfirmation] = useState(
+    initialAwaitingParsedInputsConfirmation,
+  );
   const [isComplete, setIsComplete] = useState(initialProgress >= 9);
   const [steps, setSteps] = useState<WorkflowStep[]>(
-    applyStepState(createWorkflowSteps(), initialProgress, initialProgress >= 9),
+    (() => {
+      const nextSteps = applyStepState(createWorkflowSteps(), initialProgress, initialProgress >= 9);
+
+      if (!initialAwaitingParsedInputsConfirmation) {
+        return nextSteps;
+      }
+
+      return nextSteps.map((step) => ({
+        ...step,
+        status: step.id <= 2 ? "done" : "pending",
+      }));
+    })(),
   );
   const [messages, setMessages] = useState<StreamMessage[]>(hydratedMessages);
   const nextIndexRef = useRef(
@@ -116,11 +132,13 @@ export default function ImportedWorkflowScene({
       selectedView: sceneSnapshot.selectedView,
       runTab: sceneSnapshot.runTab,
       selectedNodeId: sceneSnapshot.selectedNodeId,
+      parsedInputs: sceneSnapshot.parsedInputs,
+      awaitingParsedInputsConfirmation: sceneSnapshot.awaitingParsedInputsConfirmation,
     }),
   );
 
   useEffect(() => {
-    if (isComplete) {
+    if (isComplete || awaitingParsedInputsConfirmation) {
       return;
     }
 
@@ -167,6 +185,13 @@ export default function ImportedWorkflowScene({
       }
 
       nextIndexRef.current += 1;
+      const upcomingTemplate = templates[nextIndexRef.current];
+
+      if (nextTemplate.stage === 2 && upcomingTemplate?.stage === 3) {
+        setAwaitingParsedInputsConfirmation(true);
+        return;
+      }
+
       const delay =
         nextTemplate.type === "confirmation"
           ? 1100
@@ -183,7 +208,7 @@ export default function ImportedWorkflowScene({
         clearTimeout(timerRef.current);
       }
     };
-  }, [isComplete, templates]);
+  }, [awaitingParsedInputsConfirmation, isComplete, templates]);
 
   useEffect(() => {
     const nextSnapshot = {
@@ -191,6 +216,8 @@ export default function ImportedWorkflowScene({
       selectedView: isComplete ? "report" : "checklist",
       runTab: "diffusion",
       selectedNodeId: String(selectedStep),
+      parsedInputs: sceneSnapshot.parsedInputs,
+      awaitingParsedInputsConfirmation,
     };
     const nextKey = JSON.stringify(nextSnapshot);
 
@@ -200,12 +227,24 @@ export default function ImportedWorkflowScene({
 
     lastSnapshotKeyRef.current = nextKey;
     onSnapshotChange(nextSnapshot);
-  }, [currentStep, isComplete, onSnapshotChange, selectedStep]);
+  }, [
+    awaitingParsedInputsConfirmation,
+    currentStep,
+    isComplete,
+    onSnapshotChange,
+    sceneSnapshot.parsedInputs,
+    selectedStep,
+  ]);
 
   const currentStepData = steps.find((step) => step.id === selectedStep);
   const completedSteps = steps
     .filter((step) => step.status === "done")
     .map((step) => step.id);
+
+  const handleConfirmParsedInputs = useCallback(() => {
+    setAwaitingParsedInputsConfirmation(false);
+    setSelectedStep(3);
+  }, []);
 
   const handleContinueToGeneration = useCallback(() => {
     const title = predictionReportTitle(setup, locale);
@@ -265,7 +304,7 @@ export default function ImportedWorkflowScene({
         />
       </div>
 
-      <div className="flex h-full min-h-0 w-1/2 flex-col overflow-hidden">
+      <div className="flex h-full min-h-0 w-1/2 flex-col overflow-hidden ">
         <div className="flex flex-shrink-0 items-center border-b border-border/20 px-5 py-3">
           <span className="text-sm text-foreground/80">
             {selectedStep === 0
@@ -283,7 +322,10 @@ export default function ImportedWorkflowScene({
             completedSteps={completedSteps}
             locale={locale}
             setup={setup}
+            sceneSnapshot={sceneSnapshot}
             attachmentNames={attachmentNames}
+            onSnapshotChange={onSnapshotChange}
+            onConfirmParsedInputs={handleConfirmParsedInputs}
           />
         </div>
 
