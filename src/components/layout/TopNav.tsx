@@ -30,8 +30,8 @@ export function TopNav() {
     <header className="h-14 border-b border-border/10 bg-background/20 backdrop-blur-xl flex items-center justify-between px-4 top-0 z-50 fixed left-0 w-screen">
       {/* Left: Logo */}
       <div className="flex items-center gap-3">
-        <img src={logoDark} alt="Oran Gen" className="w-6 h-6 object-fill" />
-        <span className="text-lg font-normal">Oran Gen</span>
+        <img src={logoDark} alt="ORAN GEN" className="w-6 h-6 object-fill" />
+        <span className="text-lg font-normal">ORAN GEN</span>
       </div>
 
       {/* Right: User Actions */}

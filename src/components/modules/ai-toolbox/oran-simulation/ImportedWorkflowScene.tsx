@@ -136,6 +136,10 @@ export default function ImportedWorkflowScene({
       awaitingParsedInputsConfirmation: sceneSnapshot.awaitingParsedInputsConfirmation,
     }),
   );
+  const initialStreamDelay = 650;
+  const statusMessageDelay = 850;
+  const systemMessageDelay = 560;
+  const confirmationMessageDelay = 1400;
 
   useEffect(() => {
     if (isComplete || awaitingParsedInputsConfirmation) {
@@ -194,14 +198,14 @@ export default function ImportedWorkflowScene({
 
       const delay =
         nextTemplate.type === "confirmation"
-          ? 1100
+          ? confirmationMessageDelay
           : nextTemplate.type === "status"
-            ? 650
-            : 420;
+            ? statusMessageDelay
+            : systemMessageDelay;
       timerRef.current = setTimeout(pushNext, delay);
     };
 
-    timerRef.current = setTimeout(pushNext, 500);
+    timerRef.current = setTimeout(pushNext, initialStreamDelay);
 
     return () => {
       if (timerRef.current) {
@@ -211,7 +215,7 @@ export default function ImportedWorkflowScene({
   }, [awaitingParsedInputsConfirmation, isComplete, templates]);
 
   useEffect(() => {
-    const nextSnapshot = {
+    const nextSnapshot: OranSimulationSceneSnapshot = {
       progress: isComplete ? 9 : currentStep,
       selectedView: isComplete ? "report" : "checklist",
       runTab: "diffusion",

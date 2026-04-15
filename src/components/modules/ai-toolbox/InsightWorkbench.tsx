@@ -1251,7 +1251,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
         {step === 'input' && (
           <div className="min-h-full flex flex-col items-center justify-start gap-20 px-6 pt-[100px] pb-6 md:px-8 md:pt-[180px] md:pb-8">
             <InsightComposerPanel
-              title="ORAN INSIGHT"
+              title="ORAN HUB"
               subtitle="输入品牌、品类与竞品信息，我会帮你整理关键信息并生成对应结果。"
               reportType={reportType}
               reportTypeLabel={reportTypeLabel}
@@ -2086,36 +2086,70 @@ function ReportPreviewCard({
   onSelect: () => void;
   onExpand: () => void;
 }) {
+  const htmlWithoutRevealScript = html.replace(
+    /<script>\s*const sections = Array\.from\(document\.querySelectorAll\('\.report-section'\)\);[\s\S]*?<\/script>/,
+    ''
+  );
+  const embeddedHtml = htmlWithoutRevealScript.includes('</head>')
+    ? htmlWithoutRevealScript.replace(
+        '</head>',
+        `<style>
+          .report-section {
+            opacity: 1 !important;
+            transform: none !important;
+            transition: none !important;
+          }
+        </style></head>`
+      )
+    : htmlWithoutRevealScript;
+
   return (
     <div
-      role="button"
-      tabIndex={0}
-      aria-pressed={active}
-      onClick={onSelect}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          onSelect();
-        }
-      }}
       className={cn(
-        'relative cursor-pointer overflow-hidden rounded-[20px] border p-4 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-200/80',
+        'relative overflow-hidden rounded-[20px] border p-4 transition-all',
         active
           ? 'border-orange-200/90 bg-white shadow-[0_18px_40px_rgba(234,88,12,0.08)]'
           : 'border-border/30 bg-white hover:border-orange-200/70 hover:bg-white'
       )}
     >
-      <div className="relative space-y-1">
-        
+      <div className="relative space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <button
+            type="button"
+            aria-pressed={active}
+            onClick={onSelect}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onSelect();
+              }
+            }}
+            className="min-w-0 text-left outline-none transition-opacity hover:opacity-85 focus-visible:ring-2 focus-visible:ring-orange-200/80"
+          >
+            <div className="truncate text-[14px] font-medium text-foreground">{title}</div>
+            <div className="mt-1 text-[12px] text-muted-foreground">
+              右侧已改为完整内嵌预览，可直接在卡片内滚动查看。
+            </div>
+          </button>
 
-        <div className="relative h-[150px] overflow-hidden">
-          <div className="pointer-events-none absolute left-1/2 top-0 h-[980px] w-[760px] origin-top -translate-x-1/2 scale-[0.34] overflow-hidden rounded-[24px] bg-white ">
+          <button
+            type="button"
+            onClick={onExpand}
+            className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-border/45 bg-background/80 px-3 text-[12px] text-foreground/70 transition-colors hover:border-foreground/20 hover:bg-muted/40"
+          >
+            <Maximize2 className="h-3.5 w-3.5" />
+            <span>新窗口</span>
+          </button>
+        </div>
+
+        <div className="overflow-hidden rounded-[18px] border border-border/35 bg-white">
+          <div className="h-[72vh] min-h-[620px] w-full">
             <iframe
-              srcDoc={html}
-              title={`${title}缩略预览`}
+              key={`${title}-${embeddedHtml.length}-${active ? 'active' : 'idle'}`}
+              srcDoc={embeddedHtml}
+              title={`${title}完整预览`}
               className="h-full w-full border-0 bg-white"
               sandbox="allow-same-origin"
-              tabIndex={-1}
             />
           </div>
         </div>

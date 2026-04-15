@@ -37,7 +37,7 @@ const fadeUp = (index: number) => ({
 
 const ORAN_WORKFLOWS = [
   {
-    label: 'ORAN INSIGHT',
+    label: 'ORAN HUB',
     targetId: 'insight-workbench',
     desc: '整合趋势、竞品与人群，快速生成品牌洞察报告和策划方案',
     preview: <PreviewInsight />,
@@ -113,7 +113,7 @@ export function HeroSection({ onNavigate }: HeroSectionProps) {
         <div className="w-full">
           <motion.div variants={fadeUp(0)} initial="hidden" animate="visible">
             <h1 className="font-display text-4xl sm:text-5xl md:text-6xl tracking-tight leading-[1.1] text-[#3d3d3d] font-normal">
-              Oran Gen Toolbox
+              ORAN GEN Toolbox
             </h1>
             <p className="font-display text-lg sm:text-xl md:text-2xl font-light text-foreground/60 mt-3 max-w-2xl tracking-tight">
               把洞察、仿真与内容生成串成可复用的营销工作流。

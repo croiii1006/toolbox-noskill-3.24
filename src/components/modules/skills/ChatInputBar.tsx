@@ -14,7 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { CategoryCascader, CATEGORY_TREE } from './CategoryCascader';
+import { CategoryCascader } from './CategoryCascader';
+import { CATEGORY_TREE } from './categoryData';
 import { MemorySelectionDialog } from '@/components/modules/memory/MemorySelectionDialog';
 import { toast } from '@/hooks/use-toast';
 

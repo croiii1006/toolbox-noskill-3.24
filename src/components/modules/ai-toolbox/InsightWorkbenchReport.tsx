@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useMemory } from '@/contexts/MemoryContext';
 import { cn } from '@/lib/utils';
+import drMelaxinInsightReportHtml from '../../../../dr-melaxin-tiktok-brand-health-insights-report.html?raw';
+import drMelaxinPlanningReportHtml from '../../../../dr-melaxin-tiktok-marketing-strategy-report.html?raw';
 
 interface ExtractedInfo {
   brandName: string;
@@ -74,7 +76,7 @@ const REPORT_META = {
     sectionFourText: '优先围绕高感知卖点展开短视频、种草笔记与达人协同，形成稳定内容供给。',
     sectionFiveTitle: '交付建议',
     sectionFiveText:
-      '可继续衔接 ORANGEN 做爆款内容生成，将本方案拆解成具体选题、脚本与素材生产任务。',
+      '可继续衔接 ORAN GEN 做爆款内容生成，将本方案拆解成具体选题、脚本与素材生产任务。',
     memoryCategory: '策划方案',
   },
 } as const;
@@ -88,6 +90,37 @@ function escapeHtml(value: string) {
     .split("'").join('&#39;');
 }
 
+function normalizeLooseToken(value: string) {
+  return value.toLowerCase().replace(/[\s./\\_\-·>]+/g, '');
+}
+
+function normalizeCategoryToken(value: string) {
+  return normalizeLooseToken(value).replace(/kbeauty/g, 'kbeauty');
+}
+
+function buildComparableText(info: ExtractedInfo) {
+  return [info.brandName, info.category, info.analysisTarget, ...info.sellingPoints].filter(Boolean).join(' ');
+}
+
+function matchesDrMelaxinScenario(info: ExtractedInfo) {
+  const normalizedBrand = normalizeLooseToken(info.brandName || '');
+  const normalizedCategory = normalizeCategoryToken(info.category || '');
+  const normalizedComparable = normalizeLooseToken(buildComparableText(info));
+
+  const isDrMelaxin =
+    normalizedBrand === 'drmelaxin' ||
+    normalizedComparable.includes('drmelaxin');
+  const isTargetCategory =
+    normalizedCategory === normalizeCategoryToken('美妆个护-K-beauty-功效护肤') ||
+    normalizedComparable.includes(normalizeCategoryToken('美妆个护-K-beauty-功效护肤'));
+  const hasMedicube = normalizedComparable.includes(normalizeLooseToken('Medicube'));
+  const hasTarteCosmetics =
+    normalizedComparable.includes(normalizeLooseToken('Tarte Cosmetics')) ||
+    normalizedComparable.includes(normalizeLooseToken('Tarte'));
+
+  return isDrMelaxin && isTargetCategory && hasMedicube && hasTarteCosmetics;
+}
+
 // eslint-disable-next-line react-refresh/only-export-components
 export function buildMemoryMarkdownFromHtml(title: string, html: string) {
   return `# ${title}\n\n\`\`\`html\n${html}\n\`\`\``;
@@ -95,6 +128,10 @@ export function buildMemoryMarkdownFromHtml(title: string, html: string) {
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function generateReportHTML(info: ExtractedInfo, reportType: InsightReportType): string {
+  if (matchesDrMelaxinScenario(info)) {
+    return reportType === 'insight' ? drMelaxinInsightReportHtml : drMelaxinPlanningReportHtml;
+  }
+
   const meta = REPORT_META[reportType];
   const safeBrandName = escapeHtml(info.brandName || '未命名品牌');
   const safeCategory = escapeHtml(info.category || '待补充品类');
@@ -386,7 +423,7 @@ export function generateReportHTML(info: ExtractedInfo, reportType: InsightRepor
       </div>
 
       <div class="footer">
-        本${meta.label}由 ORAN INSIGHT 自动生成 · ${new Date().toLocaleDateString('zh-CN')} · 仅供内部讨论参考
+        本${meta.label}由 ORAN HUB 自动生成 · ${new Date().toLocaleDateString('zh-CN')} · 仅供内部讨论参考
       </div>
     </div>
   </div>

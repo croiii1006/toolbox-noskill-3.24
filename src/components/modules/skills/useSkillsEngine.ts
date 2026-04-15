@@ -1419,7 +1419,7 @@ export function useSkillsEngine() {
 
   return {
     state,
-    CATEGORIES,
+    CATEGORIES: [...CATEGORIES, '美妆护肤 · K-beauty 功效护肤'],
     completeSetup,
     refreshCandidates,
     selectVideo,

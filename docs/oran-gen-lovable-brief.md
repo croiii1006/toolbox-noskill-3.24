@@ -1,6 +1,6 @@
-# ORAN GEN 页面复刻说明（Lovable 可直接复制）
+# ORANGEN 页面复刻说明（Lovable 可直接复制）
 
-请复刻一个与 ORAN GEN 高度一致的页面视觉和交互气质。
+请复刻一个与 ORANGEN 高度一致的页面视觉和交互气质。
 
 这不是通用后台，不是营销官网，不是深色 cyberpunk dashboard。  
 这是一个浅色、高级、克制、安静的 AI 工作台页面。
@@ -253,7 +253,7 @@ className="w-5 h-5 text-muted-foreground"
 
 结构：
 
-- 中央偏上：大标题 `ORAN GEN`
+- 中央偏上：大标题 `ORANGEN`
 - 下方一行副标题
 - 再下方一个大输入卡
 
@@ -261,7 +261,7 @@ className="w-5 h-5 text-muted-foreground"
 
 ```tsx
 <h1 className="mb-2 text-4xl font-light tracking-[0.2em] text-foreground">
-  ORAN GEN
+  ORANGEN
 </h1>
 <p className="mt-3 text-sm font-light tracking-[0.1em] text-muted-foreground">
   上传商品图开始对话，或直接输入问题

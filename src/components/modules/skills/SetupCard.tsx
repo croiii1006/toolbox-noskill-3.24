@@ -7,15 +7,15 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { SessionSetup } from './useSkillsEngine';
+import { TOP_LEVEL_CATEGORIES } from './categoryData';
 
 interface SetupCardProps {
   memoryItems: { id: string; name: string; desc: string; tag: string }[];
-  categories: string[];
   onComplete: (setup: SessionSetup) => void;
   onReset: () => void;
 }
 
-export function SetupCard({ memoryItems, categories, onComplete, onReset }: SetupCardProps) {
+export function SetupCard({ memoryItems, onComplete, onReset }: SetupCardProps) {
   const [image, setImage] = useState<string | null>(null);
   const [imageName, setImageName] = useState<string | null>(null);
   const [memoryEnabled, setMemoryEnabled] = useState(true);
@@ -126,7 +126,7 @@ export function SetupCard({ memoryItems, categories, onComplete, onReset }: Setu
             <SelectValue placeholder="选择品类" />
           </SelectTrigger>
           <SelectContent>
-            {categories.map(c => (
+            {TOP_LEVEL_CATEGORIES.map(c => (
               <SelectItem key={c} value={c}>{c}</SelectItem>
             ))}
           </SelectContent>
