@@ -36,7 +36,6 @@ import { ShowcaseCard, SHOWCASE_CARDS } from './app-plaza/ShowcaseCard';
 import {
   buildMemoryMarkdownFromHtml,
   generateReportHTML,
-  InsightWorkbenchReport,
 } from './InsightWorkbenchReport';
 
 type Step = 'input' | 'reading' | 'confirm' | 'generating' | 'report';
@@ -67,6 +66,26 @@ const REPORT_TYPE_LABELS: Record<ReportType, string> = {
   insight: '洞察报告',
   planning: '策划方案',
 };
+
+function buildEmbeddedPreviewHtml(html: string) {
+  const htmlWithoutRevealScript = html.replace(
+    /<script>\s*const sections = Array\.from\(document\.querySelectorAll\('\.report-section'\)\);[\s\S]*?<\/script>/,
+    ''
+  );
+
+  return htmlWithoutRevealScript.includes('</head>')
+    ? htmlWithoutRevealScript.replace(
+        '</head>',
+        `<style>
+          .report-section {
+            opacity: 1 !important;
+            transform: none !important;
+            transition: none !important;
+          }
+        </style></head>`
+      )
+    : htmlWithoutRevealScript;
+}
 
 const READING_STEPS = [
   { label: '品牌信息校验中', delay: 700 },
@@ -630,6 +649,14 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   const currentReportPreviewHtml = useMemo(
     () => generateReportHTML(extractedInfo, reportType),
     [extractedInfo, reportType]
+  );
+  const activePreviewHtml =
+    previewMode === 'insight-history' && previousInsightPreviewHtml
+      ? previousInsightPreviewHtml
+      : currentReportPreviewHtml;
+  const activePreviewEmbeddedHtml = useMemo(
+    () => buildEmbeddedPreviewHtml(activePreviewHtml),
+    [activePreviewHtml]
   );
   const hasMultiplePreviewFiles = shouldShowPreviousInsightHistory && workflowStatus === 'completed';
   const previewToolbarItems = useMemo(
@@ -2002,18 +2029,41 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                     </div>
                   </aside>
 
-                  <section className="flex h-full min-h-0 flex-col gap-3 overflow-hidden overscroll-none animate-in fade-in-0 slide-in-from-right-12 duration-700">
+                  <section className="flex h-full min-h-0 flex-col gap-3 overscroll-none animate-in fade-in-0 slide-in-from-right-12 duration-700">
                     <div className="min-h-0 flex-1 transition-all duration-700 ease-out">
-                      <InsightWorkbenchReport
-                        extractedInfo={activePreviewExtractedInfo}
-                        reportType={activePreviewReportType}
-                        embedded
-                        showEmbeddedToolbar
-                        showEmbeddedBackButton={false}
-                        embeddedToolbarPrefix={previewToolbarControl}
-                        onBack={() => handleBack('input')}
-                        onRestart={resetWorkbench}
-                      />
+                      <div className="flex h-full min-h-0 flex-col rounded-[22px] border border-border/30 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+                        <div className="flex items-center justify-between gap-3 border-b border-border/30 px-5 py-3">
+                          <div className="flex min-w-0 items-center gap-3">
+                            {previewToolbarControl}
+                            <div className="truncate text-[13px] font-medium text-foreground/72">
+                              {previewMode === 'insight-history' && previousInsightPreviewHtml
+                                ? `${REPORT_TYPE_LABELS.insight} · 历史版本`
+                                : REPORT_TYPE_LABELS[activePreviewReportType]}
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleOpenPreviewWindow(activePreviewHtml)}
+                            className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-border/45 bg-background/80 px-3 text-[12px] text-foreground/70 transition-colors hover:border-foreground/20 hover:bg-muted/40"
+                          >
+                            <Maximize2 className="h-3.5 w-3.5" />
+                            <span>新窗口</span>
+                          </button>
+                        </div>
+
+                        <div className="min-h-0 flex-1 overflow-auto p-3">
+                          <div className="h-full min-h-0 overflow-hidden rounded-[18px] border border-border/35 bg-white">
+                            <iframe
+                              key={`${previewMode}-${activePreviewReportType}-${activePreviewEmbeddedHtml.length}`}
+                              srcDoc={activePreviewEmbeddedHtml}
+                              title="完整HTML预览"
+                              className="h-full min-h-[720px] w-full border-0 bg-white"
+                              sandbox="allow-same-origin"
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </section>
                 </div>
