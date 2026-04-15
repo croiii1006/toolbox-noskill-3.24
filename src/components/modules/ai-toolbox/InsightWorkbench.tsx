@@ -2048,7 +2048,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                             className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-border/45 bg-background/80 px-3 text-[12px] text-foreground/70 transition-colors hover:border-foreground/20 hover:bg-muted/40"
                           >
                             <Maximize2 className="h-3.5 w-3.5" />
-                            <span>新窗口</span>
+                          
                           </button>
                         </div>
 
@@ -2136,6 +2136,7 @@ function ReportPreviewCard({
   onSelect: () => void;
   onExpand: () => void;
 }) {
+  const previewScale = 0.34;
   const htmlWithoutRevealScript = html.replace(
     /<script>\s*const sections = Array\.from\(document\.querySelectorAll\('\.report-section'\)\);[\s\S]*?<\/script>/,
     ''
@@ -2148,6 +2149,13 @@ function ReportPreviewCard({
             opacity: 1 !important;
             transform: none !important;
             transition: none !important;
+          }
+          html,
+          body {
+            overflow: hidden !important;
+          }
+          body {
+            pointer-events: none !important;
           }
         </style></head>`
       )
@@ -2178,29 +2186,38 @@ function ReportPreviewCard({
           >
             <div className="truncate text-[14px] font-medium text-foreground">{title}</div>
             <div className="mt-1 text-[12px] text-muted-foreground">
-              右侧已改为完整内嵌预览，可直接在卡片内滚动查看。
+              卡片仅展示报告开头封面，右侧保留完整内嵌预览。
             </div>
           </button>
 
           <button
             type="button"
             onClick={onExpand}
-            className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-border/45 bg-background/80 px-3 text-[12px] text-foreground/70 transition-colors hover:border-foreground/20 hover:bg-muted/40"
+            className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full  bg-background/80 px-3 text-[12px] text-foreground/70 transition-colors hover:border-foreground/20 hover:bg-muted/40"
           >
             <Maximize2 className="h-3.5 w-3.5" />
-            <span>新窗口</span>
+            
           </button>
         </div>
 
         <div className="overflow-hidden rounded-[18px] border border-border/35 bg-white">
-          <div className="h-[72vh] min-h-[620px] w-full">
+          <div className="relative h-[220px] w-full overflow-hidden bg-[#f6f4f1]">
             <iframe
               key={`${title}-${embeddedHtml.length}-${active ? 'active' : 'idle'}`}
               srcDoc={embeddedHtml}
               title={`${title}完整预览`}
-              className="h-full w-full border-0 bg-white"
+              tabIndex={-1}
+              aria-hidden="true"
+              className="pointer-events-none absolute left-0 top-0 border-0 bg-white select-none"
+              style={{
+                width: `${100 / previewScale}%`,
+                height: `${100 / previewScale}%`,
+                transform: `scale(${previewScale})`,
+                transformOrigin: 'top left',
+              }}
               sandbox="allow-same-origin"
             />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-white via-white/92 to-transparent" />
           </div>
         </div>
       </div>

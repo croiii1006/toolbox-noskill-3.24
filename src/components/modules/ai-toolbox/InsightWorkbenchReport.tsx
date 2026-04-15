@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useMemory } from '@/contexts/MemoryContext';
 import { cn } from '@/lib/utils';
-import drMelaxinInsightReportHtml from '../../../../dr-melaxin-tiktok-brand-health-insights-report.html?raw';
+import drMelaxinInsightReportHtml from '../../../../dr-melaxin-tiktok-brand-health-insights-report-scroll-fixed.html?raw';
 import drMelaxinPlanningReportHtml from '../../../../dr-melaxin-tiktok-marketing-strategy-report.html?raw';
 
 interface ExtractedInfo {

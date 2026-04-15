@@ -1,11 +1,13 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dr. Melaxin TikTok Marketing Strategy</title>
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1" name="viewport"/>
+  <title>
+   Dr. Melaxin TikTok Marketing Strategy
+  </title>
   <style>
-    @font-face {
+   @font-face {
       font-family: "Urbanist";
       font-style: normal;
       font-weight: 300;
@@ -420,639 +422,2339 @@
       .report-section { opacity: 1; transform: none; }
     }
   </style>
-</head>
-<body>
+  <style>
+   :root{
+      --bg:#fbfbf9;
+      --panel:#ffffff;
+      --panel-soft:#f6f4f1;
+      --panel-softer:#f8f7f4;
+      --text:#171717;
+      --text2:rgba(23,23,23,.72);
+      --text3:rgba(23,23,23,.48);
+      --line:rgba(23,23,23,.10);
+      --line2:rgba(23,23,23,.06);
+      --accent:#e67e22;
+      --accent-soft:rgba(230,126,34,.08);
+      --accent-line:rgba(230,126,34,.24);
+      --shadow-soft:0 8px 24px rgba(17,24,39,.04), 0 1px 3px rgba(17,24,39,.04);
+      --radius-xl:20px;
+      --radius-2xl:28px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: "Urbanist", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+    }
+    html,body{
+      height:100%;
+      overflow:hidden;
+      background:var(--bg) !important;
+      color:var(--text) !important;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+      font-family:var(--sans);
+    }
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(230,126,34,.08), rgba(230,126,34,0) 22%),
+        linear-gradient(180deg, rgba(255,255,255,.96), rgba(248,247,244,.98));
+      z-index:-1;
+    }
+    .page-shell{
+      width:100% !important;
+      max-width:none !important;
+      height:100vh !important;
+      padding:16px !important;
+      gap:0 !important;
+      display:flex !important;
+      overflow:hidden !important;
+      box-sizing:border-box;
+    }
+    aside,
+    main{
+      width:50% !important;
+      min-width:0;
+      height:calc(100vh - 32px) !important;
+      overflow:auto !important;
+      box-sizing:border-box;
+      scrollbar-width:thin;
+      scrollbar-color:rgba(23,23,23,.16) transparent;
+    }
+    aside::-webkit-scrollbar,
+    main::-webkit-scrollbar{ width:10px; height:10px; }
+    aside::-webkit-scrollbar-thumb,
+    main::-webkit-scrollbar-thumb{ background:rgba(23,23,23,.12); border-radius:999px; border:3px solid transparent; background-clip:padding-box; }
+    aside{
+      padding:22px 20px 80px 24px !important;
+      border-right:1px solid var(--line2) !important;
+      background:transparent !important;
+      position:relative;
+    }
+    main{
+      padding:22px 24px 80px 24px !important;
+      background:transparent !important;
+    }
+    .brand-block,
+    .hero,
+    .report-section,
+    .footer-card,
+    .bar-list,
+    .table-wrap,
+    .metric-card,
+    .dimension-card,
+    .rank-card{
+      background:rgba(255,255,255,.92) !important;
+      border:1px solid var(--line2) !important;
+      box-shadow:var(--shadow-soft) !important;
+      backdrop-filter:none !important;
+    }
+    .brand-block,
+    .hero,
+    .report-section,
+    .footer-card{
+      border-radius:var(--radius-xl) !important;
+    }
+    .hero{
+      padding:18px 20px !important;
+      margin-bottom:18px !important;
+    }
+    .hero .eyebrow,
+    .section-head .eyebrow,
+    aside .eyebrow{
+      font-family:var(--mono) !important;
+      font-size:11px !important;
+      letter-spacing:.16em !important;
+      text-transform:uppercase;
+      color:var(--text3) !important;
+    }
+    .hero h1{
+      margin:10px 0 0 !important;
+      font-size:34px !important;
+      line-height:1.2 !important;
+      letter-spacing:.12em !important;
+      font-weight:300 !important;
+      color:var(--text) !important;
+    }
+    .hero h1 span{ color:var(--accent) !important; }
+    .brand-title{
+      font-size:20px !important;
+      line-height:1.35 !important;
+      font-weight:300 !important;
+      letter-spacing:.08em !important;
+      color:var(--text) !important;
+    }
+    .brand-copy,
+    .report-paragraph,
+    .report-list li,
+    .metric-note,
+    .dimension-conclusion,
+    .report-table td,
+    .report-table th{
+      color:var(--text2) !important;
+    }
+    .chip-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin:14px 0 0 !important;
+    }
+    .chip{
+      height:auto !important;
+      min-height:24px;
+      display:inline-flex;
+      align-items:center;
+      padding:4px 10px !important;
+      border-radius:999px !important;
+      background:var(--panel-softer) !important;
+      border:1px solid var(--line) !important;
+      color:var(--text2) !important;
+      font-size:11px !important;
+      letter-spacing:.02em;
+    }
+    .metric-grid,
+    .dimension-grid,
+    .rank-grid{
+      gap:12px !important;
+      margin-top:16px !important;
+    }
+    .metric-card,
+    .dimension-card,
+    .rank-card{
+      border-radius:16px !important;
+      padding:14px 14px 13px !important;
+      transition:background-color .18s ease,border-color .18s ease,transform .18s ease;
+    }
+    .metric-card:hover,
+    .dimension-card:hover,
+    .rank-card:hover,
+    .nav-link:hover,
+    .report-section:hover{
+      background:var(--panel-softer) !important;
+    }
+    .metric-label,
+    .section-index{
+      font-family:var(--mono) !important;
+      font-size:11px !important;
+      letter-spacing:.08em !important;
+      color:var(--text3) !important;
+    }
+    .metric-value{
+      color:var(--text) !important;
+      font-size:16px !important;
+      line-height:1.45 !important;
+      font-weight:400 !important;
+    }
+    .dimension-conclusion,
+    .metric-note{
+      font-size:12px !important;
+      line-height:1.55 !important;
+    }
+    .nav-link{
+      display:flex !important;
+      align-items:center;
+      min-height:42px;
+      margin-top:8px !important;
+      padding:10px 12px !important;
+      border-radius:14px !important;
+      border:1px solid transparent !important;
+      color:var(--text2) !important;
+      transition:background-color .18s ease,border-color .18s ease,color .18s ease;
+    }
+    .nav-link.is-active{
+      background:var(--accent-soft) !important;
+      border-color:var(--accent-line) !important;
+      color:var(--text) !important;
+    }
+    .nav-link span{
+      font-size:13px !important;
+      line-height:1.45 !important;
+    }
+    .section-head{
+      padding-bottom:12px !important;
+      margin-bottom:16px !important;
+      border-bottom:1px solid var(--line2) !important;
+    }
+    .section-head h2{
+      margin:8px 0 0 !important;
+      font-size:24px !important;
+      line-height:1.35 !important;
+      font-weight:300 !important;
+      letter-spacing:.04em !important;
+      color:var(--text) !important;
+    }
+    .report-section{
+      padding:20px 20px 18px !important;
+      margin-bottom:16px !important;
+      transition:background-color .18s ease,border-color .18s ease;
+    }
+    .table-wrap,
+    .bar-list{
+      border-radius:16px !important;
+      background:var(--panel-softer) !important;
+    }
+    .report-table th{
+      background:rgba(23,23,23,.03) !important;
+      color:var(--text) !important;
+      font-weight:500 !important;
+    }
+    .report-table td,
+    .report-table th{
+      border-bottom:1px solid var(--line2) !important;
+      font-size:13px !important;
+      line-height:1.65 !important;
+    }
+    .bar-track{
+      background:rgba(23,23,23,.06) !important;
+      border-radius:999px !important;
+    }
+    .bar-track i{
+      background:linear-gradient(90deg, rgba(230,126,34,.55), rgba(230,126,34,.88)) !important;
+      border-radius:999px !important;
+    }
+    .report-list{
+      padding-left:18px !important;
+    }
+    .report-list li{
+      margin:6px 0 !important;
+    }
+    .footer-card{
+      margin-top:18px !important;
+      font-size:12px !important;
+      color:var(--text3) !important;
+    }
+    .report-section.is-visible{
+      opacity:1 !important;
+      transform:none !important;
+    }
+    @media (max-width: 1100px){
+      html,body{ overflow:auto; }
+      .page-shell{
+        display:block !important;
+        height:auto !important;
+      }
+      aside, main{
+        width:100% !important;
+        height:auto !important;
+        overflow:visible !important;
+      }
+      aside{
+        border-right:none !important;
+        border-bottom:1px solid var(--line2) !important;
+        padding-bottom:24px !important;
+      }
+      main{ padding-top:24px !important; }
+    }
+  </style>
+  <style>
+   html, body{
+  margin:0 !important;
+  padding:0 !important;
+  height:auto !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  background:#f7f5f2 !important;
+}
+
+/* 关键：解除锁死高度 */
+body, .page-shell, main{
+  height:auto !important;
+  max-height:none !important;
+  overflow:visible !important;
+}
+
+/* 单栏 */
+.page-shell{
+  display:block !important;
+  width:min(calc(100% - 40px), 1120px) !important;
+  margin:0 auto !important;
+  padding:28px 0 60px !important;
+}
+
+aside{display:none !important;}
+
+main{
+  display:block !important;
+  width:100% !important;
+}
+
+/* 强制所有内容显示 */
+.report-section,
+.hero,
+.footer-card{
+  opacity:1 !important;
+  transform:none !important;
+  visibility:visible !important;
+  display:block !important;
+}
+
+/* 卡片风格 */
+.hero,
+.report-section{
+  background:#fff !important;
+  border:1px solid rgba(0,0,0,0.08) !important;
+  border-radius:20px !important;
+  margin-bottom:18px !important;
+  padding:24px !important;
+}
+
+/* 橙色高亮 */
+.metric-value,
+strong{
+  color:#e87e28 !important;
+}
+  </style>
+  <style>
+   .explosion-section{
+  margin-top:8px;
+}
+
+.section-title{
+  font-size:20px;
+  font-weight:400;
+  margin:0 0 16px;
+  color:rgba(20,20,20,.9);
+}
+
+.card-grid{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:16px;
+}
+
+.insight-card{
+  position:relative;
+  padding:18px 18px 16px;
+  border-radius:18px;
+  border:1px solid rgba(0,0,0,0.08);
+  background:rgba(255,255,255,0.85);
+  transition:all .2s ease;
+}
+
+.insight-card:hover{
+  background:rgba(0,0,0,0.02);
+}
+
+.card-index{
+  position:absolute;
+  top:14px;
+  right:14px;
+  font-size:11px;
+  color:rgba(232,126,40,.8);
+  border:1px solid rgba(232,126,40,.25);
+  background:rgba(232,126,40,.08);
+  padding:4px 8px;
+  border-radius:999px;
+}
+
+.insight-card h3{
+  font-size:15px;
+  font-weight:500;
+  margin:0 56px 6px 0;
+  color:rgba(20,20,20,.92);
+}
+
+.meta{
+  font-size:12px;
+  color:rgba(0,0,0,.45);
+  margin:0 0 8px;
+}
+
+.desc{
+  font-size:13px;
+  color:rgba(0,0,0,.65);
+  margin:0 0 10px;
+}
+
+.metrics{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  font-size:12px;
+  margin-bottom:8px;
+}
+
+.metrics span{
+  color:rgba(0,0,0,.56);
+}
+
+.metrics b{
+  color:#e87e28;
+  font-weight:500;
+}
+
+.tag{
+  font-size:12px;
+  color:rgba(0,0,0,.5);
+  margin:0;
+}
+
+.insight{
+  font-size:13px;
+  color:rgba(0,0,0,.7);
+  margin:6px 0 0;
+}
+
+@media (max-width: 768px){
+  .card-grid{
+    grid-template-columns:1fr;
+  }
+}
+  </style>
+ </head>
+ <body>
   <div class="page-shell">
-    <aside>
-      <div class="brand-block">
-        <div class="eyebrow">Offline HTML Report</div>
-        <div class="brand-title">Dr. Melaxin TikTok Marketing Strategy</div>
-        <p class="brand-copy">Source: 【Dr.Melaxin】TIKTOK品牌营销策略报告.docx. This HTML preserves the original Word headings, tables, and data while restyling the reading shell to match the report UI rules.</p>
-      </div>
-      <a class="nav-link" href="#section-01"><span>概览</span></a><a class="nav-link" href="#section-02"><span>策略总纲：Dr.Melaxin的TikTok增长本质</span></a><a class="nav-link" href="#section-03"><span>核心发现 → 策略承接</span></a><a class="nav-link" href="#section-04"><span>用户画像</span></a><a class="nav-link" href="#section-05"><span>分析与人群缺口调整策略</span></a><a class="nav-link" href="#section-06"><span>六维策略指标填充</span></a><a class="nav-link" href="#section-07"><span>1. 内容声量策略</span></a><a class="nav-link" href="#section-08"><span>2.  角色互动效率策略</span></a><a class="nav-link" href="#section-09"><span>3.  内容生态结构策略</span></a><a class="nav-link" href="#section-10"><span>4. 互动质量策略</span></a><a class="nav-link" href="#section-11"><span>5. 站内搜索策略</span></a><a class="nav-link" href="#section-12"><span>6. TikTok 电商策略</span></a><a class="nav-link" href="#section-13"><span>执行体系</span></a><a class="nav-link" href="#section-14"><span>1.  角色配置框架</span></a><a class="nav-link" href="#section-15"><span>2.  内容方向 · 创作者 Brief（基于明细数据更新）</span></a><a class="nav-link" href="#section-16"><span>3. 验证指标</span></a><a class="nav-link" href="#section-17"><span>① 内容声量指标</span></a><a class="nav-link" href="#section-18"><span>② 角色效率指标</span></a><a class="nav-link" href="#section-19"><span>③ 生态结构指标</span></a><a class="nav-link" href="#section-20"><span>④ 互动质量指标</span></a><a class="nav-link" href="#section-21"><span>⑤ 站内搜索指标</span></a><a class="nav-link" href="#section-22"><span>⑥ 电商表现指标</span></a><a class="nav-link" href="#section-23"><span>早停红线 · 触发即调整策略</span></a>
-    </aside>
-    <main>
-      
+   <aside>
+    <div class="brand-block">
+     <div class="eyebrow">
+      Offline HTML Report
+     </div>
+     <div class="brand-title">
+      Dr. Melaxin TikTok Marketing Strategy
+     </div>
+     <p class="brand-copy">
+      Source: 【Dr.Melaxin】TIKTOK品牌营销策略报告.docx. This HTML preserves the original Word headings, tables, and data while restyling the reading shell to match the report UI rules.
+     </p>
+    </div>
+    <a class="nav-link" href="#section-01">
+     <span>
+      概览
+     </span>
+    </a>
+    <a class="nav-link" href="#section-02">
+     <span>
+      策略总纲：Dr.Melaxin的TikTok增长本质
+     </span>
+    </a>
+    <a class="nav-link" href="#section-03">
+     <span>
+      核心发现 → 策略承接
+     </span>
+    </a>
+    <a class="nav-link" href="#section-04">
+     <span>
+      用户画像
+     </span>
+    </a>
+    <a class="nav-link" href="#section-05">
+     <span>
+      分析与人群缺口调整策略
+     </span>
+    </a>
+    <a class="nav-link" href="#section-06">
+     <span>
+      六维策略指标填充
+     </span>
+    </a>
+    <a class="nav-link" href="#section-07">
+     <span>
+      1. 内容声量策略
+     </span>
+    </a>
+    <a class="nav-link" href="#section-08">
+     <span>
+      2.  角色互动效率策略
+     </span>
+    </a>
+    <a class="nav-link" href="#section-09">
+     <span>
+      3.  内容生态结构策略
+     </span>
+    </a>
+    <a class="nav-link" href="#section-10">
+     <span>
+      4. 互动质量策略
+     </span>
+    </a>
+    <a class="nav-link" href="#section-11">
+     <span>
+      5. 站内搜索策略
+     </span>
+    </a>
+    <a class="nav-link" href="#section-12">
+     <span>
+      6. TikTok 电商策略
+     </span>
+    </a>
+    <a class="nav-link" href="#section-13">
+     <span>
+      执行体系
+     </span>
+    </a>
+    <a class="nav-link" href="#section-14">
+     <span>
+      1.  角色配置框架
+     </span>
+    </a>
+    <a class="nav-link" href="#section-15">
+     <span>
+      2.  内容方向 · 创作者 Brief（基于明细数据更新）
+     </span>
+    </a>
+    <a class="nav-link" href="#section-16">
+     <span>
+      3. 验证指标
+     </span>
+    </a>
+    <a class="nav-link" href="#section-17">
+     <span>
+      ① 内容声量指标
+     </span>
+    </a>
+    <a class="nav-link" href="#section-18">
+     <span>
+      ② 角色效率指标
+     </span>
+    </a>
+    <a class="nav-link" href="#section-19">
+     <span>
+      ③ 生态结构指标
+     </span>
+    </a>
+    <a class="nav-link" href="#section-20">
+     <span>
+      ④ 互动质量指标
+     </span>
+    </a>
+    <a class="nav-link" href="#section-21">
+     <span>
+      ⑤ 站内搜索指标
+     </span>
+    </a>
+    <a class="nav-link" href="#section-22">
+     <span>
+      ⑥ 电商表现指标
+     </span>
+    </a>
+    <a class="nav-link" href="#section-23">
+     <span>
+      早停红线 · 触发即调整策略
+     </span>
+    </a>
+   </aside>
+   <main>
     <section class="hero">
-      <div class="eyebrow">Marketing Strategy Report</div>
-      <h1>Dr. Melaxin <span>TikTok</span> Marketing Strategy</h1>
-      <p class="hero-copy">Dr.Melaxin 更适合以“功效型韩系护肤品牌”定位进入 TikTok，而不是作为泛护肤品牌参与同质化竞争。</p><p class="hero-copy">品牌应重点围绕眼部护理、淡斑提亮、焕肤去角质、毛孔紧致等具备明确痛点和结果表达空间的方向布局内容与商品。因此，TikTok 对 Dr.Melaxin 的价值不仅在于流量获取，更在于验证卖点、放大达人协同、监测竞品打法，并持续优化内容与商品结构。</p>
-      <div class="chip-row"><span class="chip">概览</span><span class="chip">用户画像</span><span class="chip">六维策略指标填充</span><span class="chip">执行体系</span></div>
-      <div class="finding-grid">
-                    <article class="finding-card">
-                      <strong>GMV 效率远超大盘：Dr.Melaxin US 店铺 7 天销售额 $340.29万，动销商品仅 123 个，单 SKU 贡献 $2.77万；而大盘周期内总动销 83.24万 件商品，头部集中度仅 20.73%。Dr.Melaxin 属于典型的“超级单品”驱动型品牌。</strong>
-                      <p>复制爆品公式：不要盲目扩张 SKU（目前在售 124 个已足够），集中火力打透 TX 传明酸线（商品搜索总销 65.7 万件）与 Calcium 胶原线。</p>
-                    </article>
-                    
-                    <article class="finding-card">
-                      <strong>内容资产“头重脚轻”：大盘 90% 销量来自达人，而 Dr.Melaxin 官方账号近 30 天仅发布 65 条视频（含大量直播预告切片），总播放 97万，不及一个腰部达人（如 southwellness 单条 470万）。</strong>
-                      <p>强化官方人设：参考大盘“商家自营号销量约 80.77 万”的数据，官方需从 “直播切片机” 转向 “功效科普博主”。</p>
-                    </article>
-                    
-                    <article class="finding-card">
-                      <strong>直播效率处于警戒线：US 官方店场均观看 1.63 万，但场均销售额仅约 $1.03 万（39 场累计 $40 万估算），UV 价值 0.40-1.22 波动极大。对比美妆大盘直播销量占比 4.3%（67.91万/1575万），Dr.Melaxin 直播仍有巨大提升空间。</strong>
-                      <p>直播重质不重量：将直播时长从动辄 6-13 小时压缩至 3 小时高能时段，必须挂载 $50+ 的套组（如 Gifted Set），提升客单以弥补 UV 价值短板。</p>
-                    </article>
-                    
-                    <article class="finding-card">
-                      <strong>英国市场“有势无货”：GB 店铺评分 4.5 极高，但 7 天销售额仅 $69.8万（US 的 1/5），动销 SKU 仅 46 个（US 为 123）。商品页显示大量爆品（如 Peel Shot）在 UK 长期缺货或未上架。</strong>
-                      <p>供给先行：立即将 US 已验证的 Top 20 商品同步至 UK 店铺，重点补齐 Neck Set 和 Gifted Collagen Set。</p>
-                    </article>
-                    </div>
+     <div class="eyebrow">
+      Marketing Strategy Report
+     </div>
+     <h1>
+      Dr. Melaxin
+      <span>
+       TikTok
+      </span>
+      Marketing Strategy
+     </h1>
+     <p class="hero-copy">
+      Dr.Melaxin 更适合以“功效型韩系护肤品牌”定位进入 TikTok，而不是作为泛护肤品牌参与同质化竞争。
+     </p>
+     <p class="hero-copy">
+      品牌应重点围绕眼部护理、淡斑提亮、焕肤去角质、毛孔紧致等具备明确痛点和结果表达空间的方向布局内容与商品。因此，TikTok 对 Dr.Melaxin 的价值不仅在于流量获取，更在于验证卖点、放大达人协同、监测竞品打法，并持续优化内容与商品结构。
+     </p>
+     <div class="chip-row">
+      <span class="chip">
+       概览
+      </span>
+      <span class="chip">
+       用户画像
+      </span>
+      <span class="chip">
+       六维策略指标填充
+      </span>
+      <span class="chip">
+       执行体系
+      </span>
+     </div>
+     <div class="finding-grid">
+      <article class="finding-card">
+       <strong>
+        GMV 效率远超大盘：Dr.Melaxin US 店铺 7 天销售额 $340.29万，动销商品仅 123 个，单 SKU 贡献 $2.77万；而大盘周期内总动销 83.24万 件商品，头部集中度仅 20.73%。Dr.Melaxin 属于典型的“超级单品”驱动型品牌。
+       </strong>
+       <p>
+        复制爆品公式：不要盲目扩张 SKU（目前在售 124 个已足够），集中火力打透 TX 传明酸线（商品搜索总销 65.7 万件）与 Calcium 胶原线。
+       </p>
+      </article>
+      <article class="finding-card">
+       <strong>
+        内容资产“头重脚轻”：大盘 90% 销量来自达人，而 Dr.Melaxin 官方账号近 30 天仅发布 65 条视频（含大量直播预告切片），总播放 97万，不及一个腰部达人（如 southwellness 单条 470万）。
+       </strong>
+       <p>
+        强化官方人设：参考大盘“商家自营号销量约 80.77 万”的数据，官方需从 “直播切片机” 转向 “功效科普博主”。
+       </p>
+      </article>
+      <article class="finding-card">
+       <strong>
+        直播效率处于警戒线：US 官方店场均观看 1.63 万，但场均销售额仅约 $1.03 万（39 场累计 $40 万估算），UV 价值 0.40-1.22 波动极大。对比美妆大盘直播销量占比 4.3%（67.91万/1575万），Dr.Melaxin 直播仍有巨大提升空间。
+       </strong>
+       <p>
+        直播重质不重量：将直播时长从动辄 6-13 小时压缩至 3 小时高能时段，必须挂载 $50+ 的套组（如 Gifted Set），提升客单以弥补 UV 价值短板。
+       </p>
+      </article>
+      <article class="finding-card">
+       <strong>
+        英国市场“有势无货”：GB 店铺评分 4.5 极高，但 7 天销售额仅 $69.8万（US 的 1/5），动销 SKU 仅 46 个（US 为 123）。商品页显示大量爆品（如 Peel Shot）在 UK 长期缺货或未上架。
+       </strong>
+       <p>
+        供给先行：立即将 US 已验证的 Top 20 商品同步至 UK 店铺，重点补齐 Neck Set 和 Gifted Collagen Set。
+       </p>
+      </article>
+     </div>
     </section>
-    
-      
     <section class="report-section" id="section-01">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">Report Section</div>
-          <h2>概览</h2>
-        </div>
-        <span class="section-index">01</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        Report Section
+       </div>
+       <h2>
+        概览
+       </h2>
       </div>
-      <div class="section-body"></div>
+      <span class="section-index">
+       01
+      </span>
+     </div>
+     <div class="section-body">
+     </div>
     </section>
-    
     <section class="report-section" id="section-02">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">概览</div>
-          <h2>策略总纲：Dr.Melaxin的TikTok增长本质</h2>
-        </div>
-        <span class="section-index">02</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        概览
+       </div>
+       <h2>
+        策略总纲：Dr.Melaxin的TikTok增长本质
+       </h2>
       </div>
-      <div class="section-body"><p class="report-paragraph">Dr.Melaxin 更适合以“功效型韩系护肤品牌”定位进入 TikTok，而不是作为泛护肤品牌参与同质化竞争。</p><p class="report-paragraph">品牌应重点围绕眼部护理、淡斑提亮、焕肤去角质、毛孔紧致等具备明确痛点和结果表达空间的方向布局内容与商品。因此，TikTok 对 Dr.Melaxin 的价值不仅在于流量获取，更在于验证卖点、放大达人协同、监测竞品打法，并持续优化内容与商品结构。</p></div>
+      <span class="section-index">
+       02
+      </span>
+     </div>
+     <div class="section-body">
+      <p class="report-paragraph">
+       Dr.Melaxin 更适合以“功效型韩系护肤品牌”定位进入 TikTok，而不是作为泛护肤品牌参与同质化竞争。
+      </p>
+      <p class="report-paragraph">
+       品牌应重点围绕眼部护理、淡斑提亮、焕肤去角质、毛孔紧致等具备明确痛点和结果表达空间的方向布局内容与商品。因此，TikTok 对 Dr.Melaxin 的价值不仅在于流量获取，更在于验证卖点、放大达人协同、监测竞品打法，并持续优化内容与商品结构。
+      </p>
+     </div>
     </section>
-    
     <section class="report-section" id="section-03">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">概览</div>
-          <h2>核心发现 → 策略承接</h2>
-        </div>
-        <span class="section-index">03</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        概览
+       </div>
+       <h2>
+        核心发现 → 策略承接
+       </h2>
       </div>
-      <div class="section-body">
-    <div class="table-shell">
-      <div class="metric-grid">
-            <article class="metric-card">
-              <span class="metric-label">GMV 效率远超大盘：Dr.Melaxin US 店铺 7 天销售额 $340.29万，动销商品仅 123 个，单 SKU 贡献 $2.77万；而大盘周期内总动销 83.24万 件商品，头部集中度仅 20.73%。Dr.Melaxin 属于典型的“超级单品”驱动型品牌。</span>
-              <strong class="metric-value">复制爆品公式：不要盲目扩张 SKU（目前在售 124 个已足够），集中火力打透 TX 传明酸线（商品搜索总销 65.7 万件）与 Calcium 胶原线。</strong>
-              <p class="metric-note"></p>
-            </article>
-            
-            <article class="metric-card">
-              <span class="metric-label">内容资产“头重脚轻”：大盘 90% 销量来自达人，而 Dr.Melaxin 官方账号近 30 天仅发布 65 条视频（含大量直播预告切片），总播放 97万，不及一个腰部达人（如 southwellness 单条 470万）。</span>
-              <strong class="metric-value">强化官方人设：参考大盘“商家自营号销量约 80.77 万”的数据，官方需从 “直播切片机” 转向 “功效科普博主”。</strong>
-              <p class="metric-note"></p>
-            </article>
-            
-            <article class="metric-card">
-              <span class="metric-label">直播效率处于警戒线：US 官方店场均观看 1.63 万，但场均销售额仅约 $1.03 万（39 场累计 $40 万估算），UV 价值 0.40-1.22 波动极大。对比美妆大盘直播销量占比 4.3%（67.91万/1575万），Dr.Melaxin 直播仍有巨大提升空间。</span>
-              <strong class="metric-value">直播重质不重量：将直播时长从动辄 6-13 小时压缩至 3 小时高能时段，必须挂载 $50+ 的套组（如 Gifted Set），提升客单以弥补 UV 价值短板。</strong>
-              <p class="metric-note"></p>
-            </article>
-            
-            <article class="metric-card">
-              <span class="metric-label">英国市场“有势无货”：GB 店铺评分 4.5 极高，但 7 天销售额仅 $69.8万（US 的 1/5），动销 SKU 仅 46 个（US 为 123）。商品页显示大量爆品（如 Peel Shot）在 UK 长期缺货或未上架。</span>
-              <strong class="metric-value">供给先行：立即将 US 已验证的 Top 20 商品同步至 UK 店铺，重点补齐 Neck Set 和 Gifted Collagen Set。</strong>
-              <p class="metric-note"></p>
-            </article>
-            </div>
-      <div class="table-wrap">
+      <span class="section-index">
+       03
+      </span>
+     </div>
+     <div class="section-body">
+      <div class="table-shell">
+       <div class="metric-grid">
+        <article class="metric-card">
+         <span class="metric-label">
+          GMV 效率远超大盘：Dr.Melaxin US 店铺 7 天销售额 $340.29万，动销商品仅 123 个，单 SKU 贡献 $2.77万；而大盘周期内总动销 83.24万 件商品，头部集中度仅 20.73%。Dr.Melaxin 属于典型的“超级单品”驱动型品牌。
+         </span>
+         <strong class="metric-value">
+          复制爆品公式：不要盲目扩张 SKU（目前在售 124 个已足够），集中火力打透 TX 传明酸线（商品搜索总销 65.7 万件）与 Calcium 胶原线。
+         </strong>
+         <p class="metric-note">
+         </p>
+        </article>
+        <article class="metric-card">
+         <span class="metric-label">
+          内容资产“头重脚轻”：大盘 90% 销量来自达人，而 Dr.Melaxin 官方账号近 30 天仅发布 65 条视频（含大量直播预告切片），总播放 97万，不及一个腰部达人（如 southwellness 单条 470万）。
+         </span>
+         <strong class="metric-value">
+          强化官方人设：参考大盘“商家自营号销量约 80.77 万”的数据，官方需从 “直播切片机” 转向 “功效科普博主”。
+         </strong>
+         <p class="metric-note">
+         </p>
+        </article>
+        <article class="metric-card">
+         <span class="metric-label">
+          直播效率处于警戒线：US 官方店场均观看 1.63 万，但场均销售额仅约 $1.03 万（39 场累计 $40 万估算），UV 价值 0.40-1.22 波动极大。对比美妆大盘直播销量占比 4.3%（67.91万/1575万），Dr.Melaxin 直播仍有巨大提升空间。
+         </span>
+         <strong class="metric-value">
+          直播重质不重量：将直播时长从动辄 6-13 小时压缩至 3 小时高能时段，必须挂载 $50+ 的套组（如 Gifted Set），提升客单以弥补 UV 价值短板。
+         </strong>
+         <p class="metric-note">
+         </p>
+        </article>
+        <article class="metric-card">
+         <span class="metric-label">
+          英国市场“有势无货”：GB 店铺评分 4.5 极高，但 7 天销售额仅 $69.8万（US 的 1/5），动销 SKU 仅 46 个（US 为 123）。商品页显示大量爆品（如 Peel Shot）在 UK 长期缺货或未上架。
+         </span>
+         <strong class="metric-value">
+          供给先行：立即将 US 已验证的 Top 20 商品同步至 UK 店铺，重点补齐 Neck Set 和 Gifted Collagen Set。
+         </strong>
+         <p class="metric-note">
+         </p>
+        </article>
+       </div>
+       <div class="table-wrap">
         <table class="report-table">
-          <thead><tr><th>核心数据发现（对比大盘）</th><th>策略机会与调整方向</th></tr></thead>
-          <tbody><tr><td>GMV 效率远超大盘：Dr.Melaxin US 店铺 7 天销售额 $340.29万，动销商品仅 123 个，单 SKU 贡献 $2.77万；而大盘周期内总动销 83.24万 件商品，头部集中度仅 20.73%。Dr.Melaxin 属于典型的“超级单品”驱动型品牌。</td><td>复制爆品公式：不要盲目扩张 SKU（目前在售 124 个已足够），集中火力打透 TX 传明酸线（商品搜索总销 65.7 万件）与 Calcium 胶原线。</td></tr><tr><td>内容资产“头重脚轻”：大盘 90% 销量来自达人，而 Dr.Melaxin 官方账号近 30 天仅发布 65 条视频（含大量直播预告切片），总播放 97万，不及一个腰部达人（如 southwellness 单条 470万）。</td><td>强化官方人设：参考大盘“商家自营号销量约 80.77 万”的数据，官方需从 “直播切片机” 转向 “功效科普博主”。</td></tr><tr><td>直播效率处于警戒线：US 官方店场均观看 1.63 万，但场均销售额仅约 $1.03 万（39 场累计 $40 万估算），UV 价值 0.40-1.22 波动极大。对比美妆大盘直播销量占比 4.3%（67.91万/1575万），Dr.Melaxin 直播仍有巨大提升空间。</td><td>直播重质不重量：将直播时长从动辄 6-13 小时压缩至 3 小时高能时段，必须挂载 $50+ 的套组（如 Gifted Set），提升客单以弥补 UV 价值短板。</td></tr><tr><td>英国市场“有势无货”：GB 店铺评分 4.5 极高，但 7 天销售额仅 $69.8万（US 的 1/5），动销 SKU 仅 46 个（US 为 123）。商品页显示大量爆品（如 Peel Shot）在 UK 长期缺货或未上架。</td><td>供给先行：立即将 US 已验证的 Top 20 商品同步至 UK 店铺，重点补齐 Neck Set 和 Gifted Collagen Set。</td></tr></tbody>
+         <thead>
+          <tr>
+           <th>
+            核心数据发现（对比大盘）
+           </th>
+           <th>
+            策略机会与调整方向
+           </th>
+          </tr>
+         </thead>
+         <tbody>
+          <tr>
+           <td>
+            GMV 效率远超大盘：Dr.Melaxin US 店铺 7 天销售额 $340.29万，动销商品仅 123 个，单 SKU 贡献 $2.77万；而大盘周期内总动销 83.24万 件商品，头部集中度仅 20.73%。Dr.Melaxin 属于典型的“超级单品”驱动型品牌。
+           </td>
+           <td>
+            复制爆品公式：不要盲目扩张 SKU（目前在售 124 个已足够），集中火力打透 TX 传明酸线（商品搜索总销 65.7 万件）与 Calcium 胶原线。
+           </td>
+          </tr>
+          <tr>
+           <td>
+            内容资产“头重脚轻”：大盘 90% 销量来自达人，而 Dr.Melaxin 官方账号近 30 天仅发布 65 条视频（含大量直播预告切片），总播放 97万，不及一个腰部达人（如 southwellness 单条 470万）。
+           </td>
+           <td>
+            强化官方人设：参考大盘“商家自营号销量约 80.77 万”的数据，官方需从 “直播切片机” 转向 “功效科普博主”。
+           </td>
+          </tr>
+          <tr>
+           <td>
+            直播效率处于警戒线：US 官方店场均观看 1.63 万，但场均销售额仅约 $1.03 万（39 场累计 $40 万估算），UV 价值 0.40-1.22 波动极大。对比美妆大盘直播销量占比 4.3%（67.91万/1575万），Dr.Melaxin 直播仍有巨大提升空间。
+           </td>
+           <td>
+            直播重质不重量：将直播时长从动辄 6-13 小时压缩至 3 小时高能时段，必须挂载 $50+ 的套组（如 Gifted Set），提升客单以弥补 UV 价值短板。
+           </td>
+          </tr>
+          <tr>
+           <td>
+            英国市场“有势无货”：GB 店铺评分 4.5 极高，但 7 天销售额仅 $69.8万（US 的 1/5），动销 SKU 仅 46 个（US 为 123）。商品页显示大量爆品（如 Peel Shot）在 UK 长期缺货或未上架。
+           </td>
+           <td>
+            供给先行：立即将 US 已验证的 Top 20 商品同步至 UK 店铺，重点补齐 Neck Set 和 Gifted Collagen Set。
+           </td>
+          </tr>
+         </tbody>
         </table>
+       </div>
       </div>
-    </div>
-    </div>
+     </div>
     </section>
-    
     <section class="report-section" id="section-04">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">Report Section</div>
-          <h2>用户画像</h2>
-        </div>
-        <span class="section-index">04</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        Report Section
+       </div>
+       <h2>
+        用户画像
+       </h2>
       </div>
-      <div class="section-body"></div>
+      <span class="section-index">
+       04
+      </span>
+     </div>
+     <div class="section-body">
+     </div>
     </section>
-    
     <section class="report-section" id="section-05">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">用户画像</div>
-          <h2>分析与人群缺口调整策略</h2>
-        </div>
-        <span class="section-index">05</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        用户画像
+       </div>
+       <h2>
+        分析与人群缺口调整策略
+       </h2>
       </div>
-      <div class="section-body"><p class="report-paragraph">现有受众结构 vs 理想受众目标 · 缺口总览</p>
-    <div class="table-shell">
-      
-      <div class="table-wrap">
+      <span class="section-index">
+       05
+      </span>
+     </div>
+     <div class="section-body">
+      <p class="report-paragraph">
+       现有受众结构 vs 理想受众目标 · 缺口总览
+      </p>
+      <div class="table-shell">
+       <div class="table-wrap">
         <table class="report-table">
-          <thead><tr><th>维度</th><th>当前表现（数据反映）</th><th>策略缺口与调整方向</th></tr></thead>
-          <tbody><tr><td>内容互动偏好</td><td>互动率两极分化：头部达人（粉丝 3.7 万）单条互动可达 0.79%；但 KOC 均值仅 0.54%，低于大盘健康值。热门视频平均时长 1分41秒。</td><td>缺口：KOC 内容停留在“产品展示”，缺乏“情绪共鸣”。<br>策略：Brief 强制要求 前 3 秒呈现“Before 痛点”（如法令纹凹陷特写）。</td></tr><tr><td>达人层级偏好</td><td>UGC 占比 1.53%（大盘中普通用户自发内容占比通常更高），内容生态呈 “极度商业化”——全是带货，无真实生活植入。</td><td>缺口：缺乏 “自来水”口碑 支撑搜索权重与信任背书。<br>策略：随单附赠 “TikTok 晒单挑战卡”，扫码发视频领 $5 Coupon。</td></tr><tr><td>价格带认知</td><td>均价 $44.14，中位数仅 $27.98。商品搜索数据显示：爆品集中在 $17.7 的 Calcium Balm（总销 69.4万）和 $55.2 的 Gifted Set（总销 30.7万）。</td><td>缺口：中段价格带（$30-$45）缺乏强势转化单品。<br>策略：主推 $34.5 的 Balm+Patches 套组，作为入门升单钩子。</td></tr></tbody>
+         <thead>
+          <tr>
+           <th>
+            维度
+           </th>
+           <th>
+            当前表现（数据反映）
+           </th>
+           <th>
+            策略缺口与调整方向
+           </th>
+          </tr>
+         </thead>
+         <tbody>
+          <tr>
+           <td>
+            内容互动偏好
+           </td>
+           <td>
+            互动率两极分化：头部达人（粉丝 3.7 万）单条互动可达 0.79%；但 KOC 均值仅 0.54%，低于大盘健康值。热门视频平均时长 1分41秒。
+           </td>
+           <td>
+            缺口：KOC 内容停留在“产品展示”，缺乏“情绪共鸣”。
+            <br/>
+            策略：Brief 强制要求 前 3 秒呈现“Before 痛点”（如法令纹凹陷特写）。
+           </td>
+          </tr>
+          <tr>
+           <td>
+            达人层级偏好
+           </td>
+           <td>
+            UGC 占比 1.53%（大盘中普通用户自发内容占比通常更高），内容生态呈 “极度商业化”——全是带货，无真实生活植入。
+           </td>
+           <td>
+            缺口：缺乏 “自来水”口碑 支撑搜索权重与信任背书。
+            <br/>
+            策略：随单附赠 “TikTok 晒单挑战卡”，扫码发视频领 $5 Coupon。
+           </td>
+          </tr>
+          <tr>
+           <td>
+            价格带认知
+           </td>
+           <td>
+            均价 $44.14，中位数仅 $27.98。商品搜索数据显示：爆品集中在 $17.7 的 Calcium Balm（总销 69.4万）和 $55.2 的 Gifted Set（总销 30.7万）。
+           </td>
+           <td>
+            缺口：中段价格带（$30-$45）缺乏强势转化单品。
+            <br/>
+            策略：主推 $34.5 的 Balm+Patches 套组，作为入门升单钩子。
+           </td>
+          </tr>
+         </tbody>
         </table>
+       </div>
       </div>
-    </div>
-    </div>
+     </div>
     </section>
-    
     <section class="report-section" id="section-06">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">Report Section</div>
-          <h2>六维策略指标填充</h2>
-        </div>
-        <span class="section-index">06</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        Report Section
+       </div>
+       <h2>
+        六维策略指标填充
+       </h2>
       </div>
-      <div class="section-body"></div>
+      <span class="section-index">
+       06
+      </span>
+     </div>
+     <div class="section-body">
+     </div>
     </section>
-    
     <section class="report-section" id="section-07">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">六维策略指标填充</div>
-          <h2>1. 内容声量策略</h2>
-        </div>
-        <span class="section-index">07</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        六维策略指标填充
+       </div>
+       <h2>
+        1. 内容声量策略
+       </h2>
       </div>
-      <div class="section-body"><p class="report-paragraph">数据现状</p><ul class="report-list"><li>大盘背景：美国美妆大盘周期内总销量 1575.77 万件，视频销量约 750.59 万，内容驱动成交特征明显。</li><li>品牌现状：官方账号 dr.melaxin.official 粉丝 37.9 万，但近一个月仅发布 65 条视频，总播放量仅 97.13 万，平均播放 1.49 万，官方内容几乎无自然流量。</li><li>UGC 生态：带货视频总数 12.48 万，但 UGC 自发内容仅占 1.53%，用户看完即走，缺乏“自来水”式口碑传播。</li></ul><p class="report-paragraph">总结性策略</p><p class="report-paragraph">“重仓官方内容，激活 UGC 飞轮”</p><ul class="report-list"><li>官方号转型：从“直播切片发布器”转型为 “功效型科普博主”，发布 TX 传明酸、钙离子导入等成分解析视频，目标月均播放量提升至 300 万+。</li><li>启动挑战赛：发起 #DrMelaxinPeelShot 购后挑战赛，随单附赠流量卡，激励用户发布非挂车素人视频，目标 60 天内 UGC 月产量达 300 条。</li></ul></div>
+      <span class="section-index">
+       07
+      </span>
+     </div>
+     <div class="section-body">
+      <p class="report-paragraph">
+       数据现状
+      </p>
+      <ul class="report-list">
+       <li>
+        大盘背景：美国美妆大盘周期内总销量 1575.77 万件，视频销量约 750.59 万，内容驱动成交特征明显。
+       </li>
+       <li>
+        品牌现状：官方账号 dr.melaxin.official 粉丝 37.9 万，但近一个月仅发布 65 条视频，总播放量仅 97.13 万，平均播放 1.49 万，官方内容几乎无自然流量。
+       </li>
+       <li>
+        UGC 生态：带货视频总数 12.48 万，但 UGC 自发内容仅占 1.53%，用户看完即走，缺乏“自来水”式口碑传播。
+       </li>
+      </ul>
+      <p class="report-paragraph">
+       总结性策略
+      </p>
+      <p class="report-paragraph">
+       “重仓官方内容，激活 UGC 飞轮”
+      </p>
+      <ul class="report-list">
+       <li>
+        官方号转型：从“直播切片发布器”转型为 “功效型科普博主”，发布 TX 传明酸、钙离子导入等成分解析视频，目标月均播放量提升至 300 万+。
+       </li>
+       <li>
+        启动挑战赛：发起 #DrMelaxinPeelShot 购后挑战赛，随单附赠流量卡，激励用户发布非挂车素人视频，目标 60 天内 UGC 月产量达 300 条。
+       </li>
+      </ul>
+     </div>
     </section>
-    
     <section class="report-section" id="section-08">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">六维策略指标填充</div>
-          <h2>2.  角色互动效率策略</h2>
-        </div>
-        <span class="section-index">08</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        六维策略指标填充
+       </div>
+       <h2>
+        2.  角色互动效率策略
+       </h2>
       </div>
-      <div class="section-body"><p class="report-paragraph">数据现状</p><ul class="report-list"><li>达人分层：带货达人 14.03 万，其中 KOC 占比 81.3%，是绝对的内容主力。</li><li>效率倒挂：KOL 平均互动率 1.02%，而 KOC 互动率仅 0.54%，大量 KOC 内容处于“无效铺量”状态。</li><li>出单效率：头部商品出单率最高可达 87.36%（BP Lip Shot），但尾部 KOC 出单率不足 20%，资源浪费严重。</li></ul><p class="report-paragraph">总结性策略</p><p class="report-paragraph">“分级赋能 KOC，用 SOP 拉升互动底线”</p><ul class="report-list"><li>强制 Brief 标准化：要求 KOC 视频前 3 秒必须出现 痛点特写（如法令纹、眼下凹陷），强制植入 “Before &amp; After” 对比结构。</li><li>流量对赌机制：针对低互动 KOC，改为 “纯佣+流量对赌” 模式，视频 GMV 达到门槛后再提供现金补贴。</li></ul></div>
+      <span class="section-index">
+       08
+      </span>
+     </div>
+     <div class="section-body">
+      <p class="report-paragraph">
+       数据现状
+      </p>
+      <ul class="report-list">
+       <li>
+        达人分层：带货达人 14.03 万，其中 KOC 占比 81.3%，是绝对的内容主力。
+       </li>
+       <li>
+        效率倒挂：KOL 平均互动率 1.02%，而 KOC 互动率仅 0.54%，大量 KOC 内容处于“无效铺量”状态。
+       </li>
+       <li>
+        出单效率：头部商品出单率最高可达 87.36%（BP Lip Shot），但尾部 KOC 出单率不足 20%，资源浪费严重。
+       </li>
+      </ul>
+      <p class="report-paragraph">
+       总结性策略
+      </p>
+      <p class="report-paragraph">
+       “分级赋能 KOC，用 SOP 拉升互动底线”
+      </p>
+      <ul class="report-list">
+       <li>
+        强制 Brief 标准化：要求 KOC 视频前 3 秒必须出现 痛点特写（如法令纹、眼下凹陷），强制植入 “Before & After” 对比结构。
+       </li>
+       <li>
+        流量对赌机制：针对低互动 KOC，改为 “纯佣+流量对赌” 模式，视频 GMV 达到门槛后再提供现金补贴。
+       </li>
+      </ul>
+     </div>
     </section>
-    
     <section class="report-section" id="section-09">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">六维策略指标填充</div>
-          <h2>3.  内容生态结构策略</h2>
-        </div>
-        <span class="section-index">09</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        六维策略指标填充
+       </div>
+       <h2>
+        3.  内容生态结构策略
+       </h2>
       </div>
-      <div class="section-body"><p class="report-paragraph">数据现状</p><ul class="report-list"><li>结构失衡：KOC 内容占比高达 81.3%，官方内容占比不足 0.1%，UGC 占比仅 1.53%。内容生态呈现 “哑铃型缺失”——有职业卖家，无真实用户。</li><li>情感缺失：热门视频 Top 10 标题全是功效词（Saggy, Dark Spots, Wrinkles），缺乏 情感叙事（如“找回自信”），导致用户粘性低。</li></ul><p class="report-paragraph">总结性策略</p><p class="report-paragraph">“压缩无效 KOC，让位官方与 UGC”</p><ul class="report-list"><li>结构调整：6 个月内将 官方+KOS 内容占比从 &lt;1% 提升至 8%，UGC 占比从 1.53% 提升至 15%，压缩低效 KOC 内容至 65%。</li><li>情感线补充：增加 “年龄自信” 类软性内容，例如“40 岁不注射，靠成分抗衰”等话题，提升品牌温度。</li></ul></div>
+      <span class="section-index">
+       09
+      </span>
+     </div>
+     <div class="section-body">
+      <p class="report-paragraph">
+       数据现状
+      </p>
+      <ul class="report-list">
+       <li>
+        结构失衡：KOC 内容占比高达 81.3%，官方内容占比不足 0.1%，UGC 占比仅 1.53%。内容生态呈现 “哑铃型缺失”——有职业卖家，无真实用户。
+       </li>
+       <li>
+        情感缺失：热门视频 Top 10 标题全是功效词（Saggy, Dark Spots, Wrinkles），缺乏 情感叙事（如“找回自信”），导致用户粘性低。
+       </li>
+      </ul>
+      <p class="report-paragraph">
+       总结性策略
+      </p>
+      <p class="report-paragraph">
+       “压缩无效 KOC，让位官方与 UGC”
+      </p>
+      <ul class="report-list">
+       <li>
+        结构调整：6 个月内将 官方+KOS 内容占比从 <1% 提升至 8%，UGC 占比从 1.53% 提升至 15%，压缩低效 KOC 内容至 65%。
+       </li>
+       <li>
+        情感线补充：增加 “年龄自信” 类软性内容，例如“40 岁不注射，靠成分抗衰”等话题，提升品牌温度。
+       </li>
+      </ul>
+     </div>
     </section>
-    
     <section class="report-section" id="section-10">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">六维策略指标填充</div>
-          <h2>4. 互动质量策略</h2>
-        </div>
-        <span class="section-index">10</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        六维策略指标填充
+       </div>
+       <h2>
+        4. 互动质量策略
+       </h2>
       </div>
-      <div class="section-body"><p class="report-paragraph">数据现状</p><ul class="report-list"><li>评论深度极浅：热门视频总点赞 170.32 万，但总评论仅 2.88 万，评赞比仅 1.7%。评论区充斥着 “Link?” 和 “How much?”，缺乏产品使用体验的深度分享。</li><li>负面隐患：Cactox 系列含有 AHA/PHA，部分视频评论区已出现 “tingling/burning”敏感讨论。</li></ul><p class="report-paragraph">总结性策略</p><p class="report-paragraph">“官方下场，从‘静默下单’转向‘深度讨论’”</p><ul class="report-list"><li>评论区运营 SOP：官方号每日在爆款视频下发起 投票式提问（如：“你的颈纹是天生还是低头族？”），引导用户参与讨论。</li><li>话术预埋：针对 Cactox 发热感，统一达人话术为 “这是钙离子激活胶原的正常体感，非过敏”，将负面体验转化为专业背书。</li></ul></div>
+      <span class="section-index">
+       10
+      </span>
+     </div>
+     <div class="section-body">
+      <p class="report-paragraph">
+       数据现状
+      </p>
+      <ul class="report-list">
+       <li>
+        评论深度极浅：热门视频总点赞 170.32 万，但总评论仅 2.88 万，评赞比仅 1.7%。评论区充斥着 “Link?” 和 “How much?”，缺乏产品使用体验的深度分享。
+       </li>
+       <li>
+        负面隐患：Cactox 系列含有 AHA/PHA，部分视频评论区已出现 “tingling/burning”敏感讨论。
+       </li>
+      </ul>
+      <p class="report-paragraph">
+       总结性策略
+      </p>
+      <p class="report-paragraph">
+       “官方下场，从‘静默下单’转向‘深度讨论’”
+      </p>
+      <ul class="report-list">
+       <li>
+        评论区运营 SOP：官方号每日在爆款视频下发起 投票式提问（如：“你的颈纹是天生还是低头族？”），引导用户参与讨论。
+       </li>
+       <li>
+        话术预埋：针对 Cactox 发热感，统一达人话术为 “这是钙离子激活胶原的正常体感，非过敏”，将负面体验转化为专业背书。
+       </li>
+      </ul>
+     </div>
     </section>
-    
     <section class="report-section" id="section-11">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">六维策略指标填充</div>
-          <h2>5. 站内搜索策略</h2>
-        </div>
-        <span class="section-index">11</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        六维策略指标填充
+       </div>
+       <h2>
+        5. 站内搜索策略
+       </h2>
       </div>
-      <div class="section-body"><p class="report-paragraph">数据现状</p><ul class="report-list"><li>核心品卡位：商品搜索页显示，Peel Shot Glow Rice Ampoule Duo 总销量高达 65.75 万件，搜索权重极高；Kojic Acid Turmeric Spray 7 天销量 8,033 件，仍在爬坡期。</li><li>场景词空缺：品牌未覆盖 “Hollow Under Eyes”、“Crepey Neck” 等长尾场景词，这些词的搜索结果多被竞品或综合类视频占据。</li></ul><p class="report-paragraph">总结性策略</p><p class="report-paragraph">“大词守城，长尾词进攻”</p><ul class="report-list"><li>标题 SEO 化：强制要求达人视频标题包含 “场景痛点 + 成分”（如：Deep hollow under eyes + Calcium Bonding Cream）。</li><li>搜索卡位：针对 Kojic Acid Spray 和 Calcium Eye Cream 投放 搜索广告，配合 UGC 内容冲榜，目标 30 天内核心词稳居 Top 3。</li></ul></div>
+      <span class="section-index">
+       11
+      </span>
+     </div>
+     <div class="section-body">
+      <p class="report-paragraph">
+       数据现状
+      </p>
+      <ul class="report-list">
+       <li>
+        核心品卡位：商品搜索页显示，Peel Shot Glow Rice Ampoule Duo 总销量高达 65.75 万件，搜索权重极高；Kojic Acid Turmeric Spray 7 天销量 8,033 件，仍在爬坡期。
+       </li>
+       <li>
+        场景词空缺：品牌未覆盖 “Hollow Under Eyes”、“Crepey Neck” 等长尾场景词，这些词的搜索结果多被竞品或综合类视频占据。
+       </li>
+      </ul>
+      <p class="report-paragraph">
+       总结性策略
+      </p>
+      <p class="report-paragraph">
+       “大词守城，长尾词进攻”
+      </p>
+      <ul class="report-list">
+       <li>
+        标题 SEO 化：强制要求达人视频标题包含 “场景痛点 + 成分”（如：Deep hollow under eyes + Calcium Bonding Cream）。
+       </li>
+       <li>
+        搜索卡位：针对 Kojic Acid Spray 和 Calcium Eye Cream 投放 搜索广告，配合 UGC 内容冲榜，目标 30 天内核心词稳居 Top 3。
+       </li>
+      </ul>
+     </div>
     </section>
-    
     <section class="report-section" id="section-12">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">六维策略指标填充</div>
-          <h2>6. TikTok 电商策略</h2>
-        </div>
-        <span class="section-index">12</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        六维策略指标填充
+       </div>
+       <h2>
+        6. TikTok 电商策略
+       </h2>
       </div>
-      <div class="section-body"><p class="report-paragraph">数据现状</p><ul class="report-list"><li>店铺势能：US 店 7 天销售额 $340.29 万，总销售额 $1.34 亿，属于头部美妆店铺。客单价 $44.14 远高于大盘均值 $23.71。</li><li>直播短板：官方直播场均观看 1.63 万，但 UV 价值仅 $0.40-$1.22，场均 GMV 约 $1.03 万，效率远低于短视频带货。</li><li>商品结构：店铺在售 124 个 SKU，但 7 天动销仅 123 个，长尾商品滞销严重。</li></ul><p class="report-paragraph">总结性策略</p><p class="report-paragraph">“直播提质减量，货盘聚焦高客单”</p><ul class="report-list"><li>直播大改版：时长从 6-13 小时压缩至 3 小时 黄金档；货盘从 99 个 SKU 缩减至 30 个 核心爆品；强制挂车 $50+ 套组（如 Gifted Set），拉升 UV 价值至 $1.50+。</li><li>达人分级激励：S 级出单率 &gt;60% 的达人给予 12% 佣金+季度返点；B 级低效达人转为 纯佣合作，减少无效支出。</li></ul></div>
+      <span class="section-index">
+       12
+      </span>
+     </div>
+     <div class="section-body">
+      <p class="report-paragraph">
+       数据现状
+      </p>
+      <ul class="report-list">
+       <li>
+        店铺势能：US 店 7 天销售额 $340.29 万，总销售额 $1.34 亿，属于头部美妆店铺。客单价 $44.14 远高于大盘均值 $23.71。
+       </li>
+       <li>
+        直播短板：官方直播场均观看 1.63 万，但 UV 价值仅 $0.40-$1.22，场均 GMV 约 $1.03 万，效率远低于短视频带货。
+       </li>
+       <li>
+        商品结构：店铺在售 124 个 SKU，但 7 天动销仅 123 个，长尾商品滞销严重。
+       </li>
+      </ul>
+      <p class="report-paragraph">
+       总结性策略
+      </p>
+      <p class="report-paragraph">
+       “直播提质减量，货盘聚焦高客单”
+      </p>
+      <ul class="report-list">
+       <li>
+        直播大改版：时长从 6-13 小时压缩至 3 小时 黄金档；货盘从 99 个 SKU 缩减至 30 个 核心爆品；强制挂车 $50+ 套组（如 Gifted Set），拉升 UV 价值至 $1.50+。
+       </li>
+       <li>
+        达人分级激励：S 级出单率 >60% 的达人给予 12% 佣金+季度返点；B 级低效达人转为 纯佣合作，减少无效支出。
+       </li>
+      </ul>
+     </div>
     </section>
-    
     <section class="report-section" id="section-13">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">Report Section</div>
-          <h2>执行体系</h2>
-        </div>
-        <span class="section-index">13</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        Report Section
+       </div>
+       <h2>
+        执行体系
+       </h2>
       </div>
-      <div class="section-body"></div>
+      <span class="section-index">
+       13
+      </span>
+     </div>
+     <div class="section-body">
+     </div>
     </section>
-    
     <section class="report-section" id="section-14">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">执行体系</div>
-          <h2>1.  角色配置框架</h2>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        执行体系
+       </div>
+       <h2>
+        1.  角色配置框架
+       </h2>
+      </div>
+      <span class="section-index">
+       14
+      </span>
+     </div>
+     <div class="section-body">
+      <div class="table-shell">
+       <div class="bar-list">
+        <div class="bar-row">
+         <span>
+          头部 KOL
+         </span>
+         <div class="bar-track">
+          <i style="width:1.02%">
+          </i>
+         </div>
+         <strong>
+          承担节点引爆、品牌声量放大、hero SKU 的高讨论度内容。依据是 KOL 平均互动率最高（1.02%）。
+         </strong>
         </div>
-        <span class="section-index">14</span>
-      </div>
-      <div class="section-body">
-    <div class="table-shell">
-      <div class="bar-list">
-            <div class="bar-row">
-              <span>头部 KOL</span>
-              <div class="bar-track"><i style="width:1.02%"></i></div>
-              <strong>承担节点引爆、品牌声量放大、hero SKU 的高讨论度内容。依据是 KOL 平均互动率最高（1.02%）。</strong>
-            </div>
-            
-            <div class="bar-row">
-              <span>腰部 KOL + KOC</span>
-              <div class="bar-track"><i style="width:81.30%"></i></div>
-              <strong>承担主力内容铺量与问题解决型种草。依据是 KOC 占热门视频样本 81.30%，且 Top10 热门视频全部来自这一层级。</strong>
-            </div>
-            
-            <div class="bar-row">
-              <span>UGC 自发</span>
-              <div class="bar-track"><i style="width:1.53%"></i></div>
-              <strong>承担真实反馈、搜索补位与口碑增强。目前样本仅 46 条，占比 1.53%。</strong>
-            </div>
-            </div>
-      <div class="table-wrap">
+        <div class="bar-row">
+         <span>
+          腰部 KOL + KOC
+         </span>
+         <div class="bar-track">
+          <i style="width:81.30%">
+          </i>
+         </div>
+         <strong>
+          承担主力内容铺量与问题解决型种草。依据是 KOC 占热门视频样本 81.30%，且 Top10 热门视频全部来自这一层级。
+         </strong>
+        </div>
+        <div class="bar-row">
+         <span>
+          UGC 自发
+         </span>
+         <div class="bar-track">
+          <i style="width:1.53%">
+          </i>
+         </div>
+         <strong>
+          承担真实反馈、搜索补位与口碑增强。目前样本仅 46 条，占比 1.53%。
+         </strong>
+        </div>
+       </div>
+       <div class="table-wrap">
         <table class="report-table">
-          <thead><tr><th>角色</th><th>内容功能</th><th>与其他角色协作</th></tr></thead>
-          <tbody><tr><td>头部 KOL</td><td>承担节点引爆、品牌声量放大、hero SKU 的高讨论度内容。依据是 KOL 平均互动率最高（1.02%）。</td><td>在新品、大促、挑战赛节点打开话题，再由 KOC 与官号接续扩散。</td></tr><tr><td>腰部 KOL + KOC</td><td>承担主力内容铺量与问题解决型种草。依据是 KOC 占热门视频样本 81.30%，且 Top10 热门视频全部来自这一层级。</td><td>围绕已验证的高需求问题持续铺量，并与店铺、直播做挂车和评论区承接。</td></tr><tr><td>UGC 自发</td><td>承担真实反馈、搜索补位与口碑增强。目前样本仅 46 条，占比 1.53%。</td><td>需要通过购后激励或二创征集提升数量，为 KOC 内容补充可信度。</td></tr><tr><td>官号 / 店铺直播</td><td>承担卖点统一、商品解释、活动通知、直播承接与搜索答案沉淀。</td><td>统一品牌表达与商品搭配逻辑，作为各层创作者内容的标准答案与转化落点。</td></tr></tbody>
+         <thead>
+          <tr>
+           <th>
+            角色
+           </th>
+           <th>
+            内容功能
+           </th>
+           <th>
+            与其他角色协作
+           </th>
+          </tr>
+         </thead>
+         <tbody>
+          <tr>
+           <td>
+            头部 KOL
+           </td>
+           <td>
+            承担节点引爆、品牌声量放大、hero SKU 的高讨论度内容。依据是 KOL 平均互动率最高（1.02%）。
+           </td>
+           <td>
+            在新品、大促、挑战赛节点打开话题，再由 KOC 与官号接续扩散。
+           </td>
+          </tr>
+          <tr>
+           <td>
+            腰部 KOL + KOC
+           </td>
+           <td>
+            承担主力内容铺量与问题解决型种草。依据是 KOC 占热门视频样本 81.30%，且 Top10 热门视频全部来自这一层级。
+           </td>
+           <td>
+            围绕已验证的高需求问题持续铺量，并与店铺、直播做挂车和评论区承接。
+           </td>
+          </tr>
+          <tr>
+           <td>
+            UGC 自发
+           </td>
+           <td>
+            承担真实反馈、搜索补位与口碑增强。目前样本仅 46 条，占比 1.53%。
+           </td>
+           <td>
+            需要通过购后激励或二创征集提升数量，为 KOC 内容补充可信度。
+           </td>
+          </tr>
+          <tr>
+           <td>
+            官号 / 店铺直播
+           </td>
+           <td>
+            承担卖点统一、商品解释、活动通知、直播承接与搜索答案沉淀。
+           </td>
+           <td>
+            统一品牌表达与商品搭配逻辑，作为各层创作者内容的标准答案与转化落点。
+           </td>
+          </tr>
+         </tbody>
         </table>
+       </div>
       </div>
-    </div>
-    </div>
+     </div>
     </section>
-    
     <section class="report-section" id="section-15">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">执行体系</div>
-          <h2>2.  内容方向 · 创作者 Brief（基于明细数据更新）</h2>
-        </div>
-        <span class="section-index">15</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        执行体系
+       </div>
+       <h2>
+        2.  内容方向 · 创作者 Brief（基于明细数据更新）
+       </h2>
       </div>
-      <div class="section-body"><p class="report-paragraph">根据热门视频 Top 10 标题高频词与 商品搜索 数据，提炼创作方向：</p>
-    <div class="table-shell">
-      
-      <div class="table-wrap">
+      <span class="section-index">
+       15
+      </span>
+     </div>
+     <div class="section-body">
+      <p class="report-paragraph">
+       根据热门视频 Top 10 标题高频词与 商品搜索 数据，提炼创作方向：
+      </p>
+      <div class="table-shell">
+       <div class="table-wrap">
         <table class="report-table">
-          <thead><tr><th>内容方向</th><th>表格依据</th><th>执行提示</th></tr></thead>
-          <tbody><tr><td>方向1：眼周护理与初老问题</td><td>依据：眼周/黑眼圈关键词在热门标题中命中 234 次；Multi Balm 近7天销量 21,813，Dark Spot Eye Cream 8,410。</td><td>围绕黑眼圈、凹陷感、细纹、松弛做单点问题切入，适合 before/after、局部近景、步骤展示。</td></tr><tr><td>方向2：淡斑提亮与肤色不均</td><td>依据：淡斑/提亮/肤色不均关键词命中 347 次；TX 系与 spot care 产品在官号标题中反复出现。</td><td>适合做“暗沉/色斑/肤色不均”问题表达，以及 TX Cream、Peel Shot 等产品的搭配内容。</td></tr><tr><td>方向3：去角质焕肤与肤感变化</td><td>依据：去角质/焕肤关键词命中 362 次；Peel Shot Keratin Care Spray 近7天销量 8,033。</td><td>适合做质地演示、老废角质、肤感变细腻等视觉变化型内容。</td></tr><tr><td>方向4：套组 / routine 教育</td><td>依据：set / bundle / routine 关键词在热门标题中命中 628 次；相关 SKU 170 个，近7天销量合计 54,133。</td><td>把单品讲法升级为“为什么这套一起用”，强化客单与复购逻辑。</td></tr><tr><td>方向5：颈纹 / 局部精细护理</td><td>依据：neck 相关关键词命中 131 次；Neck Wrinkle Care Set 近7天销量 2,639。</td><td>适合做更细分的局部护理人群切口，帮助品牌拉开与泛护肤内容的差异。</td></tr></tbody>
+         <thead>
+          <tr>
+           <th>
+            内容方向
+           </th>
+           <th>
+            表格依据
+           </th>
+           <th>
+            执行提示
+           </th>
+          </tr>
+         </thead>
+         <tbody>
+          <tr>
+           <td>
+            方向1：眼周护理与初老问题
+           </td>
+           <td>
+            依据：眼周/黑眼圈关键词在热门标题中命中 234 次；Multi Balm 近7天销量 21,813，Dark Spot Eye Cream 8,410。
+           </td>
+           <td>
+            围绕黑眼圈、凹陷感、细纹、松弛做单点问题切入，适合 before/after、局部近景、步骤展示。
+           </td>
+          </tr>
+          <tr>
+           <td>
+            方向2：淡斑提亮与肤色不均
+           </td>
+           <td>
+            依据：淡斑/提亮/肤色不均关键词命中 347 次；TX 系与 spot care 产品在官号标题中反复出现。
+           </td>
+           <td>
+            适合做“暗沉/色斑/肤色不均”问题表达，以及 TX Cream、Peel Shot 等产品的搭配内容。
+           </td>
+          </tr>
+          <tr>
+           <td>
+            方向3：去角质焕肤与肤感变化
+           </td>
+           <td>
+            依据：去角质/焕肤关键词命中 362 次；Peel Shot Keratin Care Spray 近7天销量 8,033。
+           </td>
+           <td>
+            适合做质地演示、老废角质、肤感变细腻等视觉变化型内容。
+           </td>
+          </tr>
+          <tr>
+           <td>
+            方向4：套组 / routine 教育
+           </td>
+           <td>
+            依据：set / bundle / routine 关键词在热门标题中命中 628 次；相关 SKU 170 个，近7天销量合计 54,133。
+           </td>
+           <td>
+            把单品讲法升级为“为什么这套一起用”，强化客单与复购逻辑。
+           </td>
+          </tr>
+          <tr>
+           <td>
+            方向5：颈纹 / 局部精细护理
+           </td>
+           <td>
+            依据：neck 相关关键词命中 131 次；Neck Wrinkle Care Set 近7天销量 2,639。
+           </td>
+           <td>
+            适合做更细分的局部护理人群切口，帮助品牌拉开与泛护肤内容的差异。
+           </td>
+          </tr>
+         </tbody>
         </table>
+       </div>
       </div>
-    </div>
-    <p class="report-paragraph">创作者 BRF（基于热门视频标题共性）</p><ul class="report-list"><li>优先从一个具体问题切入，不要泛讲“这个品牌很好”。当前热词更集中在 dark circles、fine lines、saggy skin、dark spots、hyperpigmentation、pore、routine 等问题型表达。</li><li>标题和口播应保留可搜索词，避免只讲抽象感受。已有表格已经验证，用户更容易被“问题 + 产品/套组 + 结果预期”的结构吸引。</li><li>优先选择 1,000–100,000 粉之间、会讲真实体验的内容账号，因为现有 Top10 热门视频全部由这一层级创作者产出。</li><li>展示方式优先考虑：局部问题特写、质地/使用动作、步骤顺序、连续使用前后变化，而不是单纯产品空镜。</li></ul></div>
+      <p class="report-paragraph">
+       创作者 BRF（基于热门视频标题共性）
+      </p>
+      <ul class="report-list">
+       <li>
+        优先从一个具体问题切入，不要泛讲“这个品牌很好”。当前热词更集中在 dark circles、fine lines、saggy skin、dark spots、hyperpigmentation、pore、routine 等问题型表达。
+       </li>
+       <li>
+        标题和口播应保留可搜索词，避免只讲抽象感受。已有表格已经验证，用户更容易被“问题 + 产品/套组 + 结果预期”的结构吸引。
+       </li>
+       <li>
+        优先选择 1,000–100,000 粉之间、会讲真实体验的内容账号，因为现有 Top10 热门视频全部由这一层级创作者产出。
+       </li>
+       <li>
+        展示方式优先考虑：局部问题特写、质地/使用动作、步骤顺序、连续使用前后变化，而不是单纯产品空镜。
+       </li>
+      </ul>
+     </div>
     </section>
-    
     <section class="report-section" id="section-16">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">执行体系</div>
-          <h2>3. 验证指标</h2>
-        </div>
-        <span class="section-index">16</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        执行体系
+       </div>
+       <h2>
+        3. 验证指标
+       </h2>
       </div>
-      <div class="section-body"></div>
+      <span class="section-index">
+       16
+      </span>
+     </div>
+     <div class="section-body">
+     </div>
     </section>
-    
     <section class="report-section" id="section-17">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">3. 验证指标</div>
-          <h2>① 内容声量指标</h2>
-        </div>
-        <span class="section-index">17</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        3. 验证指标
+       </div>
+       <h2>
+        ① 内容声量指标
+       </h2>
       </div>
-      <div class="section-body">
-    <div class="table-shell">
-      <div class="threshold-grid">
-            <article class="threshold-card">
-              <span class="metric-label">月均 UGC 产量</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>150 条 / 月</span>
-                <span><em>目标线</em>300 条 / 月</span>
-              </div>
-            </article>
-            
-            <article class="threshold-card">
-              <span class="metric-label">UGC 占总内容比例</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>8%</span>
-                <span><em>目标线</em>15%</span>
-              </div>
-            </article>
-            
-            <article class="threshold-card">
-              <span class="metric-label">话题挑战赛 UGC 数量</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>80 条 / 月</span>
-                <span><em>目标线</em>200 条 / 月</span>
-              </div>
-            </article>
-            
-            <article class="threshold-card">
-              <span class="metric-label">内容月增速</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>20%</span>
-                <span><em>目标线</em>35%</span>
-              </div>
-            </article>
-            </div>
-      <div class="table-wrap">
+      <span class="section-index">
+       17
+      </span>
+     </div>
+     <div class="section-body">
+      <div class="table-shell">
+       <div class="threshold-grid">
+        <article class="threshold-card">
+         <span class="metric-label">
+          月均 UGC 产量
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           150 条 / 月
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           300 条 / 月
+          </span>
+         </div>
+        </article>
+        <article class="threshold-card">
+         <span class="metric-label">
+          UGC 占总内容比例
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           8%
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           15%
+          </span>
+         </div>
+        </article>
+        <article class="threshold-card">
+         <span class="metric-label">
+          话题挑战赛 UGC 数量
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           80 条 / 月
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           200 条 / 月
+          </span>
+         </div>
+        </article>
+        <article class="threshold-card">
+         <span class="metric-label">
+          内容月增速
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           20%
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           35%
+          </span>
+         </div>
+        </article>
+       </div>
+       <div class="table-wrap">
         <table class="report-table">
-          <thead><tr><th>指标</th><th>通过线</th><th>目标线</th></tr></thead>
-          <tbody><tr><td>月均 UGC 产量</td><td>150 条 / 月</td><td>300 条 / 月</td></tr><tr><td>UGC 占总内容比例</td><td>8%</td><td>15%</td></tr><tr><td>话题挑战赛 UGC 数量</td><td>80 条 / 月</td><td>200 条 / 月</td></tr><tr><td>内容月增速</td><td>20%</td><td>35%</td></tr></tbody>
+         <thead>
+          <tr>
+           <th>
+            指标
+           </th>
+           <th>
+            通过线
+           </th>
+           <th>
+            目标线
+           </th>
+          </tr>
+         </thead>
+         <tbody>
+          <tr>
+           <td>
+            月均 UGC 产量
+           </td>
+           <td>
+            150 条 / 月
+           </td>
+           <td>
+            300 条 / 月
+           </td>
+          </tr>
+          <tr>
+           <td>
+            UGC 占总内容比例
+           </td>
+           <td>
+            8%
+           </td>
+           <td>
+            15%
+           </td>
+          </tr>
+          <tr>
+           <td>
+            话题挑战赛 UGC 数量
+           </td>
+           <td>
+            80 条 / 月
+           </td>
+           <td>
+            200 条 / 月
+           </td>
+          </tr>
+          <tr>
+           <td>
+            内容月增速
+           </td>
+           <td>
+            20%
+           </td>
+           <td>
+            35%
+           </td>
+          </tr>
+         </tbody>
         </table>
+       </div>
       </div>
-    </div>
-    </div>
+     </div>
     </section>
-    
     <section class="report-section" id="section-18">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">3. 验证指标</div>
-          <h2>② 角色效率指标</h2>
-        </div>
-        <span class="section-index">18</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        3. 验证指标
+       </div>
+       <h2>
+        ② 角色效率指标
+       </h2>
       </div>
-      <div class="section-body">
-    <div class="table-shell">
-      <div class="threshold-grid">
-            <article class="threshold-card">
-              <span class="metric-label">KOC 层级互动率</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>0.65%</span>
-                <span><em>目标线</em>0.80%</span>
-              </div>
-            </article>
-            
-            <article class="threshold-card">
-              <span class="metric-label">UGC 创作者激励数</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>100 人 / 月</span>
-                <span><em>目标线</em>250 人 / 月</span>
-              </div>
-            </article>
-            
-            <article class="threshold-card">
-              <span class="metric-label">UGC 自发内容条数</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>100 条 / 月</span>
-                <span><em>目标线</em>200 条 / 月</span>
-              </div>
-            </article>
-            
-            <article class="threshold-card">
-              <span class="metric-label">KOC 评论正面率</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>80%</span>
-                <span><em>目标线</em>88%</span>
-              </div>
-            </article>
-            </div>
-      <div class="table-wrap">
+      <span class="section-index">
+       18
+      </span>
+     </div>
+     <div class="section-body">
+      <div class="table-shell">
+       <div class="threshold-grid">
+        <article class="threshold-card">
+         <span class="metric-label">
+          KOC 层级互动率
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           0.65%
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           0.80%
+          </span>
+         </div>
+        </article>
+        <article class="threshold-card">
+         <span class="metric-label">
+          UGC 创作者激励数
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           100 人 / 月
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           250 人 / 月
+          </span>
+         </div>
+        </article>
+        <article class="threshold-card">
+         <span class="metric-label">
+          UGC 自发内容条数
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           100 条 / 月
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           200 条 / 月
+          </span>
+         </div>
+        </article>
+        <article class="threshold-card">
+         <span class="metric-label">
+          KOC 评论正面率
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           80%
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           88%
+          </span>
+         </div>
+        </article>
+       </div>
+       <div class="table-wrap">
         <table class="report-table">
-          <thead><tr><th>指标</th><th>通过线</th><th>目标线</th></tr></thead>
-          <tbody><tr><td>KOC 层级互动率</td><td>0.65%</td><td>0.80%</td></tr><tr><td>UGC 创作者激励数</td><td>100 人 / 月</td><td>250 人 / 月</td></tr><tr><td>UGC 自发内容条数</td><td>100 条 / 月</td><td>200 条 / 月</td></tr><tr><td>KOC 评论正面率</td><td>80%</td><td>88%</td></tr></tbody>
+         <thead>
+          <tr>
+           <th>
+            指标
+           </th>
+           <th>
+            通过线
+           </th>
+           <th>
+            目标线
+           </th>
+          </tr>
+         </thead>
+         <tbody>
+          <tr>
+           <td>
+            KOC 层级互动率
+           </td>
+           <td>
+            0.65%
+           </td>
+           <td>
+            0.80%
+           </td>
+          </tr>
+          <tr>
+           <td>
+            UGC 创作者激励数
+           </td>
+           <td>
+            100 人 / 月
+           </td>
+           <td>
+            250 人 / 月
+           </td>
+          </tr>
+          <tr>
+           <td>
+            UGC 自发内容条数
+           </td>
+           <td>
+            100 条 / 月
+           </td>
+           <td>
+            200 条 / 月
+           </td>
+          </tr>
+          <tr>
+           <td>
+            KOC 评论正面率
+           </td>
+           <td>
+            80%
+           </td>
+           <td>
+            88%
+           </td>
+          </tr>
+         </tbody>
         </table>
+       </div>
       </div>
-    </div>
-    </div>
+     </div>
     </section>
-    
     <section class="report-section" id="section-19">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">3. 验证指标</div>
-          <h2>③ 生态结构指标</h2>
-        </div>
-        <span class="section-index">19</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        3. 验证指标
+       </div>
+       <h2>
+        ③ 生态结构指标
+       </h2>
       </div>
-      <div class="section-body">
-    <div class="table-shell">
-      <div class="threshold-grid">
-            <article class="threshold-card">
-              <span class="metric-label">官号 + KOS 内容占比</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>20%</span>
-                <span><em>目标线</em>25%</span>
-              </div>
-            </article>
-            
-            <article class="threshold-card">
-              <span class="metric-label">KOC 内容占比</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>55% - 65%</span>
-                <span><em>目标线</em>45% - 55%</span>
-              </div>
-            </article>
-            
-            <article class="threshold-card">
-              <span class="metric-label">情感叙事内容占比</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>25%</span>
-                <span><em>目标线</em>35%</span>
-              </div>
-            </article>
-            </div>
-      <div class="table-wrap">
+      <span class="section-index">
+       19
+      </span>
+     </div>
+     <div class="section-body">
+      <div class="table-shell">
+       <div class="threshold-grid">
+        <article class="threshold-card">
+         <span class="metric-label">
+          官号 + KOS 内容占比
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           20%
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           25%
+          </span>
+         </div>
+        </article>
+        <article class="threshold-card">
+         <span class="metric-label">
+          KOC 内容占比
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           55% - 65%
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           45% - 55%
+          </span>
+         </div>
+        </article>
+        <article class="threshold-card">
+         <span class="metric-label">
+          情感叙事内容占比
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           25%
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           35%
+          </span>
+         </div>
+        </article>
+       </div>
+       <div class="table-wrap">
         <table class="report-table">
-          <thead><tr><th>指标</th><th>通过线</th><th>目标线</th></tr></thead>
-          <tbody><tr><td>官号 + KOS 内容占比</td><td>20%</td><td>25%</td></tr><tr><td>KOC 内容占比</td><td>55% - 65%</td><td>45% - 55%</td></tr><tr><td>情感叙事内容占比</td><td>25%</td><td>35%</td></tr></tbody>
+         <thead>
+          <tr>
+           <th>
+            指标
+           </th>
+           <th>
+            通过线
+           </th>
+           <th>
+            目标线
+           </th>
+          </tr>
+         </thead>
+         <tbody>
+          <tr>
+           <td>
+            官号 + KOS 内容占比
+           </td>
+           <td>
+            20%
+           </td>
+           <td>
+            25%
+           </td>
+          </tr>
+          <tr>
+           <td>
+            KOC 内容占比
+           </td>
+           <td>
+            55% - 65%
+           </td>
+           <td>
+            45% - 55%
+           </td>
+          </tr>
+          <tr>
+           <td>
+            情感叙事内容占比
+           </td>
+           <td>
+            25%
+           </td>
+           <td>
+            35%
+           </td>
+          </tr>
+         </tbody>
         </table>
+       </div>
       </div>
-    </div>
-    </div>
+     </div>
     </section>
-    
     <section class="report-section" id="section-20">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">3. 验证指标</div>
-          <h2>④ 互动质量指标</h2>
-        </div>
-        <span class="section-index">20</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        3. 验证指标
+       </div>
+       <h2>
+        ④ 互动质量指标
+       </h2>
       </div>
-      <div class="section-body">
-    <div class="table-shell">
-      <div class="threshold-grid">
-            <article class="threshold-card">
-              <span class="metric-label">整体正面情感比例</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>82%</span>
-                <span><em>目标线</em>88%</span>
-              </div>
-            </article>
-            
-            <article class="threshold-card">
-              <span class="metric-label">正向评论密度</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>8 / 万次播放</span>
-                <span><em>目标线</em>12 / 万次播放</span>
-              </div>
-            </article>
-            
-            <article class="threshold-card">
-              <span class="metric-label">功效质疑类负评占比</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>&lt;12%</span>
-                <span><em>目标线</em>&lt;8%</span>
-              </div>
-            </article>
-            
-            <article class="threshold-card">
-              <span class="metric-label">评论品质指数</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>75</span>
-                <span><em>目标线</em>85</span>
-              </div>
-            </article>
-            </div>
-      <div class="table-wrap">
+      <span class="section-index">
+       20
+      </span>
+     </div>
+     <div class="section-body">
+      <div class="table-shell">
+       <div class="threshold-grid">
+        <article class="threshold-card">
+         <span class="metric-label">
+          整体正面情感比例
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           82%
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           88%
+          </span>
+         </div>
+        </article>
+        <article class="threshold-card">
+         <span class="metric-label">
+          正向评论密度
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           8 / 万次播放
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           12 / 万次播放
+          </span>
+         </div>
+        </article>
+        <article class="threshold-card">
+         <span class="metric-label">
+          功效质疑类负评占比
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           <12%
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           <8%
+          </span>
+         </div>
+        </article>
+        <article class="threshold-card">
+         <span class="metric-label">
+          评论品质指数
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           75
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           85
+          </span>
+         </div>
+        </article>
+       </div>
+       <div class="table-wrap">
         <table class="report-table">
-          <thead><tr><th>指标</th><th>通过线</th><th>目标线</th></tr></thead>
-          <tbody><tr><td>整体正面情感比例</td><td>82%</td><td>88%</td></tr><tr><td>正向评论密度</td><td>8 / 万次播放</td><td>12 / 万次播放</td></tr><tr><td>功效质疑类负评占比</td><td>&lt;12%</td><td>&lt;8%</td></tr><tr><td>评论品质指数</td><td>75</td><td>85</td></tr></tbody>
+         <thead>
+          <tr>
+           <th>
+            指标
+           </th>
+           <th>
+            通过线
+           </th>
+           <th>
+            目标线
+           </th>
+          </tr>
+         </thead>
+         <tbody>
+          <tr>
+           <td>
+            整体正面情感比例
+           </td>
+           <td>
+            82%
+           </td>
+           <td>
+            88%
+           </td>
+          </tr>
+          <tr>
+           <td>
+            正向评论密度
+           </td>
+           <td>
+            8 / 万次播放
+           </td>
+           <td>
+            12 / 万次播放
+           </td>
+          </tr>
+          <tr>
+           <td>
+            功效质疑类负评占比
+           </td>
+           <td>
+            <12%
+           </td>
+           <td>
+            <8%
+           </td>
+          </tr>
+          <tr>
+           <td>
+            评论品质指数
+           </td>
+           <td>
+            75
+           </td>
+           <td>
+            85
+           </td>
+          </tr>
+         </tbody>
         </table>
+       </div>
       </div>
-    </div>
-    </div>
+     </div>
     </section>
-    
     <section class="report-section" id="section-21">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">3. 验证指标</div>
-          <h2>⑤ 站内搜索指标</h2>
-        </div>
-        <span class="section-index">21</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        3. 验证指标
+       </div>
+       <h2>
+        ⑤ 站内搜索指标
+       </h2>
       </div>
-      <div class="section-body">
-    <div class="table-shell">
-      <div class="threshold-grid">
-            <article class="threshold-card">
-              <span class="metric-label">核心品牌词搜索排名</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>进入前 30</span>
-                <span><em>目标线</em>进入前 15</span>
-              </div>
-            </article>
-            
-            <article class="threshold-card">
-              <span class="metric-label">覆盖国家场景词数</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>20</span>
-                <span><em>目标线</em>50</span>
-              </div>
-            </article>
-            
-            <article class="threshold-card">
-              <span class="metric-label">站内搜索评分</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>75</span>
-                <span><em>目标线</em>85</span>
-              </div>
-            </article>
-            </div>
-      <div class="table-wrap">
+      <span class="section-index">
+       21
+      </span>
+     </div>
+     <div class="section-body">
+      <div class="table-shell">
+       <div class="threshold-grid">
+        <article class="threshold-card">
+         <span class="metric-label">
+          核心品牌词搜索排名
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           进入前 30
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           进入前 15
+          </span>
+         </div>
+        </article>
+        <article class="threshold-card">
+         <span class="metric-label">
+          覆盖国家场景词数
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           20
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           50
+          </span>
+         </div>
+        </article>
+        <article class="threshold-card">
+         <span class="metric-label">
+          站内搜索评分
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           75
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           85
+          </span>
+         </div>
+        </article>
+       </div>
+       <div class="table-wrap">
         <table class="report-table">
-          <thead><tr><th>指标</th><th>通过线</th><th>目标线</th></tr></thead>
-          <tbody><tr><td>核心品牌词搜索排名</td><td>进入前 30</td><td>进入前 15</td></tr><tr><td>覆盖国家场景词数</td><td>20</td><td>50</td></tr><tr><td>站内搜索评分</td><td>75</td><td>85</td></tr></tbody>
+         <thead>
+          <tr>
+           <th>
+            指标
+           </th>
+           <th>
+            通过线
+           </th>
+           <th>
+            目标线
+           </th>
+          </tr>
+         </thead>
+         <tbody>
+          <tr>
+           <td>
+            核心品牌词搜索排名
+           </td>
+           <td>
+            进入前 30
+           </td>
+           <td>
+            进入前 15
+           </td>
+          </tr>
+          <tr>
+           <td>
+            覆盖国家场景词数
+           </td>
+           <td>
+            20
+           </td>
+           <td>
+            50
+           </td>
+          </tr>
+          <tr>
+           <td>
+            站内搜索评分
+           </td>
+           <td>
+            75
+           </td>
+           <td>
+            85
+           </td>
+          </tr>
+         </tbody>
         </table>
+       </div>
       </div>
-    </div>
-    </div>
+     </div>
     </section>
-    
     <section class="report-section" id="section-22">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">3. 验证指标</div>
-          <h2>⑥ 电商表现指标</h2>
-        </div>
-        <span class="section-index">22</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        3. 验证指标
+       </div>
+       <h2>
+        ⑥ 电商表现指标
+       </h2>
       </div>
-      <div class="section-body">
-    <div class="table-shell">
-      <div class="threshold-grid">
-            <article class="threshold-card">
-              <span class="metric-label">UGC 挂车 GMV 占比</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>15%</span>
-                <span><em>目标线</em>30%</span>
-              </div>
-            </article>
-            
-            <article class="threshold-card">
-              <span class="metric-label">美国核心品类 GMV 排位</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>Top 20</span>
-                <span><em>目标线</em>Top 10</span>
-              </div>
-            </article>
-            
-            <article class="threshold-card">
-              <span class="metric-label">非促销日 GMV 增速</span>
-              <div class="threshold-values">
-                <span><em>通过线</em>15%</span>
-                <span><em>目标线</em>30%</span>
-              </div>
-            </article>
-            </div>
-      <div class="table-wrap">
+      <span class="section-index">
+       22
+      </span>
+     </div>
+     <div class="section-body">
+      <div class="table-shell">
+       <div class="threshold-grid">
+        <article class="threshold-card">
+         <span class="metric-label">
+          UGC 挂车 GMV 占比
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           15%
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           30%
+          </span>
+         </div>
+        </article>
+        <article class="threshold-card">
+         <span class="metric-label">
+          美国核心品类 GMV 排位
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           Top 20
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           Top 10
+          </span>
+         </div>
+        </article>
+        <article class="threshold-card">
+         <span class="metric-label">
+          非促销日 GMV 增速
+         </span>
+         <div class="threshold-values">
+          <span>
+           <em>
+            通过线
+           </em>
+           15%
+          </span>
+          <span>
+           <em>
+            目标线
+           </em>
+           30%
+          </span>
+         </div>
+        </article>
+       </div>
+       <div class="table-wrap">
         <table class="report-table">
-          <thead><tr><th>指标</th><th>通过线</th><th>目标线</th></tr></thead>
-          <tbody><tr><td>UGC 挂车 GMV 占比</td><td>15%</td><td>30%</td></tr><tr><td>美国核心品类 GMV 排位</td><td>Top 20</td><td>Top 10</td></tr><tr><td>非促销日 GMV 增速</td><td>15%</td><td>30%</td></tr></tbody>
+         <thead>
+          <tr>
+           <th>
+            指标
+           </th>
+           <th>
+            通过线
+           </th>
+           <th>
+            目标线
+           </th>
+          </tr>
+         </thead>
+         <tbody>
+          <tr>
+           <td>
+            UGC 挂车 GMV 占比
+           </td>
+           <td>
+            15%
+           </td>
+           <td>
+            30%
+           </td>
+          </tr>
+          <tr>
+           <td>
+            美国核心品类 GMV 排位
+           </td>
+           <td>
+            Top 20
+           </td>
+           <td>
+            Top 10
+           </td>
+          </tr>
+          <tr>
+           <td>
+            非促销日 GMV 增速
+           </td>
+           <td>
+            15%
+           </td>
+           <td>
+            30%
+           </td>
+          </tr>
+         </tbody>
         </table>
+       </div>
       </div>
-    </div>
-    </div>
+     </div>
     </section>
-    
     <section class="report-section" id="section-23">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">3. 验证指标</div>
-          <h2>早停红线 · 触发即调整策略</h2>
-        </div>
-        <span class="section-index">23</span>
+     <div class="section-head">
+      <div>
+       <div class="eyebrow">
+        3. 验证指标
+       </div>
+       <h2>
+        早停红线 · 触发即调整策略
+       </h2>
       </div>
-      <div class="section-body"><ul class="report-list"><li>红线①：KOC 互动率连续 2 周低于 0.45%，立即复盘达人筛选标准、视频前 3 秒钩子和问题切入方式，暂停低质同质化素材扩量。</li><li>红线②：30 天内 UGC 占比仍低于 5%，视为用户自传播机制未建立，需立即加大购后激励、抽样回访和二创征集力度。</li><li>红线③：核心 hero SKU 对应内容量持续上涨但店铺转化无同步改善，说明内容与商品承接断层，需检查挂车、橱窗、评论引导和直播配合。</li><li>红线④：功效质疑、刺激感、真假疑问等负面评论占比反弹超过 15%，立即启动 FAQ 澄清内容、使用方法教育和评论区集中回复机制。</li></ul></div>
+      <span class="section-index">
+       23
+      </span>
+     </div>
+     <div class="section-body">
+      <ul class="report-list">
+       <li>
+        红线①：KOC 互动率连续 2 周低于 0.45%，立即复盘达人筛选标准、视频前 3 秒钩子和问题切入方式，暂停低质同质化素材扩量。
+       </li>
+       <li>
+        红线②：30 天内 UGC 占比仍低于 5%，视为用户自传播机制未建立，需立即加大购后激励、抽样回访和二创征集力度。
+       </li>
+       <li>
+        红线③：核心 hero SKU 对应内容量持续上涨但店铺转化无同步改善，说明内容与商品承接断层，需检查挂车、橱窗、评论引导和直播配合。
+       </li>
+       <li>
+        红线④：功效质疑、刺激感、真假疑问等负面评论占比反弹超过 15%，立即启动 FAQ 澄清内容、使用方法教育和评论区集中回复机制。
+       </li>
+      </ul>
+     </div>
     </section>
-    
-      <section class="footer-card">
-        This file is offline-ready. Styles and scripts are inline, Urbanist is embedded, and the source content comes directly from the matching Word document.
-      </section>
-    </main>
+    <section class="footer-card">
+     This file is offline-ready. Styles and scripts are inline, Urbanist is embedded, and the source content comes directly from the matching Word document.
+    </section>
+   </main>
   </div>
-  <script>
-    const sections = Array.from(document.querySelectorAll('.report-section'));
-    const links = Array.from(document.querySelectorAll('.nav-link'));
-    const refreshState = () => {
-      const revealLine = window.innerHeight * 0.88;
-      sections.forEach((section) => {
-        if (section.getBoundingClientRect().top < revealLine) {
-          section.classList.add('is-visible');
-        }
-      });
-      let active = sections[0];
-      sections.forEach((section) => {
-        if (section.getBoundingClientRect().top <= 160) {
-          active = section;
-        }
-      });
-      links.forEach((link) => {
-        link.classList.toggle('is-active', link.getAttribute('href') === '#' + active.id);
-      });
-    };
-    window.addEventListener('scroll', refreshState, { passive: true });
-    window.addEventListener('load', refreshState);
-    refreshState();
-  </script>
-</body>
+ </body>
 </html>
