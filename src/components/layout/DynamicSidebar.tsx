@@ -155,26 +155,29 @@ const sidebarConfig: Record<ModuleType, SidebarSection[]> = {
   ],
 };
 
-interface DynamicSidebarProps {
-  activeItem: string;
-  onItemClick: (itemId: string) => void;
-}
+function buildInitialOpenSections(sections: SidebarSection[]) {
+  const initial: Record<string, boolean> = {};
 
-export function DynamicSidebar({ activeItem, onItemClick }: DynamicSidebarProps) {
-  const { activeModule, sidebarCollapsed, setSidebarCollapsed } = useModule();
-  const { t } = useTranslation();
-  const sections = sidebarConfig[activeModule];
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
-    sections.forEach((section) => {
-      if (section.defaultOpen) {
-        initial[section.titleKey] = true;
-      }
-    });
-    return initial;
+  sections.forEach((section) => {
+    if (section.defaultOpen) {
+      initial[section.titleKey] = true;
+    }
   });
 
+  return initial;
+}
+
+export function DynamicSidebar() {
+  const { activeModule, activeItem, navigateToItem, sidebarCollapsed, setSidebarCollapsed } = useModule();
+  const { t } = useTranslation();
+  const sections = sidebarConfig[activeModule];
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => buildInitialOpenSections(sections));
+
   const hoverTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  useEffect(() => {
+    setOpenSections(buildInitialOpenSections(sections));
+  }, [sections]);
 
   const toggleSection = (titleKey: string) => {
     setOpenSections((prev) => ({ ...prev, [titleKey]: !prev[titleKey] }));
@@ -201,7 +204,7 @@ export function DynamicSidebar({ activeItem, onItemClick }: DynamicSidebarProps)
     const button = (
       <button
         key={item.id}
-        onClick={() => onItemClick(item.id)}
+        onClick={() => navigateToItem(item.id)}
         className={cn(
           'sidebar-menu-item w-full',
           activeItem === item.id && 'active',
@@ -260,7 +263,7 @@ export function DynamicSidebar({ activeItem, onItemClick }: DynamicSidebarProps)
                   const headerButton = (
                     <div className={cn(sidebarCollapsed ? 'px-1.5' : 'px-2')}>
                       <button
-                        onClick={() => onItemClick(section.id!)}
+                        onClick={() => navigateToItem(section.id!)}
                         className={cn(
                           'sidebar-menu-item w-full',
                           activeItem === section.id && 'active',

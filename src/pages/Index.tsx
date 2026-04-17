@@ -6,8 +6,8 @@ import { LLMConsoleModule } from '@/components/modules/llm-console/LLMConsoleMod
 import { GEOInsightsModule } from '@/components/modules/geo-insights/GEOInsightsModule';
 import { AIToolboxModule } from '@/components/modules/ai-toolbox/AIToolboxModule';
 
-function ModuleRenderer({ activeItem, onNavigate }: { activeItem: string; onNavigate: (itemId: string) => void }) {
-  const { activeModule } = useModule();
+function ModuleRenderer() {
+  const { activeModule, activeItem, navigateToItem } = useModule();
 
   switch (activeModule) {
     case 'llm-console':
@@ -15,7 +15,7 @@ function ModuleRenderer({ activeItem, onNavigate }: { activeItem: string; onNavi
     case 'geo-insights':
       return <GEOInsightsModule activeItem={activeItem} />;
     case 'ai-toolbox':
-      return <AIToolboxModule activeItem={activeItem} onNavigate={onNavigate} />;
+      return <AIToolboxModule activeItem={activeItem} onNavigate={navigateToItem} />;
     default:
       return <LLMConsoleModule activeItem={activeItem} />;
   }
@@ -27,7 +27,7 @@ const Index = () => {
       <PendingAssetsProvider>
         <MemoryProvider>
           <AppShell>
-            {(activeItem, onNavigate) => <ModuleRenderer activeItem={activeItem} onNavigate={onNavigate} />}
+            <ModuleRenderer />
           </AppShell>
         </MemoryProvider>
       </PendingAssetsProvider>

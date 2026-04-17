@@ -1,49 +1,21 @@
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { TopNav } from './TopNav';
 import { DynamicSidebar } from './DynamicSidebar';
 import { useModule } from '@/contexts/ModuleContext';
-import { ModuleType } from '@/types/modules';
+import { isHomeItem, isToolItem } from '@/navigation';
 
 interface AppShellProps {
-  children: (activeItem: string, onNavigate: (itemId: string) => void) => ReactNode;
+  children: ReactNode;
 }
 
-const defaultItems: Record<ModuleType, string> = {
-  'llm-console': 'playground',
-  'geo-insights': 'dashboard',
-  'ai-toolbox': 'app-plaza',
-};
-
-// Items that should trigger auto-collapse (tool/canvas views)
-const toolItems = [
-  'oran-simulation',
-  'text-to-image',
-  'ecommerce-assets',
-  'reference-to-image',
-  'text-to-video',
-  'reference-to-video',
-];
-
-// Items that should trigger auto-expand (home/dashboard views)
-const homeItems = [
-  'app-plaza',
-  'dashboard',
-  'playground',
-];
-
 export function AppShell({ children }: AppShellProps) {
-  const { activeModule, sidebarCollapsed, setSidebarCollapsed } = useModule();
-  const [activeItem, setActiveItem] = useState(defaultItems[activeModule]);
-
-  useEffect(() => {
-    setActiveItem(defaultItems[activeModule]);
-  }, [activeModule]);
+  const { activeModule, activeItem, setSidebarCollapsed } = useModule();
 
   // Auto-collapse/expand based on active item
   useEffect(() => {
-    if (toolItems.includes(activeItem)) {
+    if (isToolItem(activeItem)) {
       setSidebarCollapsed(true);
-    } else if (homeItems.includes(activeItem)) {
+    } else if (isHomeItem(activeItem)) {
       setSidebarCollapsed(false);
     }
   }, [activeItem, setSidebarCollapsed]);
@@ -61,13 +33,13 @@ export function AppShell({ children }: AppShellProps) {
     >
       <TopNav />
       <div className="flex flex-1 overflow-hidden">
-        <DynamicSidebar activeItem={activeItem} onItemClick={setActiveItem} />
+        <DynamicSidebar />
         <main
           className={`min-h-0 flex-1 pt-14 transition-all duration-300 pl-[64px] ${
             isInsightWorkbench || isOranSimulation ? 'overflow-hidden' : 'overflow-auto'
           }`}
         >
-          {children(activeItem, setActiveItem)}
+          {children}
         </main>
       </div>
     </div>

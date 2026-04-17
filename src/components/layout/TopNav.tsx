@@ -1,7 +1,5 @@
-import { ChevronDown, Globe, Database, Zap, CalendarClock, LogOut } from 'lucide-react';
+import { Globe, Database, Zap, LogOut } from 'lucide-react';
 import logoDark from '@/assets/logo_dark.svg';
-import { useModule } from '@/contexts/ModuleContext';
-import { MODULES, ModuleType } from '@/types/modules';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
@@ -12,9 +10,10 @@ import { AccountDialog } from './AccountDialog';
 import { useState } from 'react';
 import { USER_NAME, USER_EMAIL, USER_INITIALS, USER_PLAN } from '@/constants/user';
 import { useCredits } from '@/contexts/CreditsContext';
+import { Link } from 'react-router-dom';
+import { DEFAULT_PATH } from '@/navigation';
 
 export function TopNav() {
-  const { activeModule, setActiveModule } = useModule();
   const { t, i18n } = useTranslation();
   const { drawerOpen, setDrawerOpen } = useMemory();
   const [accountOpen, setAccountOpen] = useState(false);
@@ -29,10 +28,10 @@ export function TopNav() {
     <>
     <header className="h-14 border-b border-border/10 bg-background/20 backdrop-blur-xl flex items-center justify-between px-4 top-0 z-50 fixed left-0 w-screen">
       {/* Left: Logo */}
-      <div className="flex items-center gap-3">
+      <Link to={DEFAULT_PATH} className="flex items-center gap-3">
         <img src={logoDark} alt="ORAN GEN" className="w-6 h-6 object-fill" />
         <span className="text-lg font-normal">ORAN AI</span>
-      </div>
+      </Link>
 
       {/* Right: User Actions */}
       <div className="flex items-center gap-2">

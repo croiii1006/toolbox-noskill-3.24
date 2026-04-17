@@ -5,6 +5,7 @@ import { OranSimulation } from './OranSimulation';
 import { ReplicateWorkspace } from './ReplicateWorkspace';
 import { TikTokReport } from './TikTokReport';
 import { SkillsModule } from '../skills/SkillsModule';
+import { SocialMediaPublishing } from './SocialMediaPublishing';
 
 interface AIToolboxModuleProps {
   activeItem: string;
@@ -31,9 +32,11 @@ export function AIToolboxModule({ activeItem, onNavigate }: AIToolboxModuleProps
     case 'text-to-image':
       return <TextToImage onNavigate={onNavigate} />;
     case 'text-to-video':
-      return <PlaceholderPage title="文生视频" description="根据文字描述生成短视频" />;
+      return <PlaceholderPage title="镜生视频" description="根据文字描述生成短视频" />;
     case 'replicate-video':
       return <ReplicateWorkspace onNavigate={onNavigate} />;
+    case 'social-media-publishing':
+      return <SocialMediaPublishing />;
     case 'skills':
       return <SkillsModule />;
     case 'tiktok-report':

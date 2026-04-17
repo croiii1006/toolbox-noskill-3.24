@@ -262,8 +262,11 @@ export default function ImportedWorkflowScene({
     const attachmentEntries = [
       entries.find((entry) => entry.id === setup.insightMemoryId),
       entries.find((entry) => entry.id === setup.planningMemoryId),
+      ...setup.supplementalMemoryIds.map((id) => entries.find((entry) => entry.id === id)),
       predictionEntry,
-    ].flatMap((entry) => (entry ? [entry] : []));
+    ]
+      .flatMap((entry) => (entry ? [entry] : []))
+      .filter((entry, index, list) => list.findIndex((item) => item.id === entry.id) === index);
 
     setOranGenPrefill({
       attachmentIds: attachmentEntries.map((entry) => entry.id),

@@ -746,10 +746,75 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   const resolvedActivePreviewToolbarIndex =
     activePreviewToolbarIndex >= 0 ? activePreviewToolbarIndex : previewToolbarItems.length - 1;
 
+  const buildReportMemoryEntry = useCallback(
+    (reportData: ExtractedInfo, targetReportType: ReportType, reportHtml?: string) => {
+      const fileLabel = REPORT_TYPE_LABELS[targetReportType];
+      const title = `${reportData.brandName || '未命名品牌'} ${fileLabel}`;
+
+      return {
+        title,
+        content: buildMemoryMarkdownFromHtml(
+          title,
+          reportHtml ?? generateReportHTML(reportData, targetReportType)
+        ),
+        category: fileLabel,
+        tags:
+          targetReportType === 'planning'
+            ? [reportData.category, reportData.primaryChannels, reportData.budgetLevel, fileLabel].filter(Boolean)
+            : [reportData.category, reportData.analysisTarget, reportData.businessDirection, fileLabel].filter(Boolean),
+      };
+    },
+    []
+  );
+
+  const saveReportMemoryEntry = useCallback(
+    (
+      reportData: ExtractedInfo,
+      targetReportType: ReportType,
+      options?: {
+        reportHtml?: string;
+        openDrawer?: boolean;
+        showSavedToast?: boolean;
+        showExistingToast?: boolean;
+      }
+    ) => {
+      const payload = buildReportMemoryEntry(reportData, targetReportType, options?.reportHtml);
+      const existing = entries.find(
+        (item) =>
+          item.title === payload.title &&
+          item.content === payload.content &&
+          item.category === payload.category
+      );
+
+      if (existing) {
+        if (options?.openDrawer) {
+          setDrawerOpen(true);
+        }
+        if (options?.showExistingToast) {
+          toast.info('记忆库已有该内容');
+        }
+        return existing;
+      }
+
+      const entry = ensureEntry(payload);
+
+      if (options?.openDrawer) {
+        setDrawerOpen(true);
+      }
+      if (options?.showSavedToast) {
+        toast.success('已保存到记忆库');
+      }
+
+      return entry;
+    },
+    [buildReportMemoryEntry, entries, ensureEntry, setDrawerOpen]
+  );
+
   const handleGeneratePlanningFromInsight = useCallback(() => {
     const nextBrandName = brandName.trim() || extractedInfo.brandName;
     const nextCategory = category.trim() || extractedInfo.category;
 
+    saveReportMemoryEntry(extractedInfo, 'insight');
     setPreviewMode('auto');
     setPersistedCompletedReportType('insight');
     setPersistedCompletedExtractedInfo(extractedInfo);
@@ -772,6 +837,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     category,
     competitors,
     extractedInfo,
+    saveReportMemoryEntry,
     selectedMemoryIds.length,
   ]);
 
@@ -866,35 +932,17 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   }, [activePreviewExtractedInfo.brandName, activePreviewHtml, activePreviewReportType]);
 
   const handleSavePreviewToMemory = useCallback(() => {
-    const fileLabel = REPORT_TYPE_LABELS[activePreviewReportType];
-
-    ensureEntry({
-      title: `${activePreviewExtractedInfo.brandName || '未命名品牌'} ${fileLabel}`,
-      content: buildMemoryMarkdownFromHtml(
-        `${activePreviewExtractedInfo.brandName || '未命名品牌'} ${fileLabel}`,
-        activePreviewHtml
-      ),
-      category: fileLabel,
-      tags:
-        activePreviewReportType === 'planning'
-          ? [
-              activePreviewExtractedInfo.category,
-              activePreviewExtractedInfo.primaryChannels,
-              activePreviewExtractedInfo.budgetLevel,
-            ].filter(Boolean)
-          : [
-              activePreviewExtractedInfo.category,
-              activePreviewExtractedInfo.businessDirection,
-            ].filter(Boolean),
+    saveReportMemoryEntry(activePreviewExtractedInfo, activePreviewReportType, {
+      reportHtml: activePreviewHtml,
+      openDrawer: true,
+      showSavedToast: true,
+      showExistingToast: true,
     });
-    setDrawerOpen(true);
-    toast.success('已保存到记忆库');
   }, [
     activePreviewExtractedInfo,
     activePreviewHtml,
     activePreviewReportType,
-    ensureEntry,
-    setDrawerOpen,
+    saveReportMemoryEntry,
   ]);
 
   const jumpToOranGenWithPrefill = useCallback(() => {
@@ -915,31 +963,11 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     const attachmentEntries = [];
 
     if (insightSource) {
-      attachmentEntries.push(
-        ensureEntry({
-          title: `${insightSource.brandName || '未命名品牌'} 洞察报告`,
-          content: buildMemoryMarkdownFromHtml(
-            `${insightSource.brandName || '未命名品牌'} 洞察报告`,
-            generateReportHTML(insightSource, 'insight'),
-          ),
-          category: '洞察报告',
-          tags: [insightSource.category, insightSource.analysisTarget, '洞察报告'].filter(Boolean),
-        })
-      );
+      attachmentEntries.push(saveReportMemoryEntry(insightSource, 'insight'));
     }
 
     if (planningSource) {
-      attachmentEntries.push(
-        ensureEntry({
-          title: `${planningSource.brandName || '未命名品牌'} 策划报告`,
-          content: buildMemoryMarkdownFromHtml(
-            `${planningSource.brandName || '未命名品牌'} 策划报告`,
-            generateReportHTML(planningSource, 'planning'),
-          ),
-          category: '策划方案',
-          tags: [planningSource.category, planningSource.primaryChannels, planningSource.budgetLevel].filter(Boolean),
-        })
-      );
+      attachmentEntries.push(saveReportMemoryEntry(planningSource, 'planning'));
     }
 
     setOranGenPrefill({
@@ -956,12 +984,12 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     onNavigate?.('skills');
   }, [
     category,
-    ensureEntry,
     extractedInfo,
     onNavigate,
     persistedCompletedExtractedInfo,
     persistedCompletedReportType,
     reportType,
+    saveReportMemoryEntry,
     setOranGenPrefill,
   ]);
 
@@ -987,31 +1015,11 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     const attachmentEntries = [];
 
     if (insightSource) {
-      attachmentEntries.push(
-        ensureEntry({
-          title: `${insightSource.brandName || '未命名品牌'} 洞察报告`,
-          content: buildMemoryMarkdownFromHtml(
-            `${insightSource.brandName || '未命名品牌'} 洞察报告`,
-            generateReportHTML(insightSource, 'insight'),
-          ),
-          category: '洞察报告',
-          tags: [insightSource.category, insightSource.analysisTarget, '洞察报告'].filter(Boolean),
-        })
-      );
+      attachmentEntries.push(saveReportMemoryEntry(insightSource, 'insight'));
     }
 
     if (planningSource) {
-      attachmentEntries.push(
-        ensureEntry({
-          title: `${planningSource.brandName || '未命名品牌'} 策划报告`,
-          content: buildMemoryMarkdownFromHtml(
-            `${planningSource.brandName || '未命名品牌'} 策划报告`,
-            generateReportHTML(planningSource, 'planning'),
-          ),
-          category: '策划方案',
-          tags: [planningSource.category, planningSource.primaryChannels, planningSource.budgetLevel].filter(Boolean),
-        })
-      );
+      attachmentEntries.push(saveReportMemoryEntry(planningSource, 'planning'));
     }
 
     const prompt =
@@ -1045,12 +1053,12 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   }, [
     brandName,
     category,
-    ensureEntry,
     extractedInfo,
     onNavigate,
     persistedCompletedExtractedInfo,
     persistedCompletedReportType,
     reportType,
+    saveReportMemoryEntry,
     setOranSimulationPrefill,
   ]);
 
