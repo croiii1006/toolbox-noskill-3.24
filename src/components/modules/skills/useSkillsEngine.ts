@@ -30,11 +30,15 @@ export interface SkillTask {
 export interface CandidateVideo {
   id: string;
   cover: string;
+  videoUrl?: string;
   title: string;
   duration: string;
   tags: string[];
   views: string;
   likes: string;
+  publishedAt?: string;
+  revenue?: string;
+  impressions?: string;
   comments?: string;
   shares?: string;
   salesCount?: number;
@@ -129,12 +133,234 @@ export interface SkillsRunMeta {
 
 const CATEGORIES = ['美妆个护', '3C数码', '服饰鞋包', '家居日用', '食品饮料', '母婴用品', '其它'];
 
-const mockVideos = (): CandidateVideo[] => [
+const legacyMockVideos = (): CandidateVideo[] => [
   { id: `v-${Date.now()}-1`, cover: '', title: 'These come in handy daily! @MINISO #translationearbuds', duration: '0:43', tags: ['美妆', '种草'], views: '28.0M', likes: '1.1M', comments: '12.3K', shares: '8.5K', salesCount: 268, growthRate: '0.0%', analysis: '视频解析', strategy: '开场直击跑步场景痛点，展现佩戴稳固与运动舒适。', sellingPointHitRate: 0, tiktokUrl: 'https://www.tiktok.com/@miniso' },
   { id: `v-${Date.now()}-2`, cover: '', title: '沉浸式开箱ASMR｜超治愈解压', duration: '0:45', tags: ['开箱', 'ASMR'], views: '15.2M', likes: '890K', comments: '6.7K', shares: '4.2K', salesCount: 1520, growthRate: '12.3%', analysis: '视频解析', strategy: '利用ASMR声效配合近景展示产品细节，引发感官共鸣。', sellingPointHitRate: 35, tiktokUrl: 'https://www.tiktok.com/' },
   { id: `v-${Date.now()}-3`, cover: '', title: '日常妆容教程｜通勤必备5分钟出门', duration: '1:02', tags: ['教程', '日常'], views: '42.1M', likes: '2.3M', comments: '18.9K', shares: '15.1K', salesCount: 3890, growthRate: '8.7%', analysis: '视频解析', strategy: '以通勤场景切入，展示快速上妆流程，突出便携性。', sellingPointHitRate: 72, tiktokUrl: 'https://www.tiktok.com/' },
   { id: `v-${Date.now()}-4`, cover: '', title: '产品对比测评TOP3｜真实体验分享', duration: '0:58', tags: ['测评', '对比'], views: '8.9M', likes: '520K', comments: '9.1K', shares: '3.8K', salesCount: 756, growthRate: '5.2%', analysis: '视频解析', strategy: '横向对比同类产品，通过数据和实测突出性价比优势。', sellingPointHitRate: 45, tiktokUrl: 'https://www.tiktok.com/' },
   { id: `v-${Date.now()}-5`, cover: '', title: '一分钟get氛围感穿搭｜秋冬必入', duration: '0:28', tags: ['穿搭', '氛围'], views: '31.2M', likes: '1.8M', comments: '14.2K', shares: '11.3K', salesCount: 2340, growthRate: '15.6%', analysis: '视频解析', strategy: '快节奏换装展示多套搭配，突出单品百搭特性。', sellingPointHitRate: 58, tiktokUrl: 'https://www.tiktok.com/' },
+];
+
+const mockVideos = (): CandidateVideo[] => [
+  {
+    id: 'dr-melaxin-hit-1',
+    cover: '',
+    videoUrl: '/orangen-reference-videos/dr-melaxin-hit-1.mp4',
+    title: '出海热视频',
+    duration: '0:43',
+    tags: ['Dr.Melaxin', '爆款对标', '高转化开场'],
+    views: '180.00万',
+    likes: '3490',
+    publishedAt: '2025-11-18 23:46:04',
+    revenue: '$6.91万',
+    impressions: '1660.00万',
+    growthRate: '3.84%',
+    analysis: '热视频拆解',
+    strategy: '高密度产品镜头配合快速利益点抛出，适合做 Dr.Melaxin 冷启动拉新和功效心智建立。',
+    sellingPointHitRate: 96,
+    tiktokUrl: 'https://www.tiktok.com/@hangingwithalo/video/7574091997334572343?local=en',
+  },
+  {
+    id: 'dr-melaxin-hit-2',
+    cover: '',
+    videoUrl: '/orangen-reference-videos/dr-melaxin-hit-2.mp4',
+    title: '出海热视频_副本',
+    duration: '0:32',
+    tags: ['Dr.Melaxin', '场景化转化', '功效种草'],
+    views: '220.00万',
+    likes: '2081',
+    publishedAt: '2026-04-07 11:49:03',
+    revenue: '$3.92万',
+    impressions: '220.00万',
+    growthRate: '2.76%',
+    analysis: '热视频拆解',
+    strategy: '更偏真人口播和使用反馈，适合做 Dr.Melaxin 的信任感补强与二跳转化承接。',
+    sellingPointHitRate: 91,
+    tiktokUrl: 'https://www.tiktok.com/@patricknogueiraaa/video/7625859271007210766?local=en',
+  },
+  {
+    id: 'dr-melaxin-hit-3',
+    cover: '',
+    videoUrl: '/orangen-reference-videos/dr-melaxin-hit-3.mp4',
+    title: '自制1',
+    duration: '0:24',
+    tags: ['Dr.Melaxin', '自制素材', '轻口播'],
+    views: '23.50万',
+    likes: '645',
+    publishedAt: '2025-12-13 15:29:56',
+    revenue: '$1.28万',
+    impressions: '50.85万',
+    growthRate: '2.74%',
+    analysis: '自制素材拆解',
+    strategy: '镜头更克制，强调细节特写和真实肤感，适合作为 Dr.Melaxin 的低成本稳定投放模板。',
+    sellingPointHitRate: 82,
+    tiktokUrl: 'https://www.tiktok.com/@clayinspires/video/7583241245850422559?local=en',
+  },
+  {
+    id: 'dr-melaxin-hit-4',
+    cover: '',
+    videoUrl: '/orangen-reference-videos/dr-melaxin-hit-4.mp4',
+    title: '自制2',
+    duration: '0:27',
+    tags: ['Dr.Melaxin', '前后对比', '高曝光'],
+    views: '80.00万',
+    likes: '573',
+    publishedAt: '2025-10-16 02:54:39',
+    revenue: '$1.14万',
+    impressions: '280.00万',
+    growthRate: '0.72%',
+    analysis: '自制素材拆解',
+    strategy: '曝光强于互动，适合做 Dr.Melaxin 的素材扩量池，用前后对比吸引停留后再引导转化。',
+    sellingPointHitRate: 78,
+    tiktokUrl: 'https://www.tiktok.com/@nadiyafinds/video/7561523845375593783?local=en',
+  },
+  {
+    id: 'dr-melaxin-hit-5',
+    cover: '',
+    videoUrl: '/orangen-reference-videos/dr-melaxin-hit-5.mp4',
+    title: '自制3',
+    duration: '0:21',
+    tags: ['Dr.Melaxin', '高曝光测试', '转化切片'],
+    views: '50.00万',
+    likes: '369',
+    publishedAt: '2026-01-18 19:15:27',
+    revenue: '$7327.47',
+    impressions: '530.00万',
+    growthRate: '0.74%',
+    analysis: '自制素材拆解',
+    strategy: '属于典型的高曝光低互动测试素材，适合给 Dr.Melaxin 做开头钩子和节奏 AB 版本迭代。',
+    sellingPointHitRate: 73,
+    tiktokUrl: 'https://www.tiktok.com/@itskiaraoffline/video/7596658225185836302?local=en',
+  },
+  {
+    id: 'dr-melaxin-hit-6',
+    cover: '',
+    videoUrl: '/orangen-reference-videos/dr-melaxin-hit-6.mp4',
+    title: '自制4',
+    duration: '0:19',
+    tags: ['Dr.Melaxin', '爆点切片', '低成本复刻'],
+    views: '20.00万',
+    likes: '344',
+    publishedAt: '2025-10-08 02:42:12',
+    revenue: '$6798.02',
+    impressions: '370.00万',
+    growthRate: '1.72%',
+    analysis: '自制素材拆解',
+    strategy: '短时长、强钩子、快节奏，适合做 Dr.Melaxin 的爆点切片和账号日更补量素材。',
+    sellingPointHitRate: 76,
+    tiktokUrl: 'https://www.tiktok.com/@bymillie.finds/video/7558551951907097869?local=en',
+  },
+];
+
+const getDrMelaxinReferenceVideos = (): CandidateVideo[] => [
+  {
+    id: 'dr-melaxin-hit-1',
+    cover: '',
+    videoUrl: '/orangen-reference-videos/dr-melaxin-hit-1.mp4',
+    title: 'Replying to @LoveYoWholeSelf Tarot It ...',
+    duration: '1:40',
+    tags: ['Dr.Melaxin', '爆款对标', '高转化开场'],
+    views: '180.00万',
+    likes: '3490',
+    publishedAt: '2025-11-18 23:46:04',
+    revenue: '$6.91万',
+    impressions: '1660.00万',
+    growthRate: '3.84%',
+    analysis: '热视频拆解',
+    strategy: '高密度产品镜头配合快速利益点抛出，适合做 Dr.Melaxin 冷启动拉新和功效心智建立。',
+    sellingPointHitRate: 96,
+    tiktokUrl: 'https://www.tiktok.com/@hangingwithalo/video/7574091997334572343?local=en',
+  },
+  {
+    id: 'dr-melaxin-hit-2',
+    cover: '',
+    videoUrl: '/orangen-reference-videos/dr-melaxin-hit-2.mp4',
+    title: 'This is how you get rid of those tired eyes 👀...',
+    duration: '0:55',
+    tags: ['Dr.Melaxin', '场景化转化', '功效种草'],
+    views: '220.00万',
+    likes: '2081',
+    publishedAt: '2026-04-07 11:49:03',
+    revenue: '$3.92万',
+    impressions: '220.00万',
+    growthRate: '2.76%',
+    analysis: '热视频拆解',
+    strategy: '更偏真人口播和使用反馈，适合做 Dr.Melaxin 的信任感补强与二跳转化承接。',
+    sellingPointHitRate: 91,
+    tiktokUrl: 'https://www.tiktok.com/@patricknogueiraaa/video/7625859271007210766?local=en',
+  },
+  {
+    id: 'dr-melaxin-hit-3',
+    cover: '',
+    videoUrl: '/orangen-reference-videos/dr-melaxin-hit-3.mp4',
+    title: 'The deal ends tonight! #beauty #tiktokshop...',
+    duration: '0:16',
+    tags: ['Dr.Melaxin', '自制素材', '轻口播'],
+    views: '23.50万',
+    likes: '645',
+    publishedAt: '2025-12-13 15:29:56',
+    revenue: '$1.28万',
+    impressions: '50.85万',
+    growthRate: '2.74%',
+    analysis: '自制素材拆解',
+    strategy: '镜头更克制，强调细节特写和真实肤感，适合作为 Dr.Melaxin 的低成本稳定投放模板。',
+    sellingPointHitRate: 82,
+    tiktokUrl: 'https://www.tiktok.com/@clayinspires/video/7583241245850422559?local=en',
+  },
+  {
+    id: 'dr-melaxin-hit-4',
+    cover: '',
+    videoUrl: '/orangen-reference-videos/dr-melaxin-hit-4.mp4',
+    title: 'This Korean calcium balm by Dr. melaxin is saving my ski...',
+    duration: '0:09',
+    tags: ['Dr.Melaxin', '前后对比', '高曝光'],
+    views: '80.00万',
+    likes: '573',
+    publishedAt: '2025-10-16 02:54:39',
+    revenue: '$1.14万',
+    impressions: '280.00万',
+    growthRate: '0.72%',
+    analysis: '自制素材拆解',
+    strategy: '曝光强于互动，适合做 Dr.Melaxin 的素材扩量池，用前后对比吸引停留后再引导转化。',
+    sellingPointHitRate: 78,
+    tiktokUrl: 'https://www.tiktok.com/@nadiyafinds/video/7561523845375593783?local=en',
+  },
+  {
+    id: 'dr-melaxin-hit-5',
+    cover: '',
+    videoUrl: '/orangen-reference-videos/dr-melaxin-hit-5.mp4',
+    title: 'The best thing I could’ve found for my under eyes w...',
+    duration: '0:09',
+    tags: ['Dr.Melaxin', '高曝光测试', '转化切片'],
+    views: '50.00万',
+    likes: '369',
+    publishedAt: '2026-01-18 19:15:27',
+    revenue: '$7327.47',
+    impressions: '530.00万',
+    growthRate: '0.74%',
+    analysis: '自制素材拆解',
+    strategy: '属于典型的高曝光低互动测试素材，适合给 Dr.Melaxin 做开头钩子和节奏 AB 版本迭代。',
+    sellingPointHitRate: 73,
+    tiktokUrl: 'https://www.tiktok.com/@itskiaraoffline/video/7596658225185836302?local=en',
+  },
+  {
+    id: 'dr-melaxin-hit-6',
+    cover: '',
+    videoUrl: '/orangen-reference-videos/dr-melaxin-hit-6.mp4',
+    title: 'They call this Tox in a stick for a reason. It goes on like...',
+    duration: '0:08',
+    tags: ['Dr.Melaxin', '爆点切片', '低成本复刻'],
+    views: '20.00万',
+    likes: '344',
+    publishedAt: '2025-10-08 02:42:12',
+    revenue: '$6798.02',
+    impressions: '370.00万',
+    growthRate: '1.72%',
+    analysis: '自制素材拆解',
+    strategy: '短时长、强钩子、快节奏，适合做 Dr.Melaxin 的爆点切片和账号日更补量素材。',
+    sellingPointHitRate: 76,
+    tiktokUrl: 'https://www.tiktok.com/@bymillie.finds/video/7558551951907097869?local=en',
+  },
 ];
 
 function now() {
@@ -427,7 +653,7 @@ export function useSkillsEngine() {
         }));
 
         // Show video candidates
-        const videos = mockVideos();
+        const videos = getDrMelaxinReferenceVideos();
         setState(prev => ({
           ...prev,
           candidateVideos: videos,
@@ -686,7 +912,7 @@ export function useSkillsEngine() {
   // Refresh candidates
   const refreshCandidates = useCallback(() => {
     setState(prev => ({ ...prev, isProcessing: true }));
-    const newVideos = mockVideos();
+    const newVideos = getDrMelaxinReferenceVideos();
     const timer = window.setTimeout(() => {
       setState(prev => ({
         ...prev,
@@ -1173,7 +1399,7 @@ export function useSkillsEngine() {
     const buildMockPrompt = (base: SkillsState, title: string) => `【爆款复刻Prompt】\n\n镜头风格：近景特写 + 俯拍切换，暖色调滤镜\n节奏：快节奏剪辑，BGM 节拍同步\n内容结构：\n1. 开场- 产品白底展示，旋转360°（0-3s）\n2. 使用场景 - 手部特写展示质感（3-8s）\n3. 效果对比 - 使用前后对比（8-15s）\n4. 口播种草 - 真人出镜，口述卖点（15-25s）\n5. 结尾 CTA - 点击链接，限时优惠（25-30s）\n\n关键词：${base.setup.sellingPoints.slice(0, 30)}\n品类：${base.setup.category}\n参考来源：${title}`;
 
     const fastForwardToSelect = (base: SkillsState) => {
-      const videos = base.candidateVideos.length > 0 ? base.candidateVideos : mockVideos();
+      const videos = base.candidateVideos.length > 0 ? base.candidateVideos : getDrMelaxinReferenceVideos();
       commitState({
         ...base,
         isProcessing: false,
@@ -1386,7 +1612,7 @@ export function useSkillsEngine() {
 
     // Phase 1 was running (no candidates yet) → fast-forward to candidates generated
     if (snapshot.setupCompleted && !hasCandidates) {
-      const videos = mockVideos();
+      const videos = getDrMelaxinReferenceVideos();
       commitState({
         ...snapshot,
         isProcessing: false,

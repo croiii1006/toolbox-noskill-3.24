@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Play, Pause, ExternalLink, Copy, Volume2, VolumeX, Eye, Heart, ShoppingCart, TrendingUp, X, Maximize2 } from 'lucide-react';
+import { Play, Pause, ExternalLink, Copy, Volume2, VolumeX, Eye, Heart, ShoppingCart, TrendingUp, X, Maximize2, CalendarDays, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -27,7 +27,7 @@ export function VideoCandidateRow({ videos, onSelect, onPreview, selectedVideoId
   const [detailVideo, setDetailVideo] = useState<CandidateVideo | null>(null);
   const [detailIndex, setDetailIndex] = useState(0);
 
-  const displayVideos = videos.slice(0, 4);
+  const displayVideos = videos.slice(0, 6);
 
   const openDetail = (video: CandidateVideo, idx: number) => {
     setDetailVideo(video);
@@ -36,7 +36,7 @@ export function VideoCandidateRow({ videos, onSelect, onPreview, selectedVideoId
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-1 gap-2.5 md:grid-cols-3">
         {displayVideos.map((video, i) =>
         <div
           key={video.id}
@@ -45,9 +45,19 @@ export function VideoCandidateRow({ videos, onSelect, onPreview, selectedVideoId
           
             {/* Cover */}
             <div
-            className={`relative aspect-[9/14] bg-gradient-to-br ${coverColors[i % coverColors.length]} flex items-center justify-center`}>
-            
-              <Play className="w-7 h-7 text-foreground/15" />
+            className={`relative aspect-[9/14] bg-gradient-to-br ${coverColors[i % coverColors.length]} flex items-center justify-center overflow-hidden`}>
+              {video.videoUrl ?
+              <video
+                src={video.videoUrl}
+                className="absolute inset-0 h-full w-full object-cover"
+                muted
+                loop
+                autoPlay
+                playsInline
+                preload="metadata" /> :
+              null}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+              <Play className="relative z-[1] w-7 h-7 text-white/70 drop-shadow-sm" />
               <div className="absolute bottom-2 left-2 bg-foreground/75 text-background text-[10px] font-mono px-1.5 py-0.5 rounded-md">
                 {video.duration}
               </div>
@@ -67,6 +77,16 @@ export function VideoCandidateRow({ videos, onSelect, onPreview, selectedVideoId
                 </p>
             }
 
+              <div className="flex flex-wrap gap-1">
+                {video.tags.slice(0, 2).map((tag) =>
+                <span
+                  key={tag}
+                  className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                    {tag}
+                  </span>
+                )}
+              </div>
+
               {/* Stats */}
               <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
                 <div className="flex items-center gap-1.5">
@@ -75,7 +95,7 @@ export function VideoCandidateRow({ videos, onSelect, onPreview, selectedVideoId
                 </div>
                 <div className="flex items-center gap-1.5">
                   <ShoppingCart className="w-3.5 h-3.5 text-muted-foreground/60" />
-                  <span className="text-[11px] text-foreground/80">{video.salesCount ?? 0}</span>
+                  <span className="text-[11px] text-foreground/80">{video.revenue ?? '-'}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Heart className="w-3.5 h-3.5 text-muted-foreground/60" />
@@ -85,15 +105,23 @@ export function VideoCandidateRow({ videos, onSelect, onPreview, selectedVideoId
                   <TrendingUp className="w-3.5 h-3.5 text-muted-foreground/60" />
                   <span className="text-[11px] text-foreground/80">{video.growthRate ?? '0%'}</span>
                 </div>
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-muted-foreground/60" />
+                  <span className="text-[11px] text-foreground/80">{video.impressions ?? '-'}</span>
+                </div>
+                <div className="flex items-center gap-1.5 col-span-2">
+                  <CalendarDays className="w-3.5 h-3.5 text-muted-foreground/60" />
+                  <span className="text-[11px] text-foreground/80">{video.publishedAt ?? '-'}</span>
+                </div>
               </div>
 
               {/* Selling point hit rate */}
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[11px] text-muted-foreground">卖点命中率</span>
-                  <span className="text-[11px] font-semibold text-foreground">{video.sellingPointHitRate ?? 0}%</span>
+                  <span className="font-urbanist text-large font-normal text-accent">{video.sellingPointHitRate ?? 0}%</span>
                 </div>
-                <Progress value={video.sellingPointHitRate ?? 0} className="h-1" />
+                <Progress value={video.sellingPointHitRate ?? 0} className="h-1 [&>div]:bg-accent/80" />
               </div>
 
               {/* Action buttons */}
@@ -167,13 +195,23 @@ function VideoDetailDialog({ video, colorIndex, selectedVideoId, onSelect, onClo
     <div className="flex h-[75vh] max-h-[680px]">
       {/* Left: Video player area */}
       <div
-        className={`relative w-[340px] shrink-0 bg-gradient-to-br ${coverColors[colorIndex % coverColors.length]} flex items-center justify-center group`}>
-        
+        className={`relative w-[340px] shrink-0 bg-gradient-to-br ${coverColors[colorIndex % coverColors.length]} flex items-center justify-center group overflow-hidden`}>
+        {video.videoUrl ?
+        <video
+          src={video.videoUrl}
+          className="absolute inset-0 h-full w-full object-cover"
+          muted={isMuted}
+          loop
+          autoPlay={isPlaying}
+          playsInline
+          controls={false}
+          preload="metadata" /> :
+        null}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
         {/* Center play/pause */}
         <button
           onClick={() => setIsPlaying(!isPlaying)}
-          className="w-16 h-16 rounded-full bg-foreground/20 backdrop-blur-sm flex items-center justify-center hover:bg-foreground/30 transition-colors">
-          
+          className="relative z-[1] w-16 h-16 rounded-full bg-foreground/20 backdrop-blur-sm flex items-center justify-center hover:bg-foreground/30 transition-colors">
           {isPlaying ?
           <Pause className="w-7 h-7 text-background" /> :
           <Play className="w-7 h-7 text-background ml-1" />
@@ -221,7 +259,13 @@ function VideoDetailDialog({ video, colorIndex, selectedVideoId, onSelect, onClo
         <ScrollArea className="flex-1 min-h-0">
           <div className="px-5 py-4 space-y-4">
             <h3 className="text-base font-medium text-foreground leading-snug">{video.title}</h3>
-            {video.strategy &&
+            {video.strategy && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">{video.analysis || '视频解析'}</p>
+                <p className="text-sm text-foreground/80 leading-relaxed">策略：{video.strategy}</p>
+              </div>
+            )}
+            {false && video.strategy &&
             <div>
                 <p className="text-xs text-muted-foreground mb-1">{video.analysis || '视频解析'}</p>
                 <p className="text-sm text-foreground/80 leading-relaxed">策略：{video.strategy}</p>
@@ -240,7 +284,7 @@ function VideoDetailDialog({ video, colorIndex, selectedVideoId, onSelect, onClo
             </div>
             <div className="text-left pr-0 flex items-center justify-start px-[28px] gap-0 pl-[75px]">
               <ShoppingCart className="w-4 h-4 text-muted-foreground text-left mx-[50px] mr-[50px] ml-0" />
-              <span className="text-sm text-foreground font-light">{video.salesCount ?? 0}</span>
+              <span className="text-sm text-foreground font-light">{video.revenue ?? '-'}</span>
             </div>
             <div className="flex items-center gap-[40px]">
               <Heart className="w-4 h-4 text-muted-foreground" />
@@ -250,17 +294,25 @@ function VideoDetailDialog({ video, colorIndex, selectedVideoId, onSelect, onClo
               <TrendingUp className="w-4 h-4 text-orange-500 mr-[50px]" />
               <span className="text-sm text-foreground font-light">{video.growthRate ?? '0%'}</span>
             </div>
+            <div className="flex items-center gap-[40px]">
+              <Sparkles className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-foreground font-light">{video.impressions ?? '-'}</span>
+            </div>
+            <div className="flex items-center justify-start gap-0 pl-[75px]">
+              <CalendarDays className="w-4 h-4 text-muted-foreground mr-[50px]" />
+              <span className="text-sm text-foreground font-light">{video.publishedAt ?? '-'}</span>
+            </div>
           </div>
 
           {/* Selling point hit rate - highlighted */}
           <div className="rounded-xl border-orange-500/15 p-3 bg-transparent border-0 px-px">
             <div className="flex items-center justify-between mb-2">
               <span className="font-medium text-sm text-muted-foreground">卖点命中率</span>
-              <span className="font-light text-xl text-accent">{video.sellingPointHitRate ?? 0}%
+              <span className="font-urbanist text-2xl font-semibold text-orange-500">{video.sellingPointHitRate ?? 0}%
                 
               </span>
             </div>
-            <Progress value={video.sellingPointHitRate ?? 0} className="h-1.5 [&>div]:bg-orange-500" />
+            <Progress value={video.sellingPointHitRate ?? 0} className="h-1.5 [&>div]:bg-accent" />
           </div>
 
           {/* Actions */}
