@@ -31,7 +31,7 @@ export function TopNav() {
       {/* Left: Logo */}
       <div className="flex items-center gap-3">
         <img src={logoDark} alt="ORAN GEN" className="w-6 h-6 object-fill" />
-        <span className="text-lg font-normal">ORAN GEN</span>
+        <span className="text-lg font-normal">ORAN AI</span>
       </div>
 
       {/* Right: User Actions */}

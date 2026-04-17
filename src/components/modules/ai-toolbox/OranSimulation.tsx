@@ -337,28 +337,6 @@ export function OranSimulation({ onNavigate }: OranSimulationProps) {
     [entries],
   );
 
-  useEffect(() => {
-    const prefill = consumePrefill();
-    if (!prefill) return;
-
-    const inferred = inferAttachmentSlots(prefill.attachmentIds, memoryItems);
-    setSetup((prev) => ({
-      ...prev,
-      insightMemoryId: inferred.insightMemoryId,
-      planningMemoryId: inferred.planningMemoryId,
-      supplementalMemoryIds: inferred.supplementalMemoryIds,
-      brandName: prefill.brandName || prev.brandName,
-      category: prefill.category || prev.category,
-      simulationQuestion: prefill.prompt || prev.simulationQuestion,
-      mainDirection: prefill.prompt || prev.mainDirection,
-    }));
-
-    if (prefill.autoStart && inferred.insightMemoryId && inferred.planningMemoryId) {
-      setStep("scene");
-      setSceneSnapshot(DEFAULT_SCENE_SNAPSHOT);
-    }
-  }, [consumePrefill, memoryItems]);
-
   const insightMemoryTitle = useMemo(
     () => memoryItems.find((item) => item.id === setup.insightMemoryId)?.name ?? "",
     [memoryItems, setup.insightMemoryId],
@@ -430,6 +408,51 @@ export function OranSimulation({ onNavigate }: OranSimulationProps) {
     setHistory(items);
     saveOranSimulationHistory(items);
   }, []);
+
+  const startSimulationWithSetup = useCallback(
+    (nextSetup: OranSimulationSetupState) => {
+      const item: OranSimulationHistoryItem = {
+        id: crypto.randomUUID(),
+        date: new Date().toISOString(),
+        step: "scene",
+        title: buildHistoryTitle(nextSetup),
+        setup: nextSetup,
+        sceneSnapshot: DEFAULT_SCENE_SNAPSHOT,
+      };
+
+      persistHistory([item, ...history].slice(0, 20));
+      setSetup(nextSetup);
+      setSceneSnapshot(DEFAULT_SCENE_SNAPSHOT);
+      setStep("scene");
+    },
+    [history, persistHistory],
+  );
+
+  useEffect(() => {
+    const prefill = consumePrefill();
+    if (!prefill) return;
+
+    const inferred = inferAttachmentSlots(prefill.attachmentIds, memoryItems);
+    const nextSetup: OranSimulationSetupState = {
+      ...setup,
+      insightMemoryId: inferred.insightMemoryId,
+      planningMemoryId: inferred.planningMemoryId,
+      supplementalMemoryIds: inferred.supplementalMemoryIds,
+      brandName: prefill.brandName || setup.brandName,
+      category: prefill.category || setup.category,
+      simulationQuestion: prefill.prompt || setup.simulationQuestion,
+      mainDirection: prefill.prompt || setup.mainDirection,
+    };
+
+    setSetup(nextSetup);
+
+    if (prefill.autoStart && inferred.insightMemoryId && inferred.planningMemoryId) {
+      startSimulationWithSetup({
+        ...nextSetup,
+        mainDirection: nextSetup.mainDirection.trim() || nextSetup.simulationQuestion.trim(),
+      });
+    }
+  }, [consumePrefill, memoryItems, setup, startSimulationWithSetup]);
 
   const activeHistoryId = useMemo(
     () => history.find((item) => item.title === buildHistoryTitle(setup) && item.step === step)?.id ?? null,
@@ -504,20 +527,8 @@ export function OranSimulation({ onNavigate }: OranSimulationProps) {
       mainDirection: setup.mainDirection.trim() || setup.simulationQuestion.trim(),
     };
 
-    const item: OranSimulationHistoryItem = {
-      id: crypto.randomUUID(),
-      date: new Date().toISOString(),
-      step: "scene",
-      title: buildHistoryTitle(normalizedSetup),
-      setup: normalizedSetup,
-      sceneSnapshot: DEFAULT_SCENE_SNAPSHOT,
-    };
-
-    persistHistory([item, ...history].slice(0, 20));
-    setSetup(normalizedSetup);
-    setSceneSnapshot(DEFAULT_SCENE_SNAPSHOT);
-    setStep("scene");
-  }, [canSubmit, history, persistHistory, setup]);
+    startSimulationWithSetup(normalizedSetup);
+  }, [canSubmit, setup, startSimulationWithSetup]);
 
   const handleRestoreHistory = useCallback((item: OranSimulationHistoryItem) => {
     setSetup(item.setup);

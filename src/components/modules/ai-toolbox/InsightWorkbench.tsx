@@ -5,6 +5,8 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Copy,
+  Download,
   FileText,
   History,
   Loader2,
@@ -12,6 +14,7 @@ import {
   X,
 } from 'lucide-react';
 import type { KeyboardEvent } from 'react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
@@ -129,6 +132,38 @@ function saveInsightHistory(items: InsightHistoryItem[]) {
   localStorage.setItem(INSIGHT_HISTORY_STORAGE_KEY, JSON.stringify(items));
 }
 
+function normalizeLooseToken(value: string) {
+  return value.toLowerCase().replace(/[\s./\\_\->、，,]+/g, '');
+}
+
+function normalizeCategoryToken(value: string) {
+  return normalizeLooseToken(value).replace(/kbeauty/g, 'kbeauty');
+}
+
+function matchesDrMelaxinPlanningScenario(params: {
+  brandName: string;
+  category: string;
+  competitors: string[];
+}) {
+  const normalizedBrand = normalizeLooseToken(params.brandName || '');
+  const normalizedCategory = normalizeCategoryToken(params.category || '');
+  const normalizedCompetitors = normalizeLooseToken(params.competitors.join(' '));
+
+  const isDrMelaxin =
+    normalizedBrand === 'drmelaxin' || normalizedCompetitors.includes('drmelaxin');
+  const isTargetCategory =
+    normalizedCategory === normalizeCategoryToken('美妆个护>K-beauty>功效护肤') ||
+    normalizedCategory === normalizeCategoryToken('美妆个护 > K-beauty > 功效护肤') ||
+    normalizedCategory === normalizeCategoryToken('美妆个护-K-beauty-功效护肤');
+  const hasMedicube = normalizedCompetitors.includes(normalizeLooseToken('Medicube'));
+  const hasTarte =
+    normalizedCompetitors.includes(normalizeLooseToken('Tarte Cosmetics')) ||
+    normalizedCompetitors.includes(normalizeLooseToken('Tarte Cometics')) ||
+    normalizedCompetitors.includes(normalizeLooseToken('Tarte'));
+
+  return isDrMelaxin && isTargetCategory && hasMedicube && hasTarte;
+}
+
 function buildExtractedInfo(params: {
   brandName: string;
   category: string;
@@ -138,24 +173,53 @@ function buildExtractedInfo(params: {
 }): ExtractedInfo {
   const { brandName, category, competitors, selectedMemoryCount, reportType } = params;
   const leadCompetitor = competitors[0] || '头部竞品';
+  const trimmedBrandName = brandName.trim();
+  const trimmedCategory = category.trim();
+  const analysisTarget = competitors.join('、');
+  const websiteType = selectedMemoryCount > 0 ? '结构化输入 + 记忆库' : '结构化品牌输入';
+  const businessDirection =
+    reportType === 'planning' ? '营销策划 / 执行方案' : '市场洞察 / 竞品分析';
+
+  if (
+    reportType === 'planning' &&
+    matchesDrMelaxinPlanningScenario({ brandName: trimmedBrandName, category: trimmedCategory, competitors })
+  ) {
+    return {
+      brandName: trimmedBrandName,
+      category: trimmedCategory,
+      sellingPoints: [
+        '功效护肤（问题→结果）',
+        '可视化效果（对比、改善）',
+        '细分赛道（淡斑 / 抗衰 / 眼部）',
+      ],
+      targetMarket: '目标市场待确认',
+      analysisTarget,
+      websiteType,
+      businessDirection,
+      marketingGoal: '放大内容声量、提升UGC、建立产品矩阵、从爆品→品牌化',
+      targetAudience: '核心：25–44抗衰女性、增长：有色人种淡斑人群（关键）、本质：问题导向用户',
+      budgetLevel: '百万美元级 / 千万人民币级、核心投在达人（≈90%）',
+      primaryChannels:
+        'TikTok、小红书',
+    };
+  }
 
   return {
-    brandName: brandName.trim(),
-    category: category.trim(),
+    brandName: trimmedBrandName,
+    category: trimmedCategory,
     sellingPoints: [
       `围绕 ${leadCompetitor} 做差异化判断`,
       selectedMemoryCount > 0 ? '已补充记忆库背景信息' : '基于结构化输入快速分析',
       reportType === 'planning' ? '适合继续延展为策划方案' : '适合继续延展为洞察结论',
     ],
     targetMarket: '目标市场待确认',
-    analysisTarget: competitors.join('、'),
-    websiteType: selectedMemoryCount > 0 ? '结构化输入 + 记忆库' : '结构化品牌输入',
-    businessDirection:
-      reportType === 'planning' ? '营销策划 / 执行方案' : '市场洞察 / 竞品分析',
+    analysisTarget,
+    websiteType,
+    businessDirection,
     marketingGoal:
       reportType === 'planning' ? '提升品牌声量并带动内容转化' : '',
     targetAudience:
-      reportType === 'planning' ? `${category.trim() || '目标品类'}核心兴趣人群` : '',
+      reportType === 'planning' ? `${trimmedCategory || '目标品类'}核心兴趣人群` : '',
     budgetLevel:
       reportType === 'planning' ? '中等预算（20万-50万）' : '',
     primaryChannels:
@@ -165,7 +229,7 @@ function buildExtractedInfo(params: {
 
 export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => void }) {
   const { deduct, canAfford, shortfall } = useCredits();
-  const { entries, ensureEntry } = useMemory();
+  const { entries, ensureEntry, setDrawerOpen } = useMemory();
   const { setPrefill: setOranGenPrefill } = useOranGenPrefill();
   const { setPrefill: setOranSimulationPrefill } = useOranSimulationPrefill();
 
@@ -776,6 +840,62 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     previewWindow.document.write(html);
     previewWindow.document.close();
   }, []);
+
+  const handleCopyPreviewHtml = useCallback(() => {
+    navigator.clipboard.writeText(activePreviewHtml).then(
+      () => {
+        toast.success(`HTML ${REPORT_TYPE_LABELS[activePreviewReportType]}已复制到剪贴板`);
+      },
+      () => {
+        toast.error('复制失败，请稍后重试');
+      }
+    );
+  }, [activePreviewHtml, activePreviewReportType]);
+
+  const handleExportPreviewHtml = useCallback(() => {
+    const blob = new Blob([activePreviewHtml], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    const fileLabel = REPORT_TYPE_LABELS[activePreviewReportType];
+
+    anchor.href = url;
+    anchor.download = `${activePreviewExtractedInfo.brandName || '未命名品牌'}-${fileLabel}.html`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${fileLabel}已导出`);
+  }, [activePreviewExtractedInfo.brandName, activePreviewHtml, activePreviewReportType]);
+
+  const handleSavePreviewToMemory = useCallback(() => {
+    const fileLabel = REPORT_TYPE_LABELS[activePreviewReportType];
+
+    ensureEntry({
+      title: `${activePreviewExtractedInfo.brandName || '未命名品牌'} ${fileLabel}`,
+      content: buildMemoryMarkdownFromHtml(
+        `${activePreviewExtractedInfo.brandName || '未命名品牌'} ${fileLabel}`,
+        activePreviewHtml
+      ),
+      category: fileLabel,
+      tags:
+        activePreviewReportType === 'planning'
+          ? [
+              activePreviewExtractedInfo.category,
+              activePreviewExtractedInfo.primaryChannels,
+              activePreviewExtractedInfo.budgetLevel,
+            ].filter(Boolean)
+          : [
+              activePreviewExtractedInfo.category,
+              activePreviewExtractedInfo.businessDirection,
+            ].filter(Boolean),
+    });
+    setDrawerOpen(true);
+    toast.success('已保存到记忆库');
+  }, [
+    activePreviewExtractedInfo,
+    activePreviewHtml,
+    activePreviewReportType,
+    ensureEntry,
+    setDrawerOpen,
+  ]);
 
   const jumpToOranGenWithPrefill = useCallback(() => {
     const insightSource =
@@ -2042,14 +2162,40 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                             </div>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={() => handleOpenPreviewWindow(activePreviewHtml)}
-                            className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-border/45 bg-background/80 px-3 text-[12px] text-foreground/70 transition-colors hover:border-foreground/20 hover:bg-muted/40"
-                          >
-                            <Maximize2 className="h-3.5 w-3.5" />
-                          
-                          </button>
+                          <div className="flex shrink-0 items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={handleCopyPreviewHtml}
+                              className="inline-flex h-8 items-center gap-1 rounded-full border border-border/45 bg-background/80 px-3 text-[12px] text-foreground/70 transition-colors hover:border-foreground/20 hover:bg-muted/40"
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                              <span>复制HTML</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleExportPreviewHtml}
+                              className="inline-flex h-8 items-center gap-1 rounded-full border border-border/45 bg-background/80 px-3 text-[12px] text-foreground/70 transition-colors hover:border-foreground/20 hover:bg-muted/40"
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                              <span>下载</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSavePreviewToMemory}
+                              className="inline-flex h-8 items-center gap-1 rounded-full border border-border/45 bg-background/80 px-3 text-[12px] text-foreground/70 transition-colors hover:border-foreground/20 hover:bg-muted/40"
+                            >
+                              <FileText className="h-3.5 w-3.5" />
+                              <span>存入记忆库</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenPreviewWindow(activePreviewHtml)}
+                              className="inline-flex h-8 items-center gap-1 rounded-full border border-border/45 bg-background/80 px-3 text-[12px] text-foreground/70 transition-colors hover:border-foreground/20 hover:bg-muted/40"
+                            >
+                              <Maximize2 className="h-3.5 w-3.5" />
+                              <span>新窗口</span>
+                            </button>
+                          </div>
                         </div>
 
                         <div className="min-h-0 flex-1 overflow-auto p-3">
