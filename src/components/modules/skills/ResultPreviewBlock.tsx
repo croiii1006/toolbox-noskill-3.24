@@ -1,30 +1,36 @@
-import { Play, Download } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export function ResultPreviewBlock() {
+interface ResultPreviewBlockProps {
+  resultVideo: {
+    url: string;
+    cover: string;
+  };
+}
+
+export function ResultPreviewBlock({ resultVideo }: ResultPreviewBlockProps) {
   return (
-    <div className="rounded-xl border border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden">
-      <div className="px-5 py-3 border-b border-border/30">
+    <div className="overflow-hidden rounded-xl border border-border/40 bg-card/60 backdrop-blur-sm">
+      <div className="border-b border-border/30 px-5 py-3">
         <h4 className="text-sm font-semibold text-foreground">复刻视频预览</h4>
       </div>
-      
-      {/* Mock video player */}
-      <div className="relative aspect-video bg-gradient-to-br from-muted to-muted/60 flex items-center justify-center">
-        <div className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center cursor-pointer hover:bg-foreground/20 transition-colors">
-          <Play className="w-8 h-8 text-foreground/60 ml-1" />
-        </div>
-        <div className="absolute bottom-3 right-3 text-[10px] bg-foreground/70 text-background px-2 py-0.5 rounded-md font-mono">
-          0:30
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-border/30">
-          <div className="h-full w-0 bg-foreground/60 rounded-r-full" />
-        </div>
+
+      <div className="relative aspect-video bg-black">
+        <video
+          src={resultVideo.url}
+          className="h-full w-full object-cover"
+          controls
+          autoPlay
+          playsInline
+          preload="metadata"
+        />
       </div>
 
-      {/* Actions */}
-      <div className="p-4 flex items-center gap-2 flex-wrap">
-        <Button variant="outline" size="sm" className="rounded-lg gap-1.5 text-xs border-border/50">
-          <Download className="w-3.5 h-3.5" /> 导出下载
+      <div className="flex flex-wrap items-center gap-2 p-4">
+        <Button asChild variant="outline" size="sm" className="gap-1.5 rounded-lg border-border/50 text-xs">
+          <a href={resultVideo.url} download>
+            <Download className="h-3.5 w-3.5" /> 导出下载
+          </a>
         </Button>
       </div>
     </div>

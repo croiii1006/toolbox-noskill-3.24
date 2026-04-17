@@ -131,6 +131,11 @@ export interface SkillsRunMeta {
   updatedAt: number;
 }
 
+const GENERATED_MELAXIN_RESULT = {
+  url: '/generated-videos/replicate-melaxin.mp4',
+  cover: '',
+};
+
 const CATEGORIES = ['美妆个护', '3C数码', '服饰鞋包', '家居日用', '食品饮料', '母婴用品', '其它'];
 
 const legacyMockVideos = (): CandidateVideo[] => [
@@ -362,6 +367,71 @@ const getDrMelaxinReferenceVideos = (): CandidateVideo[] => [
     tiktokUrl: 'https://www.tiktok.com/@bymillie.finds/video/7558551951907097869?local=en',
   },
 ];
+
+const buildDefaultCandidateVideoPrompt = (sellingPoints: string, category: string, title: string) =>
+  `【爆款复刻Prompt】
+
+镜头风格：近景特写 + 俯拍切换，暖色调滤镜
+节奏：快节奏剪辑，BGM 节拍同步
+内容结构：
+1. 开场 - 产品白底展示，旋转 360°（0-3s）
+2. 使用场景 - 手部特写展示质感（3-8s）
+3. 效果对比 - 使用前后对比（8-15s）
+4. 口播种草 - 真人出镜，口述卖点（15-25s）
+5. 结尾 CTA - 点击链接，限时优惠（25-30s）
+
+关键词：${sellingPoints.slice(0, 30)}
+品类：${category}
+参考来源：${title}`;
+
+const DR_MELAXIN_CALCIUM_BALM_PROMPT = `原生真实 UGC 带货视频质感，画面冷调补光清晰聚焦，剪辑节奏快速卡点。
+
+【核心目标・最高优先级】
+生成【9:16】竖屏 TikTok UGC 信息流带货视频，仅参考下方拆解的纯文本逻辑（人物风格、场景类型、镜头语言、运镜节奏、画面动作逻辑、文案结构），完全不使用任何对标视频的画面、人物、产品、场景，生成全新的专属带货视频。
+
+【专属元素替换（必须 100% 填写）】：
+核心产品：仅为【紫色护肤除皱棒】（外观严格匹配上传的产品参考图）产品参考图
+图片1
+
+口播文案：
+【全程】无真人声口播，仅搭配轻柔背景音乐。
+视频中上方白色字幕：
+【00:00-00:10】When you're 36 and look better than you did at 26 all because you saw some milf talking about this wrinkle stick that's better than botox.
+
+【可复制逻辑复刻（严格遵循，填写拆解结果）】：
+人物风格：【30-35 岁非裔女性，黑色羊羔卷短发，蓝色美瞳，精致全妆，佩戴多层金色项链及夸张戒指；身穿红色深 V 吊带背心，粉色真丝头巾挂于脖间；气质自信精致、御姐感、有说服力；标志性动作为将产品贴近面部展示、熟练涂抹眼周及额头、展示涂抹后光泽感】
+场景类型：【室内生活化场景（卧室 / 化妆间），背景可见黑色皮质大容量包袋、化妆镜光线，整体环境略暗；环形灯冷色调补光，聚焦人物面部及产品；氛围标签种草、真实、精致护肤、对比感】
+镜头语言：【核心景别为中景转特写，拍摄视角为平视自拍视角；运镜以固定机位为主，通过人物靠近镜头形成视觉冲击；剪辑节奏快速切换，配合 BGM 卡点，镜头切换频率约 1-2 秒一个部位】
+运镜时序与画面动作逻辑（逐秒与口播强绑定）：
+【00:00-00:01】固定机位 中景 画面动作：人物正对镜头，从包内拿出一支紫色护肤除皱棒
+【00:01-00:02】略微推近 中景 画面动作：打开产品盖子，在左侧眼周、太阳穴位置上下涂抹
+【00:02-00:03】略微推近 中景 画面动作：在额头、眉间快速横向涂抹，展示产品质地
+【00:03-00:04】固定机位 中景 画面动作：微仰头，在颈部、下颚线位置大面积涂抹
+【00:04-00:05】略微推近 中景 画面动作：在右侧眼下、脸颊位置快速涂抹
+【00:05-00:07】固定机位 中景 画面动作：双手持一支打开一支闭合的紫色护肤除皱棒，展示产品包装
+【00:07-00:08】固定机位 中景 画面动作：放下产品，用手指轻点眼周，展示皮肤吸收后状态
+
+【核心强制约束（必须严格执行，不可修改）】：
+全程画面仅出现【紫色护肤除皱棒】+【非裔女性及手部】，无任何其他产品、竞品、无关物品
+全程画面无任何字幕、文字、水印、Logo、符号，画面干净无冗余内容
+人物、场景必须是全新原创的，不能和任何对标视频、参考图里的人物 / 场景相同
+运镜、节奏、画面动作逻辑严格遵循上方填写的可复制逻辑，口播与画面 100% 同步
+产品外观、光影、质感 100% 匹配上传的产品参考图，连续帧无变形、无外观变化`;
+
+const buildPromptForSelectedVideo = (
+  setup: SessionSetup,
+  video: CandidateVideo | null | undefined
+) => {
+  if (video?.id === 'dr-melaxin-hit-4') {
+    return DR_MELAXIN_CALCIUM_BALM_PROMPT;
+  }
+
+  return buildDefaultCandidateVideoPrompt(
+    setup.sellingPoints,
+    setup.category,
+    video?.title || ''
+  );
+};
 
 function now() {
   return new Date().toLocaleTimeString('zh-CN', { hour12: false });
@@ -813,9 +883,11 @@ export function useSkillsEngine() {
 
       const mockPrompt = `【爆款复刻 Prompt】\n\n镜头风格：近景特写 + 俯拍切换，暖色调滤镜\n节奏：快节奏剪辑，BGM 节拍同步\n内容结构：\n1. 开场 - 产品白底展示，旋转 360°（0-3s）\n2. 使用场景 - 手部特写展示质感（3-8s）\n3. 效果对比 - 使用前后对比（8-15s）\n4. 口播种草 - 真人出镜，口述卖点（15-25s）\n5. 结尾 CTA - 点击链接，限时优惠（25-30s）\n\n关键词：${state.setup.sellingPoints.slice(0, 30)}\n品类：${state.setup.category}\n参考来源：${video.title}`;
 
+      const resolvedPrompt = buildPromptForSelectedVideo(state.setup, video);
+
       setState(prev => ({
         ...prev,
-        generatedPrompt: mockPrompt,
+        generatedPrompt: resolvedPrompt,
         isProcessing: false,
         runMeta: makeRunMeta('awaiting_confirm', 'confirm_prompt', null),
       }));
@@ -895,7 +967,7 @@ export function useSkillsEngine() {
       setState(prev => ({
         ...prev,
         checklistDone: [true, true, true, true],
-        resultVideo: { url: '', cover: '' },
+        resultVideo: GENERATED_MELAXIN_RESULT,
         isProcessing: false,
         runMeta: makeRunMeta('done', null, null),
       }));
@@ -1425,7 +1497,7 @@ export function useSkillsEngine() {
     };
 
     const fastForwardToPrompt = (base: SkillsState) => {
-      const prompt = base.generatedPrompt || buildMockPrompt(base, base.selectedVideo?.title || '');
+      const prompt = base.generatedPrompt || buildPromptForSelectedVideo(base.setup, base.selectedVideo);
       commitState({
         ...base,
         isProcessing: false,
@@ -1454,7 +1526,7 @@ export function useSkillsEngine() {
       commitState({
         ...base,
         isProcessing: false,
-        resultVideo: { url: '', cover: '' },
+        resultVideo: GENERATED_MELAXIN_RESULT,
         checklistDone: [true, true, true, true],
         runMeta: makeRunMeta('done', null, null),
         agents: base.agents.map(a =>
@@ -1527,7 +1599,7 @@ export function useSkillsEngine() {
       commitState({
         ...snapshot,
         isProcessing: false,
-        resultVideo: { url: '', cover: '' },
+        resultVideo: GENERATED_MELAXIN_RESULT,
         checklistDone: [true, true, true, true],
         runMeta: makeRunMeta('done', null, null),
         agents: snapshot.agents.map(a =>
@@ -1567,10 +1639,12 @@ export function useSkillsEngine() {
     // Phase 2 was running (selected video, no prompt yet) → fast-forward to prompt generated
     if (hasSelected && !hasPrompt) {
       const mockPrompt = `【爆款复刻 Prompt】\n\n镜头风格：近景特写 + 俯拍切换，暖色调滤镜\n节奏：快节奏剪辑，BGM 节拍同步\n内容结构：\n1. 开场 - 产品白底展示，旋转 360°（0-3s）\n2. 使用场景 - 手部特写展示质感（3-8s）\n3. 效果对比 - 使用前后对比（8-15s）\n4. 口播种草 - 真人出镜，口述卖点（15-25s）\n5. 结尾 CTA - 点击链接，限时优惠（25-30s）\n\n关键词：${snapshot.setup.sellingPoints.slice(0, 30)}\n品类：${snapshot.setup.category}\n参考来源：${snapshot.selectedVideo?.title || ''}`;
+      const resolvedPrompt = buildPromptForSelectedVideo(snapshot.setup, snapshot.selectedVideo);
+
       commitState({
         ...snapshot,
         isProcessing: false,
-        generatedPrompt: mockPrompt,
+        generatedPrompt: resolvedPrompt,
         checklistDone: [true, true, true, false],
         runMeta: makeRunMeta('awaiting_confirm', 'confirm_prompt', null),
         agents: snapshot.agents.map(a => {

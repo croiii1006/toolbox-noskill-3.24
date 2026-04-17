@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Play, Pause, ExternalLink, Copy, Volume2, VolumeX, Eye, Heart, ShoppingCart, TrendingUp, X, Maximize2, CalendarDays, Sparkles } from 'lucide-react';
+import { ExternalLink, Copy, Volume2, VolumeX, Eye, Heart, ShoppingCart, TrendingUp, X, CalendarDays, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -57,12 +57,8 @@ export function VideoCandidateRow({ videos, onSelect, onPreview, selectedVideoId
                 preload="metadata" /> :
               null}
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-              <Play className="relative z-[1] w-7 h-7 text-white/70 drop-shadow-sm" />
               <div className="absolute bottom-2 left-2 bg-foreground/75 text-background text-[10px] font-mono px-1.5 py-0.5 rounded-md">
                 {video.duration}
-              </div>
-              <div className="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-foreground/20 flex items-center justify-center">
-                <Volume2 className="w-3 h-3 text-background" />
               </div>
             </div>
 
@@ -188,7 +184,6 @@ interface VideoDetailDialogProps {
 }
 
 function VideoDetailDialog({ video, colorIndex, selectedVideoId, onSelect, onClose }: VideoDetailDialogProps) {
-  const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
 
   return (
@@ -202,21 +197,12 @@ function VideoDetailDialog({ video, colorIndex, selectedVideoId, onSelect, onClo
           className="absolute inset-0 h-full w-full object-cover"
           muted={isMuted}
           loop
-          autoPlay={isPlaying}
+          autoPlay
           playsInline
           controls={false}
           preload="metadata" /> :
         null}
         <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
-        {/* Center play/pause */}
-        <button
-          onClick={() => setIsPlaying(!isPlaying)}
-          className="relative z-[1] w-16 h-16 rounded-full bg-foreground/20 backdrop-blur-sm flex items-center justify-center hover:bg-foreground/30 transition-colors">
-          {isPlaying ?
-          <Pause className="w-7 h-7 text-background" /> :
-          <Play className="w-7 h-7 text-background ml-1" />
-          }
-        </button>
 
         {/* Bottom controls bar */}
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/40 to-transparent flex items-center justify-between">
@@ -232,11 +218,6 @@ function VideoDetailDialog({ video, colorIndex, selectedVideoId, onSelect, onClo
               <VolumeX className="w-4 h-4 text-background" /> :
               <Volume2 className="w-4 h-4 text-background" />
               }
-            </button>
-            <button
-              className="w-9 h-9 rounded-full bg-foreground/25 backdrop-blur-sm flex items-center justify-center hover:bg-foreground/35 transition-colors">
-              
-              <Maximize2 className="w-4 h-4 text-background" />
             </button>
           </div>
         </div>
@@ -277,30 +258,46 @@ function VideoDetailDialog({ video, colorIndex, selectedVideoId, onSelect, onClo
         {/* Fixed bottom: stats + actions */}
         <div className="shrink-0 border-t border-border/20 px-5 py-4 space-y-4 border-0">
           {/* Stats */}
-          <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-            <div className="flex items-center gap-[40px]">
-              <Eye className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-foreground font-light">{video.views}</span>
+          <div className="grid grid-cols-2 gap-x-12">
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                </span>
+                <span className="text-sm font-light leading-none text-foreground">{video.views}</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                  <Heart className="h-4 w-4 text-muted-foreground" />
+                </span>
+                <span className="text-sm font-light leading-none text-foreground">{video.likes}</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                  <Sparkles className="h-4 w-4 text-muted-foreground" />
+                </span>
+                <span className="text-sm font-light leading-none text-foreground">{video.impressions ?? '-'}</span>
+              </div>
             </div>
-            <div className="text-left pr-0 flex items-center justify-start px-[28px] gap-0 pl-[75px]">
-              <ShoppingCart className="w-4 h-4 text-muted-foreground text-left mx-[50px] mr-[50px] ml-0" />
-              <span className="text-sm text-foreground font-light">{video.revenue ?? '-'}</span>
-            </div>
-            <div className="flex items-center gap-[40px]">
-              <Heart className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-foreground font-light">{video.likes}</span>
-            </div>
-            <div className="flex items-center justify-start gap-0 pl-[75px]">
-              <TrendingUp className="w-4 h-4 text-orange-500 mr-[50px]" />
-              <span className="text-sm text-foreground font-light">{video.growthRate ?? '0%'}</span>
-            </div>
-            <div className="flex items-center gap-[40px]">
-              <Sparkles className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-foreground font-light">{video.impressions ?? '-'}</span>
-            </div>
-            <div className="flex items-center justify-start gap-0 pl-[75px]">
-              <CalendarDays className="w-4 h-4 text-muted-foreground mr-[50px]" />
-              <span className="text-sm text-foreground font-light">{video.publishedAt ?? '-'}</span>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                  <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                </span>
+                <span className="text-sm font-light leading-none text-foreground">{video.revenue ?? '-'}</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </span>
+                <span className="text-sm font-light leading-none text-foreground">{video.growthRate ?? '0%'}</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                </span>
+                <span className="text-xs font-light leading-none text-foreground/50">{video.publishedAt ?? '-'}</span>
+              </div>
             </div>
           </div>
 
@@ -308,7 +305,7 @@ function VideoDetailDialog({ video, colorIndex, selectedVideoId, onSelect, onClo
           <div className="rounded-xl border-orange-500/15 p-3 bg-transparent border-0 px-px">
             <div className="flex items-center justify-between mb-2">
               <span className="font-medium text-sm text-muted-foreground">卖点命中率</span>
-              <span className="font-urbanist text-2xl font-semibold text-orange-500">{video.sellingPointHitRate ?? 0}%
+              <span className="font-urbanist text-2xl font-light text-orange-500">{video.sellingPointHitRate ?? 0}%
                 
               </span>
             </div>
