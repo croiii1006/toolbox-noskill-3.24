@@ -7,6 +7,7 @@ export interface SkillsHistoryItem {
   image: string | null;
   memoryEnabled: boolean;
   selectedMemoryIds: string[];
+  selectedCreatorIds: string[];
   date: string;
   snapshot: SkillsState;
 }

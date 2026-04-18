@@ -7,6 +7,7 @@ import { SetupSummary } from './SetupSummary';
 import { AgentCard, AgentClusterCard } from './AgentCard';
 import { RightWorkspace, type RightView } from './RightWorkspace';
 import { ChatInputBar } from './ChatInputBar';
+import { creatorLibraryItems } from './creatorLibrary';
 import {
   Loader2, RefreshCw, ArrowLeft, PartyPopper, Search, ListChecks, Check, X, History, ChevronRight, Users, FileText, ArrowUp } from
 'lucide-react';
@@ -233,6 +234,7 @@ export function SkillsModule() {
       image: setup.image,
       memoryEnabled: setup.memoryEnabled,
       selectedMemoryIds: setup.selectedMemoryIds,
+      selectedCreatorIds: setup.selectedCreatorIds,
       date: new Date().toISOString(),
       snapshot: { ...state }
     };
@@ -259,7 +261,13 @@ export function SkillsModule() {
     return history.some((h) => h.snapshot.setupCompleted && !h.snapshot.resultVideo);
   }, [history]);
 
-  const handleSend = (text: string, image?: string | null, category?: string, memoryIds?: string[]) => {
+  const handleSend = (
+    text: string,
+    image?: string | null,
+    category?: string,
+    memoryIds?: string[],
+    creatorIds?: string[],
+  ) => {
     if (!state.setupCompleted && (image || text)) {
       if (!historyLoaded) {
         toast({
@@ -282,6 +290,7 @@ export function SkillsModule() {
         imageName: image ? 'uploaded-image' : null,
         memoryEnabled: memoryIds && memoryIds.length > 0 || false,
         selectedMemoryIds: memoryIds || [],
+        selectedCreatorIds: creatorIds || [],
         sellingPoints: text || '',
         category: category || '其它'
       };
@@ -604,6 +613,7 @@ export function SkillsModule() {
                     onSend={handleSend}
                     disabled={state.isProcessing}
                     memoryItems={memoryItems}
+                    creators={creatorLibraryItems}
                     initialCategory={prefilledCategory}
                     initialMemoryIds={prefilledMemoryIds}
                   />
@@ -667,6 +677,7 @@ export function SkillsModule() {
               onSend={handleSend}
               disabled={state.isProcessing}
               memoryItems={memoryItems}
+              creators={creatorLibraryItems}
               initialCategory={prefilledCategory}
               initialMemoryIds={prefilledMemoryIds}
             />

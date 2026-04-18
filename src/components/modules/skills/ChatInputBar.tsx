@@ -1,22 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { Plus, ArrowUp, X, Database } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { ArrowUp, Database, Plus, Users, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { CategoryCascader } from './CategoryCascader';
 import { CATEGORY_TREE } from './categoryData';
 import { MemorySelectionDialog } from '@/components/modules/memory/MemorySelectionDialog';
+import { CreatorSelectionDialog } from './CreatorSelectionDialog';
+import type { CreatorLibraryItem } from './creatorLibrary';
 import { toast } from '@/hooks/use-toast';
 
 export interface MemoryItem {
@@ -28,11 +17,19 @@ export interface MemoryItem {
 }
 
 interface ChatInputBarProps {
-  onSend: (text: string, image?: string | null, category?: string, memoryIds?: string[]) => void;
+  onSend: (
+    text: string,
+    image?: string | null,
+    category?: string,
+    memoryIds?: string[],
+    creatorIds?: string[],
+  ) => void;
   disabled?: boolean;
   memoryItems: MemoryItem[];
+  creators: CreatorLibraryItem[];
   initialCategory?: string;
   initialMemoryIds?: string[];
+  initialCreatorIds?: string[];
 }
 
 const MAX_TAG_LENGTH = 20;
@@ -42,8 +39,10 @@ export function ChatInputBar({
   onSend,
   disabled,
   memoryItems,
+  creators,
   initialCategory,
   initialMemoryIds,
+  initialCreatorIds,
 }: ChatInputBarProps) {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
@@ -51,7 +50,9 @@ export function ChatInputBar({
   const [imageName, setImageName] = useState<string | null>(null);
   const [category, setCategory] = useState('');
   const [selectedMemoryIds, setSelectedMemoryIds] = useState<string[]>([]);
+  const [selectedCreatorIds, setSelectedCreatorIds] = useState<string[]>([]);
   const [memoryDialogOpen, setMemoryDialogOpen] = useState(false);
+  const [creatorDialogOpen, setCreatorDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const tagInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,46 +71,77 @@ export function ChatInputBar({
     setSelectedMemoryIds(validIds);
   }, [initialMemoryIds, memoryItems]);
 
+  useEffect(() => {
+    if (!initialCreatorIds) {
+      return;
+    }
+
+    const validIds = initialCreatorIds.filter((id) => creators.some((item) => item.id === id));
+    setSelectedCreatorIds(validIds);
+  }, [initialCreatorIds, creators]);
+
   const addTag = (value: string) => {
     const trimmed = value.trim();
     if (!trimmed) return;
+
     if (trimmed.length > MAX_TAG_LENGTH) {
-      toast({ title: '标签过长', description: `每个标签最多 ${MAX_TAG_LENGTH} 个字符`, variant: 'destructive' });
+      toast({
+        title: '标签过长',
+        description: `每个标签最多 ${MAX_TAG_LENGTH} 个字符`,
+        variant: 'destructive',
+      });
       return;
     }
+
     if (tags.length >= MAX_TAG_COUNT) {
-      toast({ title: '标签已满', description: `最多添加 ${MAX_TAG_COUNT} 个标签`, variant: 'destructive' });
+      toast({
+        title: '标签已满',
+        description: `最多添加 ${MAX_TAG_COUNT} 个标签`,
+        variant: 'destructive',
+      });
       return;
     }
+
     if (tags.includes(trimmed)) {
       toast({ title: '标签重复', description: '该标签已存在' });
       return;
     }
-    setTags(prev => [...prev, trimmed]);
+
+    setTags((prev) => [...prev, trimmed]);
     setTagInput('');
   };
 
   const removeTag = (index: number) => {
-    setTags(prev => prev.filter((_, i) => i !== index));
+    setTags((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSend = () => {
     if (tags.length === 0 || !image || !category || disabled) return;
+
     const sellingPointsText = tags.join('\n');
-    onSend(sellingPointsText, image, category || undefined, selectedMemoryIds.length > 0 ? selectedMemoryIds : undefined);
+    onSend(
+      sellingPointsText,
+      image,
+      category || undefined,
+      selectedMemoryIds.length > 0 ? selectedMemoryIds : undefined,
+      selectedCreatorIds.length > 0 ? selectedCreatorIds : undefined,
+    );
+
     setTags([]);
     setTagInput('');
     setImage(null);
     setImageName(null);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setImage(url);
-      setImageName(file.name);
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
     }
+
+    const url = URL.createObjectURL(file);
+    setImage(url);
+    setImageName(file.name);
   };
 
   const removeImage = () => {
@@ -118,44 +150,50 @@ export function ChatInputBar({
   };
 
   const toggleMemory = (id: string) => {
-    setSelectedMemoryIds(prev =>
-      prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]
+    setSelectedMemoryIds((prev) =>
+      prev.includes(id) ? prev.filter((memoryId) => memoryId !== id) : [...prev, id],
     );
   };
 
+  const toggleCreator = (id: string) => {
+    setSelectedCreatorIds((prev) => (prev[0] === id ? [] : [id]));
+  };
+
   const hasContent = tags.length > 0 && image && category;
+  const selectedCreators = creators.filter((item) => selectedCreatorIds.includes(item.id));
 
   return (
     <div className="border-t border-border/20 bg-transparent px-6 py-3">
-      <div className="max-w-3xl mx-auto">
+      <div className="mx-auto max-w-3xl">
         <div className="flex items-start gap-4">
-          {/* Left: Image upload box */}
           <div className="shrink-0 pt-0.5">
             {image ? (
-              <div className="relative w-[100px] h-[100px] rounded-xl overflow-hidden border border-border/60 group">
-                <img src={image} alt="Product" className="w-full h-full object-cover" />
+              <div className="group relative h-[100px] w-[100px] overflow-hidden rounded-xl border border-border/60">
+                <img src={image} alt="Product" className="h-full w-full object-cover" />
                 <button
+                  type="button"
                   onClick={removeImage}
-                  className="absolute top-1 right-1 w-5 h-5 rounded-full bg-foreground/70 text-background flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-foreground/70 text-background opacity-0 transition-opacity group-hover:opacity-100"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="h-3 w-3" />
                 </button>
               </div>
             ) : (
               <button
+                type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-[100px] h-[100px] rounded-xl border-2 border-dashed border-border/40 hover:border-foreground/20 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                className="flex h-[100px] w-[100px] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-border/40 transition-colors hover:border-foreground/20"
               >
-                <Plus className="w-5 h-5 text-muted-foreground/50" />
-                <span className="text-[10px] text-muted-foreground/50 leading-tight text-center px-2">上传商品白底图</span>
+                <Plus className="h-5 w-5 text-muted-foreground/50" />
+                <span className="px-2 text-center text-[10px] leading-tight text-muted-foreground/50">
+                  上传商品白底图
+                </span>
               </button>
             )}
           </div>
 
-          {/* Right: Input area */}
-          <div className="flex-1 min-w-0">
-            {/* Category selector */}
-            <div className="flex items-center gap-2 mb-2">
+          <div className="min-w-0 flex-1">
+            <div className="mb-2 flex items-center gap-2">
               <CategoryCascader
                 data={CATEGORY_TREE}
                 value={category}
@@ -164,58 +202,85 @@ export function ChatInputBar({
               />
             </div>
 
-            {/* Tag input area */}
-            <div className="flex flex-wrap items-center gap-1.5 min-h-[48px] py-1.5">
-              {tags.map((tag, i) => (
+            <div className="flex min-h-[48px] flex-wrap items-center gap-1.5 py-1.5">
+              {tags.map((tag, index) => (
                 <span
-                  key={`${tag}-${i}`}
-                  className="inline-flex items-center gap-1 h-6 rounded-full bg-foreground/5 border border-border/40 px-2.5 text-xs text-foreground/80"
+                  key={`${tag}-${index}`}
+                  className="inline-flex h-6 items-center gap-1 rounded-full border border-border/40 bg-foreground/5 px-2.5 text-xs text-foreground/80"
                 >
                   {tag}
-                  <button onClick={() => removeTag(i)} className="text-muted-foreground hover:text-foreground transition-colors">
-                    <X className="w-3 h-3" />
+                  <button
+                    type="button"
+                    onClick={() => removeTag(index)}
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <X className="h-3 w-3" />
                   </button>
                 </span>
               ))}
+
               <input
                 ref={tagInputRef}
                 value={tagInput}
-                onChange={e => setTagInput(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
+                onChange={(event) => setTagInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
                     addTag(tagInput);
                   }
-                  if (e.key === 'Backspace' && !tagInput && tags.length > 0) {
+
+                  if (event.key === 'Backspace' && !tagInput && tags.length > 0) {
                     removeTag(tags.length - 1);
                   }
                 }}
                 onBlur={() => {
                   if (tagInput.trim()) addTag(tagInput);
                 }}
-                placeholder={tags.length === 0 ? '输入卖点后按回车添加标签...' : tags.length < MAX_TAG_COUNT ? '继续添加...' : ''}
+                placeholder={
+                  tags.length === 0
+                    ? '输入卖点后按回车添加标签...'
+                    : tags.length < MAX_TAG_COUNT
+                      ? '继续添加...'
+                      : ''
+                }
                 disabled={disabled || tags.length >= MAX_TAG_COUNT}
-                className="flex-1 min-w-[120px] bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none disabled:opacity-50"
+                className="min-w-[120px] flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none disabled:opacity-50"
               />
             </div>
           </div>
         </div>
 
-        {/* Bottom toolbar */}
-        <div className="flex items-center justify-between mt-2 pt-2">
+        <div className="mt-2 flex items-center justify-between pt-2">
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={() => setMemoryDialogOpen(true)}
               className={cn(
-                'h-8 rounded-full border flex items-center justify-center gap-1.5 px-3 transition-all duration-300 ease-out',
+                'flex h-8 items-center justify-center gap-1.5 rounded-full border px-3 transition-all duration-300 ease-out',
                 selectedMemoryIds.length > 0
                   ? 'border-orange-400/60 bg-orange-400/10 text-accent/80'
-                  : 'border-border/40 text-muted-foreground hover:text-foreground hover:border-border'
+                  : 'border-border/40 text-muted-foreground hover:border-border hover:text-foreground',
               )}
             >
-              <Database className="w-4 h-4" />
-              <span className="text-[11px] font-medium whitespace-nowrap">
+              <Database className="h-4 w-4" />
+              <span className="whitespace-nowrap text-[11px] font-medium">
                 {selectedMemoryIds.length > 0 ? `${selectedMemoryIds.length} 个记忆库` : '记忆库'}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCreatorDialogOpen(true)}
+              className={cn(
+                'flex h-8 items-center justify-center gap-1.5 rounded-full border px-3 transition-all duration-300 ease-out',
+                selectedCreatorIds.length > 0
+                  ? 'border-orange-400/60 bg-orange-400/10 text-accent/80'
+                  : 'border-border/40 text-muted-foreground hover:border-border hover:text-foreground',
+              )}
+            >
+              <Users className="h-4 w-4" />
+              <span className="whitespace-nowrap text-[11px] font-medium">
+                {selectedCreatorIds.length > 0 ? `${selectedCreatorIds.length} 位达人` : '达人库'}
               </span>
             </button>
           </div>
@@ -223,21 +288,51 @@ export function ChatInputBar({
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground/60">预计消耗：约 200 credit</span>
             <button
+              type="button"
               onClick={handleSend}
               disabled={!hasContent || disabled}
               className={cn(
-                'w-9 h-9 rounded-full flex items-center justify-center transition-colors',
+                'flex h-9 w-9 items-center justify-center rounded-full transition-colors',
                 hasContent && !disabled
                   ? 'bg-foreground text-background hover:bg-foreground/90'
-                  : 'bg-muted/60 text-muted-foreground/40 cursor-not-allowed'
+                  : 'cursor-not-allowed bg-muted/60 text-muted-foreground/40',
               )}
             >
-              <ArrowUp className="w-4 h-4" />
+              <ArrowUp className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+        {selectedCreators.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-[11px] text-muted-foreground/60">已选达人</span>
+            {selectedCreators.map((creator) => (
+              <button
+                key={creator.id}
+                type="button"
+                onClick={() => setCreatorDialogOpen(true)}
+                className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/[0.06] px-2.5 py-1.5 text-xs text-foreground/80 transition-colors hover:bg-accent/[0.1]"
+              >
+                <img src={creator.avatarUrl} alt={creator.handle} className="h-5 w-5 rounded-full object-cover" />
+                <span className="max-w-[140px] truncate">{creator.handle}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {imageName && (
+          <div className="mt-2 text-[11px] text-muted-foreground/50">
+            当前图片：<span className="text-foreground/70">{imageName}</span>
+          </div>
+        )}
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleImageUpload}
+        />
       </div>
 
       <MemorySelectionDialog
@@ -246,7 +341,15 @@ export function ChatInputBar({
         items={memoryItems}
         selectedIds={selectedMemoryIds}
         onToggle={toggleMemory}
-        className="bg-background/40 backdrop-blur-xl border-border/20"
+        className="border-border/20 bg-background/40 backdrop-blur-xl"
+      />
+
+      <CreatorSelectionDialog
+        open={creatorDialogOpen}
+        onOpenChange={setCreatorDialogOpen}
+        items={creators}
+        selectedIds={selectedCreatorIds}
+        onToggle={toggleCreator}
       />
     </div>
   );

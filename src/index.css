@@ -292,6 +292,29 @@
   .scrollbar-track-transparent::-webkit-scrollbar-track {
     background: transparent;
   }
+
+  .scrollbar-ghost {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.12) transparent;
+  }
+
+  .scrollbar-ghost::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  .scrollbar-ghost::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-ghost::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.12);
+    border-radius: 999px;
+  }
+
+  .scrollbar-ghost:hover::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.2);
+  }
 }
 
 /* Sonner toast close button: inside toast, right side */

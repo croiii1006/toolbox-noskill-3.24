@@ -54,6 +54,7 @@ export interface SessionSetup {
   imageName: string | null;
   memoryEnabled: boolean;
   selectedMemoryIds: string[];
+  selectedCreatorIds: string[];
   sellingPoints: string;
   category: string;
 }
@@ -459,7 +460,7 @@ export function useSkillsEngine() {
   const [state, setState] = useState<SkillsState>({
     sessionId: `session-${Date.now()}`,
     setupCompleted: false,
-    setup: { image: null, imageName: null, memoryEnabled: true, selectedMemoryIds: [], sellingPoints: '', category: '' },
+    setup: { image: null, imageName: null, memoryEnabled: true, selectedMemoryIds: [], selectedCreatorIds: [], sellingPoints: '', category: '' },
     uiMode: 'single',
     activeTaskId: null,
     tasks: [],
@@ -1093,7 +1094,7 @@ export function useSkillsEngine() {
     setState({
       sessionId: `session-${Date.now()}`,
       setupCompleted: false,
-      setup: { image: null, imageName: null, memoryEnabled: true, selectedMemoryIds: [], sellingPoints: '', category: '' },
+      setup: { image: null, imageName: null, memoryEnabled: true, selectedMemoryIds: [], selectedCreatorIds: [], sellingPoints: '', category: '' },
       uiMode: 'single',
       activeTaskId: null,
       tasks: [],
