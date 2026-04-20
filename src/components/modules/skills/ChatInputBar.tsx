@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowUp, Database, Plus, Users, X } from 'lucide-react';
+import { ArrowUp, Database, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CategoryCascader } from './CategoryCascader';
 import { CATEGORY_TREE } from './categoryData';
@@ -63,19 +63,13 @@ export function ChatInputBar({
   }, [initialCategory]);
 
   useEffect(() => {
-    if (!initialMemoryIds) {
-      return;
-    }
-
+    if (!initialMemoryIds) return;
     const validIds = initialMemoryIds.filter((id) => memoryItems.some((item) => item.id === id));
     setSelectedMemoryIds(validIds);
   }, [initialMemoryIds, memoryItems]);
 
   useEffect(() => {
-    if (!initialCreatorIds) {
-      return;
-    }
-
+    if (!initialCreatorIds) return;
     const validIds = initialCreatorIds.filter((id) => creators.some((item) => item.id === id));
     setSelectedCreatorIds(validIds);
   }, [initialCreatorIds, creators]);
@@ -118,9 +112,8 @@ export function ChatInputBar({
   const handleSend = () => {
     if (tags.length === 0 || !image || !category || disabled) return;
 
-    const sellingPointsText = tags.join('\n');
     onSend(
-      sellingPointsText,
+      tags.join('\n'),
       image,
       category || undefined,
       selectedMemoryIds.length > 0 ? selectedMemoryIds : undefined,
@@ -135,9 +128,7 @@ export function ChatInputBar({
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
     const url = URL.createObjectURL(file);
     setImage(url);
@@ -272,21 +263,41 @@ export function ChatInputBar({
               type="button"
               onClick={() => setCreatorDialogOpen(true)}
               className={cn(
-                'flex h-8 items-center justify-center gap-1.5 rounded-full border px-3 transition-all duration-300 ease-out',
+                'flex min-h-8 items-center justify-center gap-1.5 rounded-full border px-3 py-1 transition-all duration-300 ease-out',
                 selectedCreatorIds.length > 0
                   ? 'border-orange-400/60 bg-orange-400/10 text-accent/80'
                   : 'border-border/40 text-muted-foreground hover:border-border hover:text-foreground',
               )}
             >
-              <Users className="h-4 w-4" />
-              <span className="whitespace-nowrap text-[11px] font-medium">
-                {selectedCreatorIds.length > 0 ? `${selectedCreatorIds.length} 位达人` : '达人库'}
-              </span>
+              {selectedCreators.length > 0 ? (
+                <div className="flex items-center gap-1.5">
+                  <div className="flex -space-x-1.5">
+                    {selectedCreators.slice(0, 2).map((creator) => (
+                      <img
+                        key={creator.id}
+                        src={creator.avatarUrl}
+                        alt={creator.handle}
+                        className="h-5 w-5 rounded-full border border-background object-cover"
+                      />
+                    ))}
+                  </div>
+                  <span className="max-w-[132px] truncate text-[11px] font-medium text-foreground/85">
+                    {selectedCreators[0]?.handle}
+                  </span>
+                  {selectedCreators.length > 1 ? (
+                    <span className="rounded-full bg-white/75 px-1.5 py-0.5 text-[10px] font-medium text-accent/80">
+                      +{selectedCreators.length - 1}
+                    </span>
+                  ) : null}
+                </div>
+              ) : (
+                <span className="whitespace-nowrap text-[11px] font-medium">达人库</span>
+              )}
             </button>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground/60">预计消耗：约 200 credit</span>
+            <span className="text-xs text-muted-foreground/60">预计消耗: 约 200 credit</span>
             <button
               type="button"
               onClick={handleSend}
@@ -303,26 +314,9 @@ export function ChatInputBar({
           </div>
         </div>
 
-        {selectedCreators.length > 0 && (
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="text-[11px] text-muted-foreground/60">已选达人</span>
-            {selectedCreators.map((creator) => (
-              <button
-                key={creator.id}
-                type="button"
-                onClick={() => setCreatorDialogOpen(true)}
-                className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/[0.06] px-2.5 py-1.5 text-xs text-foreground/80 transition-colors hover:bg-accent/[0.1]"
-              >
-                <img src={creator.avatarUrl} alt={creator.handle} className="h-5 w-5 rounded-full object-cover" />
-                <span className="max-w-[140px] truncate">{creator.handle}</span>
-              </button>
-            ))}
-          </div>
-        )}
-
         {imageName && (
           <div className="mt-2 text-[11px] text-muted-foreground/50">
-            当前图片：<span className="text-foreground/70">{imageName}</span>
+            当前图片: <span className="text-foreground/70">{imageName}</span>
           </div>
         )}
 
