@@ -15,7 +15,9 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { cn } from "@/lib/utils";
 import { PixelProgress } from "@/components/modules/skills/PixelProgress";
 import GraphCanvas from "./components/GraphCanvas";
@@ -237,6 +239,7 @@ export default function OranSimulationScene({
     sceneSnapshot.selectedNodeId ?? highlightDefault.nodeIds[0] ?? "product_scalp_repair_serum",
   );
   const leftRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
   const progress = sceneSnapshot.progress;
   const selectedView = sceneSnapshot.selectedView;
   const runTab = sceneSnapshot.runTab;
@@ -282,8 +285,19 @@ export default function OranSimulationScene({
 
   return (
     <div className="h-full flex flex-col bg-background">
-      <div className="flex-1 flex overflow-hidden">
-        <div className="flex min-h-0 w-1/2 flex-col border-r border-border/20">
+      <div className="flex-1 overflow-hidden">
+        <ResizablePanelGroup
+          direction={isMobile ? "vertical" : "horizontal"}
+          autoSaveId={`oran-simulation-scene-${isMobile ? "vertical" : "horizontal"}-split`}
+          className="h-full"
+        >
+          <ResizablePanel defaultSize={50} minSize={isMobile ? 35 : 30} className="min-h-0 min-w-0">
+            <div
+              className={cn(
+                "flex h-full min-h-0 flex-col",
+                isMobile ? "border-b border-border/20" : "border-r border-border/20",
+              )}
+            >
           <div className="px-4 py-2 border-b border-border/10 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
               {onBack ? (
@@ -299,7 +313,7 @@ export default function OranSimulationScene({
             </div>
           </div>
 
-          <div ref={leftRef} className="flex-1 overflow-y-auto">
+          <div ref={leftRef} className="oran-sim-scrollbar-hidden flex-1 overflow-y-auto">
             <div className="px-6 py-6 pb-[60px]">
               <div className="max-w-3xl mx-auto space-y-4">
                 <SetupCompactBar
@@ -413,8 +427,11 @@ export default function OranSimulationScene({
           </div>
         </div>
 
-        <div className="w-1/2 min-h-0 overflow-hidden animate-in slide-in-from-right-4 duration-300">
-          <div className="h-full min-h-0 overflow-hidden flex flex-col bg-background">
+            </div>
+          </ResizablePanel>
+          <ResizableHandle className="bg-border/20 transition-colors hover:bg-accent/30" />
+          <ResizablePanel defaultSize={50} minSize={isMobile ? 35 : 32} className="min-h-0 min-w-0">
+            <div className="h-full min-h-0 overflow-hidden flex flex-col bg-background animate-in slide-in-from-right-4 duration-300">
             <div className="px-5 py-3 border-b border-border/20 flex items-center justify-between shrink-0">
               <div>
                 <div className="flex items-center gap-2">
@@ -586,8 +603,9 @@ export default function OranSimulationScene({
                 })}
               </div>
             </div>
-          </div>
-        </div>
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </div>
   );

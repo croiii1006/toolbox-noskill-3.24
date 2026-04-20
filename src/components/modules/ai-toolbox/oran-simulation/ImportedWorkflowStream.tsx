@@ -227,7 +227,7 @@ export default function ImportedWorkflowStream({
     <div
       ref={scrollRef}
       onScroll={updateAutoScrollState}
-      className="flex-1 overflow-y-auto scrollbar-thin scroll-smooth px-6 py-6 pb-[60px] motion-reduce:scroll-auto"
+      className="oran-sim-scrollbar-hidden flex-1 overflow-y-auto scroll-smooth px-6 py-6 pb-[60px] motion-reduce:scroll-auto"
     >
       <div className="max-w-3xl mx-auto space-y-3">
         {hasSetupSummary && <SetupSummaryBlock locale={locale} setup={setup} />}

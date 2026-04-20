@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { useMemory } from "@/contexts/MemoryContext";
+import { useOranGenPrefill } from "@/contexts/OranGenPrefillContext";
 import ImportedWorkflowPanel, {
   buildPredictionReportHtml,
   predictionReportTitle,
@@ -15,8 +19,6 @@ import type {
   OranSimulationSceneSnapshot,
   OranSimulationSetupState,
 } from "./workflowTypes";
-import { useMemory } from "@/contexts/MemoryContext";
-import { useOranGenPrefill } from "@/contexts/OranGenPrefillContext";
 import { buildMemoryMarkdownFromHtml } from "../InsightWorkbenchReport";
 
 interface ImportedWorkflowSceneProps {
@@ -78,6 +80,7 @@ export default function ImportedWorkflowScene({
 }: ImportedWorkflowSceneProps) {
   const { entries, ensureEntry } = useMemory();
   const { setPrefill: setOranGenPrefill } = useOranGenPrefill();
+  const isMobile = useIsMobile();
   const templates = useMemo(
     () => generateWorkflowMessages(setup, attachmentNames, locale),
     [attachmentNames, locale, setup],
@@ -255,7 +258,7 @@ export default function ImportedWorkflowScene({
     const predictionEntry = ensureEntry({
       title,
       content: buildMemoryMarkdownFromHtml(title, buildPredictionReportHtml(setup, locale)),
-      category: locale === "zh" ? "预测报告" : "Prediction Report",
+      category: "Prediction Report",
       tags: [setup.brandName, setup.category, "ORAN SIM"].filter(Boolean),
     });
 
@@ -286,88 +289,104 @@ export default function ImportedWorkflowScene({
 
   return (
     <div className="flex h-full bg-background text-foreground">
-      <div className="flex h-full min-h-0 w-1/2 flex-col border-r border-border/20">
-        <div className="flex flex-shrink-0 items-center gap-2 border-b border-border/20 px-5 py-3">
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground/65 transition-colors hover:text-foreground/80"
+      <ResizablePanelGroup
+        direction={isMobile ? "vertical" : "horizontal"}
+        autoSaveId={`oran-imported-workflow-${isMobile ? "vertical" : "horizontal"}-split`}
+        className="h-full w-full"
+      >
+        <ResizablePanel defaultSize={50} minSize={isMobile ? 35 : 28} className="min-h-0 min-w-0">
+          <div
+            className={`flex h-full min-h-0 flex-col ${
+              isMobile ? "border-b border-border/20" : "border-r border-border/20"
+            }`}
           >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            <span className="text-xs">{locale === "zh" ? "返回" : "Back"}</span>
-          </button>
-        </div>
-
-        <ImportedWorkflowStream
-          steps={steps}
-          messages={messages}
-          currentStep={currentStep}
-          isComplete={isComplete}
-          selectedStep={selectedStep}
-          onSelectStep={setSelectedStep}
-          locale={locale}
-          setup={setup}
-          showFollowUpActions={completedSteps.includes(9)}
-          onContinueToGeneration={handleContinueToGeneration}
-        />
-      </div>
-
-      <div className="flex h-full min-h-0 w-1/2 flex-col overflow-hidden ">
-        <div className="flex flex-shrink-0 items-center border-b border-border/20 px-5 py-3">
-          <span className="text-sm text-foreground/80">
-            {selectedStep === 0
-              ? locale === "zh"
-                ? "编写待办清单"
-                : "Task Checklist"
-              : currentStepData?.title || ""}
-          </span>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-5">
-          <ImportedWorkflowPanel
-            step={selectedStep}
-            currentStep={currentStep}
-            completedSteps={completedSteps}
-            locale={locale}
-            setup={setup}
-            sceneSnapshot={sceneSnapshot}
-            attachmentNames={attachmentNames}
-            onSnapshotChange={onSnapshotChange}
-            onConfirmParsedInputs={handleConfirmParsedInputs}
-          />
-        </div>
-
-        <div className="flex flex-shrink-0 border-t border-border/20">
-          {steps.map((step) => (
-            <button
-              key={step.id}
-              onClick={() => {
-                if (step.status === "done" || step.id === currentStep) {
-                  setSelectedStep(step.id);
-                }
-              }}
-              disabled={!(step.status === "done" || step.id === currentStep)}
-              className={`flex-1 border-r border-border/20 py-2.5 text-center transition-colors last:border-r-0 ${
-                step.id === selectedStep
-                  ? "bg-card"
-                  : step.status === "done" || step.id === currentStep
-                    ? "bg-muted/20 hover:bg-muted/35"
-                    : "cursor-not-allowed bg-muted/10 opacity-45"
-              }`}
-            >
-              <p
-                className={`font-mono text-sm ${
-                  step.id === selectedStep ? "text-foreground/80" : "text-muted-foreground/60"
-                }`}
+            <div className="flex flex-shrink-0 items-center gap-2 border-b border-border/20 px-5 py-3">
+              <button
+                onClick={onBack}
+                className="flex items-center gap-1.5 text-sm text-muted-foreground/65 transition-colors hover:text-foreground/80"
               >
-                {String(step.id).padStart(2, "0")}
-              </p>
-              {step.status === "done" ? (
-                <p className="mt-0.5 text-[8px] tracking-[0.2em] text-accent/80">DONE</p>
-              ) : null}
-            </button>
-          ))}
-        </div>
-      </div>
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span className="text-xs">{locale === "zh" ? "返回" : "Back"}</span>
+              </button>
+            </div>
+
+            <ImportedWorkflowStream
+              steps={steps}
+              messages={messages}
+              currentStep={currentStep}
+              isComplete={isComplete}
+              selectedStep={selectedStep}
+              onSelectStep={setSelectedStep}
+              locale={locale}
+              setup={setup}
+              showFollowUpActions={completedSteps.includes(9)}
+              onContinueToGeneration={handleContinueToGeneration}
+            />
+          </div>
+        </ResizablePanel>
+
+        <ResizableHandle className="z-10 bg-border/30 transition-colors hover:bg-accent/35" />
+
+        <ResizablePanel defaultSize={50} minSize={isMobile ? 35 : 32} className="min-h-0 min-w-0">
+          <div className="flex h-full min-h-0 flex-col overflow-hidden">
+            <div className="flex flex-shrink-0 items-center border-b border-border/20 px-5 py-3">
+              <span className="text-sm text-foreground/80">
+                {selectedStep === 0
+                  ? locale === "zh"
+                    ? "编写待办清单"
+                    : "Task Checklist"
+                  : currentStepData?.title || ""}
+              </span>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5">
+              <ImportedWorkflowPanel
+                step={selectedStep}
+                currentStep={currentStep}
+                completedSteps={completedSteps}
+                locale={locale}
+                setup={setup}
+                sceneSnapshot={sceneSnapshot}
+                attachmentNames={attachmentNames}
+                onSnapshotChange={onSnapshotChange}
+                onConfirmParsedInputs={handleConfirmParsedInputs}
+              />
+            </div>
+
+            <div className="flex flex-shrink-0 border-t border-border/20">
+              {steps.map((step) => (
+                <button
+                  key={step.id}
+                  onClick={() => {
+                    if (step.status === "done" || step.id === currentStep) {
+                      setSelectedStep(step.id);
+                    }
+                  }}
+                  disabled={!(step.status === "done" || step.id === currentStep)}
+                  className={`flex-1 border-r border-border/20 py-2.5 text-center transition-colors last:border-r-0 ${
+                    step.id === selectedStep
+                      ? "bg-card"
+                      : step.status === "done" || step.id === currentStep
+                        ? "bg-muted/20 hover:bg-muted/35"
+                        : "cursor-not-allowed bg-muted/10 opacity-45"
+                  }`}
+                >
+                  <p
+                    className={`font-mono text-sm ${
+                      step.id === selectedStep ? "text-foreground/80" : "text-muted-foreground/60"
+                    }`}
+                  >
+                    {String(step.id).padStart(2, "0")}
+                  </p>
+                  {step.status === "done" ? (
+                    <p className="mt-0.5 text-[8px] tracking-[0.2em] text-accent/80">DONE</p>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 }
