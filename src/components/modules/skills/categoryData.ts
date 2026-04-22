@@ -5,6 +5,12 @@ export interface CategoryNode {
 
 export const CATEGORY_TREE: CategoryNode[] = [
   {
+    label: '娱乐收藏',
+    children: [
+      { label: '潮流玩具', children: [{ label: '盲盒' }] },
+    ],
+  },
+  {
     label: '穆斯林时尚',
     children: [
       { label: '穆斯林女装' },
