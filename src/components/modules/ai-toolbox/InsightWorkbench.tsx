@@ -344,6 +344,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   const previousStepRef = useRef<Step>('input');
   const isRestoringHistoryRef = useRef(false);
   const fullPreviewIframeRef = useRef<HTMLIFrameElement | null>(null);
+  const fullPreviewScrollRef = useRef<HTMLDivElement | null>(null);
   const [completedReadingDocCount, setCompletedReadingDocCount] = useState(0);
   const [visibleReadingDocCount, setVisibleReadingDocCount] = useState(1);
   const [previewFrameHeight, setPreviewFrameHeight] = useState(720);
@@ -1042,6 +1043,14 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     setPreviewFrameHeight(nextHeight + 8);
   }, []);
 
+  const scrollFullPreviewToTop = useCallback(() => {
+    if (fullPreviewScrollRef.current) {
+      fullPreviewScrollRef.current.scrollTop = 0;
+    }
+
+    fullPreviewIframeRef.current?.contentWindow?.scrollTo(0, 0);
+  }, []);
+
   const handleCopyPreviewHtml = useCallback(() => {
     navigator.clipboard.writeText(activePreviewHtml).then(
       () => {
@@ -1313,10 +1322,14 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
 
   useEffect(() => {
     setPreviewFrameHeight(720);
+    scrollFullPreviewToTop();
 
-    const timer = window.setTimeout(syncFullPreviewHeight, 120);
+    const timer = window.setTimeout(() => {
+      scrollFullPreviewToTop();
+      syncFullPreviewHeight();
+    }, 120);
     return () => window.clearTimeout(timer);
-  }, [activePreviewEmbeddedHtml, syncFullPreviewHeight]);
+  }, [activePreviewEmbeddedHtml, scrollFullPreviewToTop, syncFullPreviewHeight]);
 
   const historySheet = (
     <Sheet>
@@ -2331,14 +2344,17 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                           </div>
                         </div>
 
-                        <div className="min-h-0 flex-1 overflow-auto p-3">
+                        <div ref={fullPreviewScrollRef} className="min-h-0 flex-1 overflow-auto p-3">
                           <div className="min-h-full overflow-hidden rounded-[18px] border border-border/35 bg-white">
                             <iframe
                               ref={fullPreviewIframeRef}
                               key={`${previewMode}-${activePreviewReportType}-${activePreviewEmbeddedHtml.length}`}
                               srcDoc={activePreviewEmbeddedHtml}
                               title="完整HTML预览"
-                              onLoad={syncFullPreviewHeight}
+                              onLoad={() => {
+                                scrollFullPreviewToTop();
+                                syncFullPreviewHeight();
+                              }}
                               className="w-full border-0 bg-white"
                               style={{ height: previewFrameHeight }}
                               sandbox="allow-same-origin"
