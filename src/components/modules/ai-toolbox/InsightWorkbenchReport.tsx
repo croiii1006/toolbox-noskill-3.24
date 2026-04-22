@@ -8,6 +8,8 @@ import { useMemory } from '@/contexts/MemoryContext';
 import { cn } from '@/lib/utils';
 import drMelaxinInsightReportHtml from '../../../../dr-melaxin-tiktok-brand-health-insights-report-scroll-fixed.html?raw';
 import drMelaxinPlanningReportHtml from '../../../../dr-melaxin-tiktok-marketing-strategy-report.html?raw';
+import popmartInsightReportHtml from '../../../../popmart-brand-health-report.html?raw';
+import popmartPlanningReportHtml from '../../../../popmart-tiktok-strategy-report.html?raw';
 
 interface ExtractedInfo {
   brandName: string;
@@ -121,6 +123,13 @@ function matchesDrMelaxinScenario(info: ExtractedInfo) {
   return isDrMelaxin && isTargetCategory && hasMedicube && hasTarteCosmetics;
 }
 
+function matchesPopmartScenario(info: ExtractedInfo) {
+  const normalizedBrand = normalizeLooseToken(info.brandName || '');
+  const normalizedComparable = normalizeLooseToken(buildComparableText(info));
+
+  return normalizedBrand === 'popmart' || normalizedComparable.includes('popmart');
+}
+
 // eslint-disable-next-line react-refresh/only-export-components
 export function buildMemoryMarkdownFromHtml(title: string, html: string) {
   return `# ${title}\n\n\`\`\`html\n${html}\n\`\`\``;
@@ -128,6 +137,10 @@ export function buildMemoryMarkdownFromHtml(title: string, html: string) {
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function generateReportHTML(info: ExtractedInfo, reportType: InsightReportType): string {
+  if (matchesPopmartScenario(info)) {
+    return reportType === 'insight' ? popmartInsightReportHtml : popmartPlanningReportHtml;
+  }
+
   if (matchesDrMelaxinScenario(info)) {
     return reportType === 'insight' ? drMelaxinInsightReportHtml : drMelaxinPlanningReportHtml;
   }

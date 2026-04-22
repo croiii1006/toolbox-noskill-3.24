@@ -254,9 +254,11 @@ export function RightWorkspace(props: RightWorkspaceProps) {
               <CopyButton text={props.memoryContent || '暂无内容'} />
               <div className="px-5 pt-10 pb-4 font-mono text-sm leading-7">
                 {lines.map((line, i) =>
-                  <div key={i} className="flex">
+                  <div key={i} className="flex items-start">
                     <span className="w-10 shrink-0 text-right pr-4 text-muted-foreground/30 select-none">{i + 1}</span>
-                    <span className="text-foreground/80 whitespace-pre-wrap break-all">{line || '\u00A0'}</span>
+                    <span className="min-w-0 flex-1 line-clamp-4 whitespace-pre-wrap break-all text-foreground/80">
+                      {line || '\u00A0'}
+                    </span>
                   </div>
                   )}
               </div>

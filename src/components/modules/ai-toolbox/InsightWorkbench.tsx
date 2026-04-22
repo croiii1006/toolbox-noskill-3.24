@@ -80,6 +80,20 @@ function buildEmbeddedPreviewHtml(html: string) {
     ? htmlWithoutRevealScript.replace(
         '</head>',
         `<style>
+          html,
+          body {
+            height: auto !important;
+            min-height: 100% !important;
+            overflow: visible !important;
+          }
+          .page-shell,
+          .shell,
+          main {
+            height: auto !important;
+            max-height: none !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+          }
           .report-section {
             opacity: 1 !important;
             transform: none !important;
@@ -279,12 +293,15 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   const competitorInputRef = useRef<HTMLInputElement>(null);
   const readingTextViewportRefs = useRef<Array<HTMLDivElement | null>>([]);
   const latestProcessingItemRef = useRef<HTMLDivElement | null>(null);
+  const processingTimelineEndRef = useRef<HTMLDivElement | null>(null);
   const processingViewportRef = useRef<HTMLDivElement | null>(null);
   const splitLayoutAsideRef = useRef<HTMLElement | null>(null);
   const previousStepRef = useRef<Step>('input');
   const isRestoringHistoryRef = useRef(false);
+  const fullPreviewIframeRef = useRef<HTMLIFrameElement | null>(null);
   const [completedReadingDocCount, setCompletedReadingDocCount] = useState(0);
   const [visibleReadingDocCount, setVisibleReadingDocCount] = useState(1);
+  const [previewFrameHeight, setPreviewFrameHeight] = useState(720);
   const [history, setHistory] = useState<InsightHistoryItem[]>(loadInsightHistory);
 
   const memoryItems: MemorySelectItem[] = useMemo(
@@ -660,7 +677,8 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     step === 'reading'
       ? readingDocumentItems.slice(0, Math.min(visibleReadingDocCount, readingDocumentItems.length))
       : readingDocumentItems;
-  const showBrandInfoSection = step !== 'reading' || docsReadFinished;
+  const showReadingDocumentsSection = selectedMemoryFiles.length > 0;
+  const showBrandInfoSection = step !== 'reading' || docsReadFinished || !showReadingDocumentsSection;
   const showGeneratingSection = workflowStatus === 'generating_report' || workflowStatus === 'completed';
   const readingSectionTitle = docsReadFinished
     ? reportType === 'planning'
@@ -907,6 +925,23 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     previewWindow.document.close();
   }, []);
 
+  const syncFullPreviewHeight = useCallback(() => {
+    const frame = fullPreviewIframeRef.current;
+    const doc = frame?.contentDocument;
+    if (!doc) {
+      return;
+    }
+
+    const nextHeight = Math.max(
+      doc.documentElement.scrollHeight,
+      doc.body?.scrollHeight ?? 0,
+      doc.documentElement.offsetHeight,
+      720
+    );
+
+    setPreviewFrameHeight(nextHeight + 8);
+  }, []);
+
   const handleCopyPreviewHtml = useCallback(() => {
     navigator.clipboard.writeText(activePreviewHtml).then(
       () => {
@@ -970,15 +1005,19 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
       attachmentEntries.push(saveReportMemoryEntry(planningSource, 'planning'));
     }
 
+    const prefillBrandName = planningSource?.brandName || insightSource?.brandName || '';
+    const prefillCategory =
+      planningSource?.category ||
+      insightSource?.category ||
+      category.trim() ||
+      persistedCompletedExtractedInfo.category ||
+      undefined;
+    const isPopmartPrefill = /pop\s*mart|popmart/i.test(prefillBrandName);
+
     setOranGenPrefill({
       attachmentIds: attachmentEntries.map((entry) => entry.id),
       attachmentNames: attachmentEntries.map((entry) => entry.title),
-      category:
-        planningSource?.category ||
-        insightSource?.category ||
-        category.trim() ||
-        persistedCompletedExtractedInfo.category ||
-        undefined,
+      category: isPopmartPrefill && prefillCategory ? `${prefillBrandName} · ${prefillCategory}` : prefillCategory,
     });
 
     onNavigate?.('skills');
@@ -1172,6 +1211,13 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     step,
   ]);
 
+  useEffect(() => {
+    setPreviewFrameHeight(720);
+
+    const timer = window.setTimeout(syncFullPreviewHeight, 120);
+    return () => window.clearTimeout(timer);
+  }, [activePreviewEmbeddedHtml, syncFullPreviewHeight]);
+
   const historySheet = (
     <Sheet>
       <SheetTrigger asChild>
@@ -1256,40 +1302,16 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     }
 
     const viewport = readingTextViewportRefs.current[activeReadingDocIndex];
-    if (!viewport) {
-      const fallbackTimer = window.setTimeout(() => {
-        setCompletedReadingDocCount((prev) => Math.min(prev + 1, readingDocumentItems.length));
-      }, 760);
-
-      return () => {
-        window.clearTimeout(fallbackTimer);
-      };
+    if (viewport) {
+      viewport.scrollTop = 0;
     }
 
-    let frameId = 0;
-    viewport.scrollTop = 0;
-
-    const tick = () => {
-      const maxScroll = viewport.scrollHeight - viewport.clientHeight;
-
-      if (maxScroll <= 0) {
-        setCompletedReadingDocCount((prev) => Math.min(prev + 1, readingDocumentItems.length));
-        return;
-      }
-
-      if (viewport.scrollTop >= maxScroll) {
-        setCompletedReadingDocCount((prev) => Math.min(prev + 1, readingDocumentItems.length));
-        return;
-      }
-
-      viewport.scrollTop = Math.min(maxScroll, viewport.scrollTop + 7.0);
-      frameId = window.requestAnimationFrame(tick);
-    };
-
-    frameId = window.requestAnimationFrame(tick);
+    const timer = window.setTimeout(() => {
+      setCompletedReadingDocCount((prev) => Math.min(prev + 1, readingDocumentItems.length));
+    }, 760);
 
     return () => {
-      window.cancelAnimationFrame(frameId);
+      window.clearTimeout(timer);
     };
   }, [activeReadingDocIndex, readingDocumentItems.length, step]);
 
@@ -1352,10 +1374,6 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   }, [canAfford, deduct, docsReadFinished, reportType, reportTypeLabel, step]);
 
   useEffect(() => {
-    if (workflowStatus === 'completed') {
-      return;
-    }
-
     const scrollContainer = useSplitLayout
       ? splitLayoutAsideRef.current
       : processingViewportRef.current;
@@ -1368,8 +1386,8 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
 
     frameA = window.requestAnimationFrame(() => {
       frameB = window.requestAnimationFrame(() => {
-        scrollContainer.scrollTo({
-          top: scrollContainer.scrollHeight,
+        processingTimelineEndRef.current?.scrollIntoView({
+          block: 'end',
           behavior: 'smooth',
         });
       });
@@ -1384,6 +1402,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     completedGeneratingPhases,
     completedReadingDocCount,
     docsReadFinished,
+    isShowingPreviousInsightPreview,
     step,
     useSplitLayout,
     visibleReadingDocCount,
@@ -1517,6 +1536,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
 
                   <div className="max-w-[540px] pl-3 pt-24 text-[12px] text-muted-foreground md:ml-[18%]">
                     <div className="space-y-6">
+                      {showReadingDocumentsSection && (
                       <section className="space-y-3.5">
                         <h2 className="text-[14px] font-normal text-foreground/70">
                           {readingSectionTitle}
@@ -1557,9 +1577,9 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                                       ref={(node) => {
                                         readingTextViewportRefs.current[index] = node;
                                       }}
-                                      className="reading-text-viewport relative h-[50px] overflow-hidden"
+                                      className="reading-text-viewport relative h-16 overflow-hidden"
                                     >
-                                      <div className="whitespace-pre-wrap break-words text-[12px] leading-4 text-foreground/30">
+                                      <div className="line-clamp-4 break-all text-[12px] leading-4 text-foreground/30">
                                         {doc.text}
                                       </div>
                                     </div>
@@ -1571,6 +1591,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                           })}
                         </div>
                       </section>
+                      )}
 
                       {showBrandInfoSection && (
                         <section className="space-y-3.5 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
@@ -1702,6 +1723,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                           </div>
                         </section>
                       )}
+                      <div ref={processingTimelineEndRef} className="h-px" aria-hidden="true" />
                     </div>
                   </div>
                 </div>
@@ -1732,6 +1754,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                             </div>
                           </section>
 
+                          {showReadingDocumentsSection && (
                           <section className="space-y-3">
                             <div className="space-y-1">
                               <h3 className="text-[14px] font-light tracking-tight text-foreground">
@@ -1769,6 +1792,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                               ))}
                             </div>
                           </section>
+                          )}
 
                           <section className="space-y-3">
                             <div className="space-y-1">
@@ -1838,7 +1862,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                         </div>
                       </section>
 
-                      {hasReachedStep('reading') && (
+                      {hasReachedStep('reading') && showReadingDocumentsSection && (
                       <section className="space-y-3">
                         <div className="space-y-1">
                           <h3 className="text-[14px] font-light tracking-tight text-foreground">
@@ -2154,6 +2178,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                           </div>
                         </section>
                       )}
+                      <div ref={processingTimelineEndRef} className="h-px" aria-hidden="true" />
                     </div>
                   </aside>
 
@@ -2207,12 +2232,15 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                         </div>
 
                         <div className="min-h-0 flex-1 overflow-auto p-3">
-                          <div className="h-full min-h-0 overflow-hidden rounded-[18px] border border-border/35 bg-white">
+                          <div className="min-h-full overflow-hidden rounded-[18px] border border-border/35 bg-white">
                             <iframe
+                              ref={fullPreviewIframeRef}
                               key={`${previewMode}-${activePreviewReportType}-${activePreviewEmbeddedHtml.length}`}
                               srcDoc={activePreviewEmbeddedHtml}
                               title="完整HTML预览"
-                              className="h-full min-h-[720px] w-full border-0 bg-white"
+                              onLoad={syncFullPreviewHeight}
+                              className="w-full border-0 bg-white"
+                              style={{ height: previewFrameHeight }}
                               sandbox="allow-same-origin"
                             />
                           </div>
