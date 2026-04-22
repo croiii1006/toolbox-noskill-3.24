@@ -554,6 +554,17 @@ const creatorSeeds: CreatorSeed[] = [
     segment: 'overseas-white-female',
   },
   {
+    name: 'Hannah Ellis',
+    handle: '@hannah.ugcfinds',
+    followers: '156.4K',
+    niche: 'TikTok Shop UGC',
+    region: 'UK',
+    avgViews: '18.2万',
+    avatarUrl: '/model-avatars/overseas-female/white-female-11.jpg',
+    gender: 'female',
+    segment: 'overseas-white-female',
+  },
+  {
     name: 'Marcus Bryant',
     handle: '@marcus.reviewroom',
     followers: '158.7K',

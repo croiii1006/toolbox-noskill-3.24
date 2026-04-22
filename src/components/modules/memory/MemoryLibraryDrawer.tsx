@@ -37,7 +37,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-const MEMORY_CONTENT_LIMIT = 20000;
+const MEMORY_CONTENT_LIMIT = 100000;
 
 export function MemoryLibraryDrawer({ open, onOpenChange }: Props) {
   const { entries, addEntry, updateEntry, deleteEntry } = useMemory();

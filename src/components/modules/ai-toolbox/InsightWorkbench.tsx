@@ -178,6 +178,32 @@ function matchesDrMelaxinPlanningScenario(params: {
   return isDrMelaxin && isTargetCategory && hasMedicube && hasTarte;
 }
 
+function matchesPopmartPlanningScenario(params: {
+  brandName: string;
+  category: string;
+  competitors: string[];
+}) {
+  const normalizedBrand = normalizeLooseToken(params.brandName || '');
+  const normalizedCategory = normalizeLooseToken(params.category || '');
+  const normalizedCompetitors = normalizeLooseToken(params.competitors.join(' '));
+
+  const isPopmart =
+    normalizedBrand.includes('popmart') ||
+    normalizedBrand.includes(normalizeLooseToken('POP MART')) ||
+    normalizedBrand.includes('泡泡玛特') ||
+    normalizedCompetitors.includes('popmart') ||
+    normalizedCompetitors.includes('泡泡玛特');
+  const isToyCategory =
+    normalizedCategory.includes('潮玩') ||
+    normalizedCategory.includes('潮流玩具') ||
+    normalizedCategory.includes('盲盒') ||
+    normalizedCategory.includes('娱乐收藏') ||
+    normalizedCategory.includes('toy') ||
+    normalizedCategory.includes('collectible');
+
+  return isPopmart || isToyCategory;
+}
+
 function buildExtractedInfo(params: {
   brandName: string;
   category: string;
@@ -215,6 +241,25 @@ function buildExtractedInfo(params: {
       budgetLevel: '百万美元级 / 千万人民币级、核心投在达人（≈90%）',
       primaryChannels:
         'TikTok、小红书',
+    };
+  }
+
+  if (
+    reportType === 'planning' &&
+    matchesPopmartPlanningScenario({ brandName: trimmedBrandName, category: trimmedCategory, competitors })
+  ) {
+    return {
+      brandName: trimmedBrandName,
+      category: trimmedCategory,
+      sellingPoints: ['强IP资产（Labubu/DIMOO）+ 盲盒隐藏款惊喜机制'],
+      targetMarket: '目标市场待确认',
+      analysisTarget,
+      websiteType,
+      businessDirection,
+      marketingGoal: '月GMV $1500万+、新品成交占比25%',
+      targetAudience: '18-34岁潮玩爱好者，重点突破男性收藏人群',
+      budgetLevel: '中等预算（20万-50万）',
+      primaryChannels: 'TikTok',
     };
   }
 
@@ -350,12 +395,47 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     (casesPage + 1) * CASES_PER_PAGE
   );
   const reportTypeLabel = REPORT_TYPE_LABELS[reportType];
-  const selectedMemoryFiles = useMemo(
+  const planningInsightMemoryFile = useMemo<MemorySelectItem | null>(() => {
+    if (
+      !isPlanningFromInsight ||
+      persistedCompletedReportType !== 'insight' ||
+      !persistedCompletedExtractedInfo.brandName
+    ) {
+      return null;
+    }
+
+    const title = `${persistedCompletedExtractedInfo.brandName || '未命名品牌'} ${REPORT_TYPE_LABELS.insight}`;
+    const content = buildMemoryMarkdownFromHtml(
+      title,
+      generateReportHTML(persistedCompletedExtractedInfo, 'insight')
+    );
+
+    return {
+      id: 'previous-insight-report',
+      name: title,
+      desc: content,
+      tag: REPORT_TYPE_LABELS.insight,
+      charCount: content.length,
+    };
+  }, [
+    isPlanningFromInsight,
+    persistedCompletedExtractedInfo,
+    persistedCompletedReportType,
+  ]);
+  const manuallySelectedMemoryFiles = useMemo(
     () =>
       selectedMemoryIds
         .map((id) => memoryItems.find((item) => item.id === id))
         .filter((item): item is MemorySelectItem => Boolean(item)),
     [memoryItems, selectedMemoryIds]
+  );
+  const hasUserSelectedMemoryFiles = manuallySelectedMemoryFiles.length > 0;
+  const selectedMemoryFiles = useMemo(
+    () =>
+      planningInsightMemoryFile
+        ? [planningInsightMemoryFile, ...manuallySelectedMemoryFiles]
+        : manuallySelectedMemoryFiles,
+    [manuallySelectedMemoryFiles, planningInsightMemoryFile]
   );
   const streamRequestText = useMemo(() => {
     if (reportType === 'planning') {
@@ -401,6 +481,21 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
       };
     });
   }, [entries, reportType, selectedMemoryFiles, streamRequestText]);
+  const previousInsightReadingDocumentItems = useMemo(
+    () =>
+      manuallySelectedMemoryFiles.map((item) => {
+        const fullContent =
+          entries.find((entry) => entry.id === item.id)?.content || item.desc || item.name;
+        const normalized = fullContent.replace(/\s+/g, ' ').trim();
+
+        return {
+          id: item.id,
+          name: item.name,
+          text: normalized.length > 1200 ? normalized.slice(0, 1200) : normalized,
+        };
+      }),
+    [entries, manuallySelectedMemoryFiles]
+  );
   const hasReachedStep = (target: Exclude<Step, 'input'>) => {
     const order: Array<Exclude<Step, 'input'>> = ['reading', 'confirm', 'generating', 'report'];
     return step === 'input' ? false : order.indexOf(step) >= order.indexOf(target);
@@ -654,12 +749,12 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
       ? isPlanningFromInsight
         ? '当前洞察'
         : '参考资料'
-      : selectedMemoryFiles.length > 0
+      : hasUserSelectedMemoryFiles
         ? 'user'
         : '用户请求';
   const selectedMemoryFilesLabel = isPlanningFromInsight
     ? '1 report'
-    : `${selectedMemoryFiles.length} file${selectedMemoryFiles.length === 1 ? '' : 's'}`;
+    : `${manuallySelectedMemoryFiles.length} file${manuallySelectedMemoryFiles.length === 1 ? '' : 's'}`;
   const processingEntityItems = [
     { label: '品牌名', value: effectiveBrandName || '待补充' },
     { label: '品类', value: category || '待补充' },
@@ -677,20 +772,25 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     step === 'reading'
       ? readingDocumentItems.slice(0, Math.min(visibleReadingDocCount, readingDocumentItems.length))
       : readingDocumentItems;
-  const showReadingDocumentsSection = selectedMemoryFiles.length > 0;
+  const showReadingDocumentsSection =
+    reportType === 'planning'
+      ? selectedMemoryFiles.length > 0
+      : hasUserSelectedMemoryFiles;
+  const showPreviousInsightReadingDocumentsSection =
+    shouldShowPreviousInsightHistory && previousInsightReadingDocumentItems.length > 0;
   const showBrandInfoSection = step !== 'reading' || docsReadFinished || !showReadingDocumentsSection;
   const showGeneratingSection = workflowStatus === 'generating_report' || workflowStatus === 'completed';
   const readingSectionTitle = docsReadFinished
     ? reportType === 'planning'
       ? '已完成策划信息提取...'
-      : selectedMemoryFiles.length > 0
+      : hasUserSelectedMemoryFiles
         ? '已完成参考资料读取...'
         : '已完成任务输入读取...'
     : reportType === 'planning'
       ? isPlanningFromInsight
         ? '正在根据洞察报告和记忆库提取策划信息...'
         : '正在根据记忆库提取策划信息...'
-      : selectedMemoryFiles.length > 0
+      : hasUserSelectedMemoryFiles
         ? '正在读取参考资料...'
         : '正在读取任务输入...';
   const brandInfoSectionTitle =
@@ -1754,7 +1854,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                             </div>
                           </section>
 
-                          {showReadingDocumentsSection && (
+                          {showPreviousInsightReadingDocumentsSection && (
                           <section className="space-y-3">
                             <div className="space-y-1">
                               <h3 className="text-[14px] font-light tracking-tight text-foreground">
@@ -1765,7 +1865,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                               </p>
                             </div>
                             <div className="space-y-3">
-                              {readingDocumentItems.map((doc) => (
+                              {previousInsightReadingDocumentItems.map((doc) => (
                                 <div
                                   key={`insight-history-${doc.id}`}
                                   className="flex items-start gap-3 rounded-[22px] border border-border/25 bg-card/82 px-4 py-4 shadow-sm"

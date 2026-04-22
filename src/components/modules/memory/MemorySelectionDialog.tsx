@@ -27,7 +27,7 @@ interface MemorySelectionDialogProps {
   className?: string;
 }
 
-const MEMORY_SELECTION_CHAR_LIMIT = 20000;
+const MEMORY_SELECTION_CHAR_LIMIT = 1000000;
 
 export function MemorySelectionDialog({
   open,
