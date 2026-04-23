@@ -40,6 +40,7 @@ import {
   buildMemoryMarkdownFromHtml,
   generateReportHTML,
 } from './InsightWorkbenchReport';
+import { openReportHtmlInNewWindow } from './InsightReportWindow';
 
 type Step = 'input' | 'reading' | 'confirm' | 'generating' | 'report';
 type ReportType = 'insight' | 'planning';
@@ -1017,13 +1018,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   );
 
   const handleOpenPreviewWindow = useCallback((html: string) => {
-    const previewWindow = window.open('', '_blank');
-    if (!previewWindow) {
-      return;
-    }
-
-    previewWindow.document.write(html);
-    previewWindow.document.close();
+    openReportHtmlInNewWindow(html);
   }, []);
 
   const syncFullPreviewHeight = useCallback(() => {

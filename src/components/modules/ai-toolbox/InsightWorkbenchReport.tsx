@@ -10,6 +10,7 @@ import drMelaxinInsightReportHtml from '../../../../dr-melaxin-tiktok-brand-heal
 import drMelaxinPlanningReportHtml from '../../../../dr-melaxin-tiktok-marketing-strategy-report.html?raw';
 import popmartInsightReportHtml from '../../../../popmart-brand-health-report.html?raw';
 import popmartPlanningReportHtml from '../../../../popmart-tiktok-strategy-report.html?raw';
+import { REPORT_FAVICON_HREF, openReportHtmlInNewWindow } from './InsightReportWindow';
 
 interface ExtractedInfo {
   brandName: string;
@@ -211,7 +212,7 @@ export function generateReportHTML(info: ExtractedInfo, reportType: InsightRepor
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${safeBrandName} - ${meta.label}</title>
-  <link rel="icon" type="image/svg+xml" href="/logo_dark.svg" />
+  <link rel="icon" type="image/svg+xml" href="${REPORT_FAVICON_HREF}" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html {
@@ -478,11 +479,7 @@ export function InsightWorkbenchReport({
   }, [extractedInfo.brandName, meta.label, reportHTML]);
 
   const handlePreview = useCallback(() => {
-    const previewWindow = window.open('', '_blank');
-    if (previewWindow) {
-      previewWindow.document.write(reportHTML);
-      previewWindow.document.close();
-    }
+    openReportHtmlInNewWindow(reportHTML);
   }, [reportHTML]);
 
   const handleCopyToMemory = useCallback(() => {
