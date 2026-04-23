@@ -161,6 +161,7 @@ export function SkillsModule() {
   const [chatOnlyInput, setChatOnlyInput] = useState('');
   const [historySheetOpen, setHistorySheetOpen] = useState(false);
   const [prefilledCategory, setPrefilledCategory] = useState('');
+  const [prefilledSellingPoints, setPrefilledSellingPoints] = useState('');
   const [prefilledMemoryIds, setPrefilledMemoryIds] = useState<string[]>([]);
   const isNarrowWorkspace = useMediaQuery('(max-width: 1279px)');
   const [narrowPane, setNarrowPane] = useState<NarrowPane>('left');
@@ -230,6 +231,7 @@ export function SkillsModule() {
     }
 
     setPrefilledCategory(prefill.category || '');
+    setPrefilledSellingPoints(prefill.sellingPoints || '');
     setPrefilledMemoryIds(prefill.attachmentIds);
   }, [consumeOranGenPrefill]);
 
@@ -705,6 +707,7 @@ export function SkillsModule() {
                     memoryItems={memoryItems}
                     creators={creatorLibraryItems}
                     initialCategory={prefilledCategory}
+                    initialSellingPoints={prefilledSellingPoints}
                     initialMemoryIds={prefilledMemoryIds}
                   />
                 </div>
@@ -769,6 +772,7 @@ export function SkillsModule() {
               memoryItems={memoryItems}
               creators={creatorLibraryItems}
               initialCategory={prefilledCategory}
+              initialSellingPoints={prefilledSellingPoints}
               initialMemoryIds={prefilledMemoryIds}
             />
             }

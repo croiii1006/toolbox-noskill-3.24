@@ -28,6 +28,7 @@ interface ChatInputBarProps {
   memoryItems: MemoryItem[];
   creators: CreatorLibraryItem[];
   initialCategory?: string;
+  initialSellingPoints?: string;
   initialMemoryIds?: string[];
   initialCreatorIds?: string[];
 }
@@ -41,6 +42,7 @@ export function ChatInputBar({
   memoryItems,
   creators,
   initialCategory,
+  initialSellingPoints,
   initialMemoryIds,
   initialCreatorIds,
 }: ChatInputBarProps) {
@@ -61,6 +63,18 @@ export function ChatInputBar({
       setCategory(initialCategory);
     }
   }, [initialCategory]);
+
+  useEffect(() => {
+    if (typeof initialSellingPoints !== 'string') return;
+
+    const nextTags = initialSellingPoints
+      .split(/[\n,，、]+/)
+      .map((tag) => tag.trim())
+      .filter(Boolean)
+      .slice(0, MAX_TAG_COUNT);
+
+    setTags(nextTags);
+  }, [initialSellingPoints]);
 
   useEffect(() => {
     if (!initialMemoryIds) return;

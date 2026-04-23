@@ -4,6 +4,7 @@ export interface OranGenPrefill {
   attachmentIds: string[];
   attachmentNames: string[];
   category?: string;
+  sellingPoints?: string;
 }
 
 interface OranGenPrefillContextValue {

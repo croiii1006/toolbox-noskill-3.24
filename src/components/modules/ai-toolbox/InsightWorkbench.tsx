@@ -27,7 +27,6 @@ import {
 import { useCredits } from '@/contexts/CreditsContext';
 import { useMemory } from '@/contexts/MemoryContext';
 import { useOranGenPrefill } from '@/contexts/OranGenPrefillContext';
-import { useOranSimulationPrefill } from '@/contexts/OranSimulationPrefillContext';
 import { cn } from '@/lib/utils';
 import {
   MemorySelectionDialog,
@@ -291,7 +290,6 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   const { deduct, canAfford, shortfall } = useCredits();
   const { entries, ensureEntry, setDrawerOpen } = useMemory();
   const { setPrefill: setOranGenPrefill } = useOranGenPrefill();
-  const { setPrefill: setOranSimulationPrefill } = useOranSimulationPrefill();
 
   const [step, setStep] = useState<Step>('input');
   const [brandName, setBrandName] = useState('');
@@ -1122,6 +1120,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
       attachmentIds: attachmentEntries.map((entry) => entry.id),
       attachmentNames: attachmentEntries.map((entry) => entry.title),
       category: isPopmartPrefill && prefillCategory ? `${prefillBrandName} · ${prefillCategory}` : prefillCategory,
+      sellingPoints: isPopmartPrefill ? 'IP盲盒开箱与隐藏款' : undefined,
     });
 
     onNavigate?.('skills');
@@ -1141,69 +1140,8 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   }, [jumpToOranGenWithPrefill]);
 
   const handleJumpToPrediction = useCallback(() => {
-    const insightSource =
-      reportType === 'insight'
-        ? extractedInfo
-        : persistedCompletedReportType === 'insight' && persistedCompletedExtractedInfo.brandName
-          ? persistedCompletedExtractedInfo
-          : null;
-
-    const planningSource =
-      reportType === 'planning'
-        ? extractedInfo
-        : persistedCompletedReportType === 'planning' && persistedCompletedExtractedInfo.brandName
-          ? persistedCompletedExtractedInfo
-          : null;
-
-    const attachmentEntries = [];
-
-    if (insightSource) {
-      attachmentEntries.push(saveReportMemoryEntry(insightSource, 'insight'));
-    }
-
-    if (planningSource) {
-      attachmentEntries.push(saveReportMemoryEntry(planningSource, 'planning'));
-    }
-
-    const prompt =
-      attachmentEntries.length >= 2
-        ? '基于附件中的洞察报告与策划方案，预测后续传播表现与执行风险。'
-        : planningSource
-          ? '基于附件中的策划方案，预测后续传播表现与执行风险。'
-          : '基于附件中的洞察报告，预测后续传播表现与执行风险。';
-
-    setOranSimulationPrefill({
-      attachmentIds: attachmentEntries.map((entry) => entry.id),
-      attachmentNames: attachmentEntries.map((entry) => entry.title),
-      prompt,
-      autoStart: true,
-      brandName:
-        planningSource?.brandName ||
-        insightSource?.brandName ||
-        brandName.trim() ||
-        persistedCompletedExtractedInfo.brandName ||
-        extractedInfo.brandName ||
-        '',
-      category:
-        planningSource?.category ||
-        insightSource?.category ||
-        category.trim() ||
-        persistedCompletedExtractedInfo.category ||
-        extractedInfo.category ||
-        '',
-    });
-    onNavigate?.('oran-simulation');
-  }, [
-    brandName,
-    category,
-    extractedInfo,
-    onNavigate,
-    persistedCompletedExtractedInfo,
-    persistedCompletedReportType,
-    reportType,
-    saveReportMemoryEntry,
-    setOranSimulationPrefill,
-  ]);
+    window.open('https://sim.oran.cn/#workspace', '_blank', 'noopener,noreferrer');
+  }, []);
 
   const handleJumpToContentGeneration = useCallback(() => {
     jumpToOranGenWithPrefill();
