@@ -845,7 +845,7 @@ export function useSkillsEngine() {
         updateAgent('agent-01', { progress: 75, statusText: '正在生成 Top 20 排名...' });
         await randDelay();
         updateChild('task-crawl', 'task-crawl-rank', { status: 'done', progress: 100, title: '策略专家完成排序生成 Top 20' });
-        addTaskLog('task-crawl', '策略专家完成排序 → Top 4候选已生成');
+        addTaskLog('task-crawl', '策略专家完成排序 → Top 6候选已生成');
 
         // Sub 4: Cover
         updateChild('task-crawl', 'task-crawl-cover', { status: 'running', title: '视频专家正在提取视频封面' });
@@ -853,7 +853,7 @@ export function useSkillsEngine() {
         updateAgent('agent-01', { progress: 90, statusText: '正在提取视频封面...' });
         await subDelay();
         updateChild('task-crawl', 'task-crawl-cover', { status: 'done', progress: 100, title: '视频专家完成提取视频封面' });
-        addTaskLog('task-crawl', '视频专家完成封面提取 → 4张高清封面已缓存');
+        addTaskLog('task-crawl', '视频专家完成封面提取 → 6张高清封面已缓存');
 
         updateTask('task-crawl', { status: 'done', progress: 100, endAt: now(), output: '抓取 142 条，Top 20 已排序' });
         updateAgentInMessages('agent-01', { progress: 100, status: 'done', statusText: '已完成爆款视频匹配，请选择对标视频' });
@@ -1519,8 +1519,8 @@ export function useSkillsEngine() {
             { key: '完成抓取', message: `爬虫专家完成抓取 → 共获取 ${crawlCount} 条视频数据` },
             { key: '正在分析卖点匹配度', message: '数据专家正在分析卖点匹配度...' },
             { key: '完成分析', message: `数据专家完成分析 → 平均匹配度 ${matchRate}%，高匹配 ${highMatchCount} 条` },
-            { key: '完成排序', message: '策略专家完成排序 → Top 4候选已生成' },
-            { key: '完成封面提取', message: '视频专家完成封面提取 → 4张高清封面已缓存' },
+            { key: '完成排序', message: '策略专家完成排序 → Top 6候选已生成' },
+            { key: '完成封面提取', message: '视频专家完成封面提取 → 6张高清封面已缓存' },
           ]);
         }
 

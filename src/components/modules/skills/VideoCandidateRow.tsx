@@ -36,16 +36,16 @@ export function VideoCandidateRow({ videos, onSelect, onPreview, selectedVideoId
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-1 gap-2.5 md:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         {displayVideos.map((video, i) =>
         <div
           key={video.id}
-          className="rounded-xl border border-border/30 bg-card overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer"
+          className="rounded-lg border border-border/30 bg-card overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer"
           onClick={() => openDetail(video, i)}>
           
             {/* Cover */}
             <div
-            className={`relative aspect-[9/14] bg-gradient-to-br ${coverColors[i % coverColors.length]} flex items-center justify-center overflow-hidden`}>
+            className={`relative aspect-[9/12] max-h-[360px] bg-gradient-to-br ${coverColors[i % coverColors.length]} flex items-center justify-center overflow-hidden`}>
               {video.videoUrl ?
               <video
                 src={video.videoUrl}
@@ -63,7 +63,7 @@ export function VideoCandidateRow({ videos, onSelect, onPreview, selectedVideoId
             </div>
 
             {/* Content */}
-            <div className="p-3 space-y-2.5">
+            <div className="p-2.5 space-y-2">
               {/* Title - no likes */}
               <p className="text-xs font-medium text-foreground leading-snug line-clamp-2">{video.title}</p>
 
@@ -84,7 +84,7 @@ export function VideoCandidateRow({ videos, onSelect, onPreview, selectedVideoId
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1.5">
                 <div className="flex items-center gap-1.5">
                   <Eye className="w-3.5 h-3.5 text-muted-foreground/60" />
                   <span className="text-[11px] text-foreground/80">{video.views}</span>
@@ -246,12 +246,6 @@ function VideoDetailDialog({ video, colorIndex, selectedVideoId, onSelect, onClo
                 <p className="text-sm text-foreground/80 leading-relaxed">策略：{video.strategy}</p>
               </div>
             )}
-            {false && video.strategy &&
-            <div>
-                <p className="text-xs text-muted-foreground mb-1">{video.analysis || '视频解析'}</p>
-                <p className="text-sm text-foreground/80 leading-relaxed">策略：{video.strategy}</p>
-              </div>
-            }
           </div>
         </ScrollArea>
 

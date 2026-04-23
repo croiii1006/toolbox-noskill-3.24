@@ -2295,7 +2295,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                     </div>
                   </aside>
 
-                  <section className="flex h-full min-h-0 flex-col gap-3 overscroll-none animate-in fade-in-0 slide-in-from-right-12 duration-700">
+                  <section className="hidden h-full min-h-0 flex-col gap-3 overscroll-none animate-in fade-in-0 slide-in-from-right-12 duration-700 xl:flex">
                     <div className="min-h-0 flex-1 transition-all duration-700 ease-out">
                       <div className="flex h-full min-h-0 flex-col rounded-[22px] border border-border/30 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
                         <div className="flex items-center justify-between gap-3 border-b border-border/30 px-5 py-3">

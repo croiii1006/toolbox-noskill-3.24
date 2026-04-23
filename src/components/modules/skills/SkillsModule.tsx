@@ -30,6 +30,23 @@ const avatarMap: Record<string, string> = {
   designer: expertDesigner, strategist: pixelPrompt, search: pixelSearch
 };
 
+type NarrowPane = 'left' | 'right';
+
+function useMediaQuery(query: string) {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(query);
+    const handleChange = () => setMatches(mediaQuery.matches);
+
+    handleChange();
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [query]);
+
+  return matches;
+}
+
 /* ─── Agent task background descriptions ─── */
 const getAgentDescriptions = (category: string, sellingPoints: string, memoryNames: string): Record<string, string> => ({
   'agent-01': `你是一名TikTok爆款视频专家，需要为用户收集「${category}」品类下最符合「${sellingPoints}」卖点的对标爆款视频，并生成一个可供复刻的视频列表。`,
@@ -145,6 +162,49 @@ export function SkillsModule() {
   const [historySheetOpen, setHistorySheetOpen] = useState(false);
   const [prefilledCategory, setPrefilledCategory] = useState('');
   const [prefilledMemoryIds, setPrefilledMemoryIds] = useState<string[]>([]);
+  const isNarrowWorkspace = useMediaQuery('(max-width: 1279px)');
+  const [narrowPane, setNarrowPane] = useState<NarrowPane>('left');
+  const previousProcessingRef = useRef(state.isProcessing);
+  const previousRightViewRef = useRef(state.activeRightView);
+  const previousNarrowRef = useRef(isNarrowWorkspace);
+  const showRightPanel = state.activeRightView !== 'none';
+  const openRightView = useCallback((view: SkillsState['activeRightView'], agentTab?: SkillsState['activeAgentTab']) => {
+    setActiveRightView(view, agentTab);
+    if (isNarrowWorkspace && view !== 'none') {
+      setNarrowPane('right');
+    }
+  }, [isNarrowWorkspace, setActiveRightView]);
+
+  const showLeftFlowOnNarrow = useCallback(() => {
+    if (isNarrowWorkspace) {
+      setNarrowPane('left');
+    }
+  }, [isNarrowWorkspace]);
+
+  const handleVideoSelect = useCallback((video: Parameters<typeof selectVideo>[0]) => {
+    showLeftFlowOnNarrow();
+    selectVideo(video);
+  }, [selectVideo, showLeftFlowOnNarrow]);
+
+  const handlePromptConfirm = useCallback(() => {
+    showLeftFlowOnNarrow();
+    confirmGenerate();
+  }, [confirmGenerate, showLeftFlowOnNarrow]);
+
+  const handleRegenerate = useCallback(() => {
+    showLeftFlowOnNarrow();
+    regenerate();
+  }, [regenerate, showLeftFlowOnNarrow]);
+
+  const handleBackToVideoSelect = useCallback(() => {
+    backToVideoSelect();
+    if (isNarrowWorkspace) {
+      setNarrowPane('right');
+    }
+  }, [backToVideoSelect, isNarrowWorkspace]);
+
+  const showLeftColumn = !isNarrowWorkspace || !showRightPanel || narrowPane === 'left';
+  const showRightColumn = showRightPanel && (!isNarrowWorkspace || narrowPane === 'right');
 
   useEffect(() => {
     let mounted = true;
@@ -172,6 +232,36 @@ export function SkillsModule() {
     setPrefilledCategory(prefill.category || '');
     setPrefilledMemoryIds(prefill.attachmentIds);
   }, [consumeOranGenPrefill]);
+
+  useEffect(() => {
+    const previousView = previousRightViewRef.current;
+    const wasNarrowWorkspace = previousNarrowRef.current;
+    previousRightViewRef.current = state.activeRightView;
+    previousNarrowRef.current = isNarrowWorkspace;
+
+    if (!isNarrowWorkspace) {
+      setNarrowPane('left');
+      return;
+    }
+
+    if (state.activeRightView === 'none') {
+      setNarrowPane('left');
+      return;
+    }
+
+    if (!wasNarrowWorkspace || previousView === 'none') {
+      setNarrowPane('right');
+    }
+  }, [isNarrowWorkspace, state.activeRightView]);
+
+  useEffect(() => {
+    const wasProcessing = previousProcessingRef.current;
+    previousProcessingRef.current = state.isProcessing;
+
+    if (isNarrowWorkspace && showRightPanel && wasProcessing && !state.isProcessing) {
+      setNarrowPane('right');
+    }
+  }, [isNarrowWorkspace, showRightPanel, state.isProcessing]);
 
   // Persist activeHistoryId to localStorage
   useEffect(() => {
@@ -316,7 +406,6 @@ export function SkillsModule() {
     setActiveHistoryId(null);
   };
 
-  const showRightPanel = state.activeRightView !== 'none';
 
   /* ─── Flow-step types that get grouped into one card ─── */
   const FLOW_STEP_TYPES = new Set<StreamMessageType>(['checklist', 'create-agent', 'read-checklist', 'read-memory', 'agent-cluster']);
@@ -375,7 +464,7 @@ export function SkillsModule() {
           if (msg.type === 'checklist') {
             icon = <ListChecks className="w-4 h-4 text-foreground/60" />;
             label = '编写待办清单';
-            onClick = () => setActiveRightView('checklist');
+            onClick = () => openRightView('checklist');
           } else if (msg.type === 'create-agent') {
             // Show as a bullet point step (agent details below)
             icon = <span className="w-4 h-4 text-foreground/60 flex items-center justify-center">•</span>;
@@ -383,7 +472,7 @@ export function SkillsModule() {
           } else if (msg.type === 'read-checklist') {
             icon = <ListChecks className="w-4 h-4 text-foreground/60" />;
             label = msg.content;
-            onClick = () => setActiveRightView('checklist');
+            onClick = () => openRightView('checklist');
           } else if (msg.type === 'read-memory') {
             const memEntry = entries.find((e) => e.id === msg.memoryId);
             const memTitle = memEntry?.title || msg.content || '记忆库';
@@ -391,7 +480,7 @@ export function SkillsModule() {
             label = `阅读`;
             onClick = () => {
               setActiveMemoryId(msg.memoryId || null);
-              setActiveRightView('read-memory');
+              openRightView('read-memory');
             };
           } else {
             icon = <span className="w-4 h-4 text-foreground/60 flex items-center justify-center">•</span>;
@@ -456,10 +545,10 @@ export function SkillsModule() {
             key={msg.id}
             agents={msg.agents || []}
             onAgentClick={(agentId) => {
-              if (agentId === 'agent-01') setActiveRightView('agents', '01');else
-              if (agentId === 'agent-02') setActiveRightView('agents', '02');else
-              if (agentId === 'agent-03') setActiveRightView('agents', '03');else
-              if (agentId === 'agent-04') setActiveRightView('agents', '04');
+              if (agentId === 'agent-01') openRightView('agents', '01');else
+              if (agentId === 'agent-02') openRightView('agents', '02');else
+              if (agentId === 'agent-03') openRightView('agents', '03');else
+              if (agentId === 'agent-04') openRightView('agents', '04');
             }} />);
 
 
@@ -594,7 +683,8 @@ export function SkillsModule() {
         {/* Left: Conversation column */}
         <div className={cn(
           'flex min-h-0 flex-col transition-all duration-300',
-          showRightPanel ? 'w-1/2 border-r border-border/20' : 'w-full'
+          showRightPanel && !isNarrowWorkspace ? 'w-1/2 border-r border-border/20' : 'w-full',
+          !showLeftColumn && 'hidden'
         )}>
           {isEmpty ?
           <div className="relative min-h-full flex flex-col items-center justify-start gap-20 px-6 pt-[100px] pb-6 md:px-8 md:pt-[180px] md:pb-8">
@@ -648,10 +738,10 @@ export function SkillsModule() {
                                 <AgentClusterCard
                               agents={acMsg.agents || []}
                               onAgentClick={(agentId) => {
-                                if (agentId === 'agent-01') setActiveRightView('agents', '01');else
-                                if (agentId === 'agent-02') setActiveRightView('agents', '02');else
-                                if (agentId === 'agent-03') setActiveRightView('agents', '03');else
-                                if (agentId === 'agent-04') setActiveRightView('agents', '04');
+                                if (agentId === 'agent-01') openRightView('agents', '01');else
+                                if (agentId === 'agent-02') openRightView('agents', '02');else
+                                if (agentId === 'agent-03') openRightView('agents', '03');else
+                                if (agentId === 'agent-04') openRightView('agents', '04');
                               }} />
                             
                               </div>
@@ -687,13 +777,16 @@ export function SkillsModule() {
         </div>
 
         {/* Right: Workspace panel */}
-        {showRightPanel &&
-        <div className="w-1/2 min-h-0 overflow-hidden animate-in slide-in-from-right-4 duration-300">
+        {showRightColumn &&
+        <div className={cn(
+          'min-h-0 overflow-hidden animate-in slide-in-from-right-4 duration-300',
+          isNarrowWorkspace ? 'w-full' : 'w-1/2'
+        )}>
             <RightWorkspace
             view={state.activeRightView as RightView}
-            onClose={() => setActiveRightView('none')}
+            onClose={() => openRightView('none')}
             activeAgentTab={state.activeAgentTab || '01'}
-            onAgentTabChange={(tab) => setActiveRightView('agents', tab)}
+            onAgentTabChange={(tab) => openRightView('agents', tab)}
             // Checklist
             checklistItems={state.checklistItems}
             checklistDone={state.checklistDone}
@@ -702,7 +795,7 @@ export function SkillsModule() {
             agent01Task={taskCrawl}
             candidateVideos={state.candidateVideos}
             selectedVideoId={state.selectedVideo?.id}
-            onVideoSelect={selectVideo}
+            onVideoSelect={handleVideoSelect}
             videoSelectDisabled={!!state.selectedVideo}
             // Agent 02/03
             agent02={state.agents.find((a) => a.id === 'agent-02')}
@@ -711,17 +804,15 @@ export function SkillsModule() {
             agent03Task={taskPrompt}
             generatedPrompt={state.generatedPrompt}
             onPromptChange={updatePrompt}
-            onPromptConfirm={confirmGenerate}
-            onBackToVideoSelect={() => {
-              backToVideoSelect();
-            }}
+            onPromptConfirm={handlePromptConfirm}
+            onBackToVideoSelect={handleBackToVideoSelect}
             memoryEnabled={state.setup.memoryEnabled}
             isProcessing={state.isProcessing}
             // Agent 04
             agent04={state.agents.find((a) => a.id === 'agent-04')}
             agent04Task={taskGenVideo}
             resultVideo={state.resultVideo}
-            onRegenerate={regenerate}
+            onRegenerate={handleRegenerate}
             // Memory
             memoryTitle={activeMemoryEntry?.title}
             memoryContent={activeMemoryEntry?.content}
