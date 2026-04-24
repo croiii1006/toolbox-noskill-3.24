@@ -45,7 +45,7 @@ export function MarketInsightComposer({ onSubmit, disabled, initialData }: Marke
     setSelectedMemoryIds((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
   }, []);
 
-  const canSend = brandName.trim() && category.trim() && competitors.length > 0;
+  const canSend = Boolean(brandName.trim() && category.trim());
 
   const handleSend = useCallback(() => {
     if (!canSend || disabled) return;

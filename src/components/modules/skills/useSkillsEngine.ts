@@ -580,9 +580,9 @@ function now() {
   return new Date().toLocaleTimeString('zh-CN', { hour12: false });
 }
 
-const PHASE1_MS = 12000;
-const PHASE2_MS = 9000;
-const PHASE3_MS = 12000;
+const PHASE1_MS = 82_000;
+const PHASE2_MS = 33_000;
+const PHASE3_MS = 273_000;
 
 const makeRunMeta = (phase: SkillsRunPhase, awaitingAction: SkillsAwaitingAction, nextActionAt: number | null): SkillsRunMeta => ({
   phase,
@@ -701,6 +701,15 @@ export function useSkillsEngine() {
   const subDelay = () => new Promise<void>(r => { const t = window.setTimeout(r, 1000 + Math.random() * 1000); streamTimers.current.push(t); });
   const backendDelay = () => new Promise<void>(r => { const t = window.setTimeout(r, 3000 + Math.random() * 3000); streamTimers.current.push(t); });
   const pause = (ms = 600) => new Promise<void>(r => { const t = window.setTimeout(r, ms); streamTimers.current.push(t); });
+  const waitUntil = (deadline: number) => new Promise<void>(r => {
+    const remaining = Math.max(0, deadline - Date.now());
+    if (remaining === 0) {
+      r();
+      return;
+    }
+    const t = window.setTimeout(r, remaining);
+    streamTimers.current.push(t);
+  });
 
   // Update agent in cluster messages (to keep them in sync for rendering)
   const updateAgentInMessages = useCallback((agentId: string, updates: Partial<AgentInfo>) => {
@@ -720,6 +729,7 @@ export function useSkillsEngine() {
 
   // ─── Phase 0: Complete setup ───
   const completeSetup = useCallback((setup: SessionSetup) => {
+    const phase1Deadline = Date.now() + PHASE1_MS;
     const checklistItems = [
       '匹配对标品类和卖点的爆款视频列表',
       '构建记忆库特征向量',
@@ -779,7 +789,7 @@ export function useSkillsEngine() {
       tasks,
       checklistItems,
       checklistDone: [false, false, false, false],
-      runMeta: makeRunMeta('phase1', null, Date.now() + PHASE1_MS),
+      runMeta: makeRunMeta('phase1', null, phase1Deadline),
     }));
 
     // Add setup summary
@@ -854,6 +864,7 @@ export function useSkillsEngine() {
         await subDelay();
         updateChild('task-crawl', 'task-crawl-cover', { status: 'done', progress: 100, title: '视频专家完成提取视频封面' });
         addTaskLog('task-crawl', '视频专家完成封面提取 → 6张高清封面已缓存');
+        await waitUntil(phase1Deadline);
 
         updateTask('task-crawl', { status: 'done', progress: 100, endAt: now(), output: '抓取 142 条，Top 20 已排序' });
         updateAgentInMessages('agent-01', { progress: 100, status: 'done', statusText: '已完成爆款视频匹配，请选择对标视频' });
@@ -883,11 +894,12 @@ export function useSkillsEngine() {
 
   // ─── Select video → Phase 2: Agent 02 + 03 parallel ───
   const selectVideo = useCallback((video: CandidateVideo) => {
+    const phase2Deadline = Date.now() + PHASE2_MS;
     setState(prev => ({
       ...prev,
       selectedVideo: video,
       isProcessing: true,
-      runMeta: makeRunMeta('phase2', null, Date.now() + PHASE2_MS),
+      runMeta: makeRunMeta('phase2', null, phase2Deadline),
     }));
 
     addMessage({ type: 'selection-confirm', content: `已选择「${video.title}」作为对标视频，现在为你生成专属爆款视频Prompt。` });
@@ -941,8 +953,8 @@ export function useSkillsEngine() {
         const setup = state.setup;
         if (!setup.memoryEnabled) {
           updateTask('task-memory', { status: 'skipped', endAt: now() });
-          updateAgentInMessages('agent-02', { status: 'skipped' as any, progress: 0, statusText: '未选择记忆库，已跳过' });
-          updateAgent('agent-02', { status: 'skipped' as any, progress: 0, statusText: '未选择记忆库，已跳过' });
+          updateAgentInMessages('agent-02', { status: 'skipped', progress: 0, statusText: '未选择记忆库，已跳过' });
+          updateAgent('agent-02', { status: 'skipped', progress: 0, statusText: '未选择记忆库，已跳过' });
           return;
         }
 
@@ -1023,6 +1035,7 @@ export function useSkillsEngine() {
       };
 
       await Promise.all([runAgent02(), runAgent03()]);
+      await waitUntil(phase2Deadline);
 
       const mockPrompt = `【爆款复刻 Prompt】\n\n镜头风格：近景特写 + 俯拍切换，暖色调滤镜\n节奏：快节奏剪辑，BGM 节拍同步\n内容结构：\n1. 开场 - 产品白底展示，旋转 360°（0-3s）\n2. 使用场景 - 手部特写展示质感（3-8s）\n3. 效果对比 - 使用前后对比（8-15s）\n4. 口播种草 - 真人出镜，口述卖点（15-25s）\n5. 结尾 CTA - 点击链接，限时优惠（25-30s）\n\n关键词：${state.setup.sellingPoints.slice(0, 30)}\n品类：${state.setup.category}\n参考来源：${video.title}`;
 
@@ -1041,10 +1054,11 @@ export function useSkillsEngine() {
 
   // ─── Confirm prompt → Phase 3: Agent 04 ───
   const confirmGenerate = useCallback(() => {
+    const phase3Deadline = Date.now() + PHASE3_MS;
     setState(prev => ({
       ...prev,
       isProcessing: true,
-      runMeta: makeRunMeta('phase3', null, Date.now() + PHASE3_MS),
+      runMeta: makeRunMeta('phase3', null, phase3Deadline),
     }));
 
     (async () => {
@@ -1102,6 +1116,7 @@ export function useSkillsEngine() {
       updateChild(genTaskId, 'sub-compose', { status: 'done', progress: 100, title: '视频专家完成合成视频' });
       addTaskLog(genTaskId, '视频专家完成视频合成');
       addTaskLog(genTaskId, '质量检测通过');
+      await waitUntil(phase3Deadline);
 
       updateTask(genTaskId, { status: 'done', progress: 100, endAt: now(), output: '视频生成完成，时长 30s' });
       updateAgentInMessages('agent-04', { status: 'done', progress: 100, statusText: '视频生成完成！' });
@@ -1455,7 +1470,7 @@ export function useSkillsEngine() {
 
       let tasks = base.tasks.map(t => t);
       let agents = [...base.agents];
-      let checklistDone = [...base.checklistDone];
+      const checklistDone = [...base.checklistDone];
 
       if (base.candidateVideos.length > 0 || base.runMeta?.awaitingAction === 'select_video') {
         tasks = tasks.map(t => t.id === 'task-crawl' ? setTask(t, 'done', 'done') : t);

@@ -117,6 +117,20 @@ const GENERATING_PHASES = [
   { label: '补充策略建议', delay: 5000 },
   { label: '合成 HTML 结果', delay: 6600 },
 ];
+const BASE_GENERATING_PHASE_COMPLETE_MS = GENERATING_PHASES[GENERATING_PHASES.length - 1]?.delay ?? 1;
+const REPORT_GENERATING_TOTAL_MS: Record<ReportType, number> = {
+  insight: 83_000,
+  planning: 71_000,
+};
+
+function getGeneratingPhases(reportType: ReportType) {
+  const total = REPORT_GENERATING_TOTAL_MS[reportType];
+
+  return GENERATING_PHASES.map((phase) => ({
+    ...phase,
+    delay: Math.round((phase.delay / BASE_GENERATING_PHASE_COMPLETE_MS) * total),
+  }));
+}
 
 interface InsightHistoryItem {
   id: string;
@@ -295,6 +309,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
   const [brandName, setBrandName] = useState('');
   const [category, setCategory] = useState('');
   const [reportType, setReportType] = useState<ReportType>('insight');
+  const activeGeneratingPhases = useMemo(() => getGeneratingPhases(reportType), [reportType]);
   const [planningInputSource, setPlanningInputSource] = useState<PlanningInputSource>('memory');
   const [reportTypeMenuOpen, setReportTypeMenuOpen] = useState(false);
   const [competitors, setCompetitors] = useState<string[]>([]);
@@ -381,7 +396,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
       ? isPlanningFromInsight
         ? Boolean(effectiveBrandName)
         : selectedMemoryIds.length > 0 && Boolean(effectiveBrandName)
-      : brandName.trim() && category.trim() && competitors.length > 0;
+      : Boolean(brandName.trim() && category.trim());
   const activeCases = useMemo(
     () =>
       SHOWCASE_CARDS.filter((card) =>
@@ -518,31 +533,26 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
       return;
     }
 
-    setGeneratingPhases(new Array(GENERATING_PHASES.length).fill(false));
+    setGeneratingPhases(new Array(activeGeneratingPhases.length).fill(false));
 
-    const timers = GENERATING_PHASES.map((item, index) =>
+    const timers = activeGeneratingPhases.map((item, index) =>
       window.setTimeout(() => {
         setGeneratingPhases((prev) => {
           const next = [...prev];
           next[index] = true;
           return next;
         });
+
+        if (index === activeGeneratingPhases.length - 1 && !DEBUG_STAY_ON_PROCESSING_PAGE) {
+          startTransition(() => setStep('report'));
+        }
       }, item.delay)
     );
 
-    const doneTimer = window.setTimeout(() => {
-      if (DEBUG_STAY_ON_PROCESSING_PAGE) {
-        return;
-      }
-
-      startTransition(() => setStep('report'));
-    }, 8200);
-
     return () => {
       timers.forEach((timer) => window.clearTimeout(timer));
-      window.clearTimeout(doneTimer);
     };
-  }, [step]);
+  }, [activeGeneratingPhases, step]);
 
   const handleSubmit = useCallback(() => {
     if (!canSubmit) {
@@ -725,8 +735,8 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     extractedInfo.budgetLevel.trim().length > 0 &&
     extractedInfo.primaryChannels.trim().length > 0;
   const completedGeneratingPhases = generatingPhases.filter(Boolean).length;
-  const activeGeneratingIndex = Math.min(completedGeneratingPhases, GENERATING_PHASES.length - 1);
-  const generatingProgressItems = GENERATING_PHASES.map((phase, index) => {
+  const activeGeneratingIndex = Math.min(completedGeneratingPhases, activeGeneratingPhases.length - 1);
+  const generatingProgressItems = activeGeneratingPhases.map((phase, index) => {
     if (workflowStatus === 'completed') {
       return { label: phase.label, state: 'completed' as const };
     }
@@ -817,7 +827,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
     workflowStatus === 'completed'
       ? generatingProgressItems
       : workflowStatus === 'generating_report'
-        ? generatingProgressItems.slice(0, Math.min(completedGeneratingPhases + 1, GENERATING_PHASES.length))
+        ? generatingProgressItems.slice(0, Math.min(completedGeneratingPhases + 1, activeGeneratingPhases.length))
         : [];
   const showInsightFollowUpActions = workflowStatus === 'completed' && reportType === 'insight';
   const showPlanningFollowUpActions = workflowStatus === 'completed' && reportType === 'planning';
@@ -1876,7 +1886,7 @@ export function InsightWorkbench({ onNavigate }: { onNavigate?: (id: string) => 
                               </p>
                             </div>
                             <div className="space-y-1.5 pl-12">
-                              {GENERATING_PHASES.map((item) => (
+                              {activeGeneratingPhases.map((item) => (
                                 <div
                                   key={`insight-generating-${item.label}`}
                                   className="flex items-center gap-2 text-[12px] text-foreground/76"
